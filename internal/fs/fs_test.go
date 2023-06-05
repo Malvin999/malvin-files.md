@@ -3,6 +3,7 @@ package fs
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
@@ -256,4 +257,41 @@ func TestOnlyChecklists(t *testing.T) {
 	dirs := OnlyChecklists(entries)
 	r.Len(dirs, 1)
 	r.Equal("-list-", dirs[0].Name)
+}
+
+func TestFS_TouchNew(t *testing.T) {
+	r := require.New(t)
+
+	fs, _ := NewFS(-1, afero.NewMemMapFs())
+	exists, err := fs.Exists("today", "a.md")
+	r.Nil(err)
+	r.False(exists)
+
+	err = fs.Touch("today", "a.md")
+	r.Nil(err)
+
+	exists, err = fs.Exists("today", "a.md")
+	r.Nil(err)
+	r.True(exists)
+}
+
+func TestFS_TouchExisting(t *testing.T) {
+	r := require.New(t)
+	fs, _ := NewFS(-1, afero.NewMemMapFs())
+	err := fs.Put("today", "a.md", "")
+	r.Nil(err)
+
+	path := fs.path("today", "a.md")
+	fi, err := fs.backend.Stat(path)
+	r.Nil(err)
+	orig_ctime := Ctime(fi)
+
+	time.Sleep(time.Second)
+	err = fs.Touch("today", "a.md")
+	r.Nil(err)
+
+	fi, err = fs.backend.Stat(path)
+	r.Nil(err)
+	r.Less(orig_ctime, Ctime(fi))
+
 }
