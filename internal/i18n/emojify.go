@@ -5,5 +5,5 @@ const (
 )
 
 func emojify(str string) string {
-
+	return ""
 }

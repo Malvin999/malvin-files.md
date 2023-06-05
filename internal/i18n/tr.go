@@ -1,5 +1,5 @@
 package i18n
 
-func Tr(value string) {
-
+func Tr(str string) string {
+	return str
 }

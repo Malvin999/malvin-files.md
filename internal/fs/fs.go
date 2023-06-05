@@ -56,7 +56,7 @@ type File struct {
 
 // TODO create Unsorted
 func NewFS(userID int64, backend afero.Fs) (*FS, error) {
-	rootDir := "./assets"
+	rootDir := "./cmd/testdata"
 	for _, dir := range []string{DirTrash, DirToday, DirLater} {
 		path := fmt.Sprintf("%s/%s", rootDir, dir)
 		exists, err := afero.Exists(backend, path)
