@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"zakirullin/dumpbot/internal/userconfig"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
@@ -23,8 +24,8 @@ var now = func() time.Time {
 }
 
 const (
-	maxTitleLength   = 100
-	pomodoroDuration = 10 * time.Second
+	maxTitleLength          = 100
+	defaultPomodoroDuration = 15 * time.Minute
 )
 
 // TGInterface provides a simple interface to telegram API
@@ -55,10 +56,11 @@ type Bot struct {
 	tg     TGInterface
 	fs     *fs.FS
 	db     *db.DB
+	conf   *userconfig.Config
 }
 
-func NewBot(userID int64, tg TGInterface, fs *fs.FS, db *db.DB) *Bot {
-	return &Bot{userID, tg, fs, db}
+func NewBot(userID int64, tg TGInterface, fs *fs.FS, db *db.DB, conf *userconfig.Config) *Bot {
+	return &Bot{userID, tg, fs, db, conf}
 }
 
 // Reply to incoming text message or command (inline queries aren't supported yet)
@@ -897,7 +899,7 @@ func (b *Bot) complete(params []string) error {
 	}
 
 	if dir == fs.DirToday && filename == fs.FilePomodoro {
-		err = b.db.AddToSchedule(b.userID, filename, time.Now().Unix()+int64(pomodoroDuration.Seconds()), "")
+		err = b.db.AddToSchedule(b.userID, filename, time.Now().Unix()+int64(b.pomodoroDuration().Seconds()), "")
 		if err != nil {
 			return fmt.Errorf("b.complete: can't add pomodoro task to schedule: %w", err)
 		}
@@ -909,6 +911,15 @@ func (b *Bot) complete(params []string) error {
 	}
 
 	return nil
+}
+
+func (b *Bot) pomodoroDuration() time.Duration {
+	pomodoroDuration, err := time.ParseDuration(b.conf.PomodoroDuration)
+	if err == nil {
+		return pomodoroDuration
+	}
+	fmt.Printf("b.complete: can't parse pomodoro duration \"%v\" from the userconfig: %v", b.conf.PomodoroDuration, err)
+	return defaultPomodoroDuration
 }
 
 func (b *Bot) schedule(params []string) error {
@@ -1215,7 +1226,7 @@ func (b *Bot) togglePomodoro(_ []string) error {
 
 	err = b.send(fmt.Sprintf("Pomodoro is run: you can see \"%v\" task in your %v folder. Once are ready to focus on something and start working, just complete this task."+
 		" It will get back in %v to let you know that you worked enough and deserved a break. To stop it just use /%v comand again",
-		fs.FilePomodoro, fs.DirToday, pomodoroDuration, cmdPomodoro))
+		fs.FilePomodoro, fs.DirToday, b.pomodoroDuration(), cmdPomodoro))
 	if err != nil {
 		return fmt.Errorf("b.togglePomodoro: failed to show pomodoro hint message %w", err)
 	}
