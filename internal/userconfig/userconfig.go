@@ -9,13 +9,6 @@ import (
 	"os"
 )
 
-type Config struct {
-	Language         string   `json:"language"`
-	HomeCmd          string   `json:"homeCmd"`
-	RawMoveToButtons []string `json:"moveToButtons"`
-	PomodoroDuration string   `json:"pomodoroDuration"`
-}
-
 var DefaultConfig = Config{
 	Language:         "en",
 	HomeCmd:          "today",
@@ -31,6 +24,13 @@ var TasksOnlyConfig = Config{
 var NotesOnlyConfig = Config{
 	HomeCmd:          "notes",
 	RawMoveToButtons: []string{"##NOTE_DIRS##"},
+}
+
+type Config struct {
+	Language         string   `json:"language"`
+	HomeCmd          string   `json:"homeCmd"`
+	RawMoveToButtons []string `json:"moveToButtons"`
+	PomodoroDuration string   `json:"pomodoroDuration"`
 }
 
 func NewConfig() *Config {
