@@ -262,6 +262,9 @@ func (fs FS) Dirs() ([]File, error) {
 
 // Maybe we should replace / with | and use filepath.Clean by default
 // instead of throwing an error up the stack
+// TODO test all Fs' public the methods for path traversal
+// TODO after you cover everything with the tests, we may remove this method
+// because we build our own paths
 func (fs FS) isSafe(path string) bool {
 	if !strings.HasPrefix(path, fs.rootPath) {
 		return false
