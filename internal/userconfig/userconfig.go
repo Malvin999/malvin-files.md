@@ -10,23 +10,33 @@ import (
 )
 
 var DefaultConfig = Config{
-	Language:         "en",
-	HomeCmd:          "today",
-	RawMoveToButtons: []string{"tomorrow", "later", "day", "note", "checklist", "doc", "recent", "journal"},
-	PomodoroDuration: "25m",
+	config: config{
+		Language:         "en",
+		HomeCmd:          "today",
+		RawMoveToButtons: []string{"tomorrow", "later", "day", "note", "checklist", "doc", "recent", "journal"},
+		PomodoroDuration: "25m",
+	},
 }
 
 var TasksOnlyConfig = Config{
-	HomeCmd:          "today",
-	RawMoveToButtons: []string{"tomorrow", "later", "day"},
+	config: config{
+		HomeCmd:          "today",
+		RawMoveToButtons: []string{"tomorrow", "later", "day"},
+	},
 }
 
 var NotesOnlyConfig = Config{
-	HomeCmd:          "notes",
-	RawMoveToButtons: []string{"##NOTE_DIRS##"},
+	config: config{
+		HomeCmd:          "notes",
+		RawMoveToButtons: []string{"##NOTE_DIRS##"},
+	},
 }
 
 type Config struct {
+	config
+}
+
+type config struct {
 	Language         string   `json:"language"`
 	HomeCmd          string   `json:"homeCmd"`
 	RawMoveToButtons []string `json:"moveToButtons"`
@@ -35,6 +45,10 @@ type Config struct {
 
 func NewConfig() *Config {
 	return &Config{}
+}
+
+func (c *Config) UnmarshalJSON(b []byte) error {
+	return json.Unmarshal(b, &c.config)
 }
 
 // TODO add file creation
