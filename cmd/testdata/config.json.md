@@ -1,6 +1,6 @@
 {
     "language": "en",
     "homeCmd": "today",
-    "moveToButtons": ["tomorrow"],
+    "moveToCommands": ["tomorrow"],
     "pomodoroDuration": 50
 }

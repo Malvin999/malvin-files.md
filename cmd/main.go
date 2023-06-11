@@ -85,7 +85,7 @@ func main() {
 			defer func() {
 				err := recover()
 				if err != nil {
-					slog.Error("Bot's panic: %s\n", err)
+					slog.Error("Bot's panic", "err", err)
 				}
 			}()
 
@@ -93,7 +93,7 @@ func main() {
 			userID := u.UserID()
 			fsys, err := fs.NewFS(userID, afero.NewOsFs())
 			if err != nil {
-				slog.Error("Bot's error: can't create FS: %s\n", err)
+				slog.Error("Bot's error: can't create FS", "err", err)
 				return
 			}
 
@@ -102,7 +102,7 @@ func main() {
 			configPath := "cmd/testdata/config.json.md"
 			err = conf.LoadOrCreate(configPath)
 			if err != nil {
-				slog.Error("Bot's error: can't get or create config: %s\n", err)
+				slog.Error("Bot's error: can't get or create config", "err", err)
 				return
 			}
 			defer conf.Save(configPath)
@@ -110,7 +110,7 @@ func main() {
 			bot := internal.NewBot(userID, telegram, fsys, db.NewDB(redis), conf)
 
 			if err := bot.Reply(u); err != nil {
-				slog.Error("Bot's error: %s\n", err)
+				slog.Error("Bot's error", "err", err)
 			}
 		}(upd)
 	}

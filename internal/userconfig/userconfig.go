@@ -15,36 +15,36 @@ import (
 )
 
 var DefaultConfig = Config{
-	config: config{
+	raw: raw{
 		Language:               "en",
 		HomeCmd:                "today",
-		MoveToButtons:          []string{"tomorrow", "later", "day", "note", "checklist", "doc", "recent", "journal"},
+		MoveToCommands:         []string{"tomorrow", "later", "day", "note", "checklist", "doc", "recent", "journal"},
 		PomodoroDurationMinute: 25,
 	},
 }
 
 var TasksOnlyConfig = Config{
-	config: config{
-		HomeCmd:       "today",
-		MoveToButtons: []string{"tomorrow", "later", "day"},
+	raw: raw{
+		HomeCmd:        "today",
+		MoveToCommands: []string{"tomorrow", "later", "day"},
 	},
 }
 
 var NotesOnlyConfig = Config{
-	config: config{
-		HomeCmd:       "notes",
-		MoveToButtons: []string{"##NOTE_DIRS##"},
+	raw: raw{
+		HomeCmd:        "notes",
+		MoveToCommands: []string{"##NOTE_DIRS##"},
 	},
 }
 
 type Config struct {
-	config
+	raw
 }
 
-type config struct {
+type raw struct {
 	Language               string   `json:"language"`
 	HomeCmd                string   `json:"homeCmd"`
-	MoveToButtons          []string `json:"moveToButtons"`
+	MoveToCommands         []string `json:"moveToButtons"`
 	PomodoroDurationMinute float64  `json:"pomodoroDurationMinute"`
 }
 
@@ -53,25 +53,25 @@ func NewConfig() *Config {
 }
 
 func (c *Config) UnmarshalJSON(b []byte) error {
-	return json.Unmarshal(b, &c.config)
+	return json.Unmarshal(b, &c.raw)
 }
 
 // TODO add file creation
 func (c *Config) LoadOrCreate(path string) error {
 	configFile, err := os.Open(path)
 	if err != nil {
-		return fmt.Errorf("config.LoadOrCreate: %w", err)
+		return fmt.Errorf("config load: %w", err)
 	}
 	defer configFile.Close()
 
 	bytes, err := io.ReadAll(configFile)
 	if err != nil {
-		return fmt.Errorf("config.LoadOrCreate: %w", err)
+		return fmt.Errorf("config load: %w", err)
 	}
 
 	err = json.Unmarshal(bytes, c)
 	if err != nil {
-		return fmt.Errorf("config.LoadOrCreate: can't unmarshal: %w", err)
+		return fmt.Errorf("config load: can't unmarshal: %w", err)
 	}
 
 	return nil
@@ -81,7 +81,7 @@ func (c *Config) Save(path string) {
 
 }
 
-func mapConfigButtonNamesToRealNames(configNames []string) []string {
+func (c *Config) MoveToCmds() []string {
 	configToReal := map[string]string{
 		"tomorrow":  i18n.StrForTomorrow,
 		"later":     i18n.StrForLater,
@@ -91,34 +91,34 @@ func mapConfigButtonNamesToRealNames(configNames []string) []string {
 		"doc":       i18n.StrToDoc,
 	}
 
-	var realNames []string
-	for _, configName := range configNames {
+	var realCmds []string
+	for _, configName := range c.raw.MoveToCommands {
 		realName, ok := configToReal[configName]
 		if !ok {
 			continue
 		}
 
-		realNames = append(realNames, realName)
+		realCmds = append(realCmds, realName)
 	}
 
-	return realNames
+	return realCmds
 }
 
 func (c *Config) SetPomodoroDuration(value time.Duration) error {
 	if value <= 0 || value > 24*time.Hour {
-		return fmt.Errorf("config.SetPomodoroDuration: value is invalid: %v", value)
+		return fmt.Errorf("raw.SetPomodoroDuration: value is invalid: %v", value)
 	}
-	c.config.PomodoroDurationMinute = value.Minutes()
+	c.raw.PomodoroDurationMinute = value.Minutes()
 	return nil
 }
 
 func (c *Config) PomodoroDuration() time.Duration {
-	minutes := c.config.PomodoroDurationMinute
+	minutes := c.raw.PomodoroDurationMinute
 	if minutes <= 0 {
 		slog.Error("Pomodoro duration is invalid. Using default value", "duration",
-			c.config.PomodoroDurationMinute, "default", DefaultConfig.config.PomodoroDurationMinute)
+			c.raw.PomodoroDurationMinute, "default", DefaultConfig.raw.PomodoroDurationMinute)
 		//I don't use DefaultConfig.PomodoroDuration() because it may cause infinite recursion
-		minutes = DefaultConfig.config.PomodoroDurationMinute
+		minutes = DefaultConfig.raw.PomodoroDurationMinute
 	}
 	return time.Duration(minutes * float64(time.Minute))
 }

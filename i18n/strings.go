@@ -13,4 +13,5 @@ const (
 	StrToNote         = "📌 To Note"
 	StrToChecklist    = "☑️ To Checklist"
 	StrToDoc          = "📝 To Doc"
+	StrGoToToday      = "➡️ Today"
 )

@@ -357,25 +357,31 @@ func (b *Bot) show(text string, kb *tg.Keyboard, markup string) error {
 func (b *Bot) showMove(params []string) error {
 	filenameHash := params[0]
 
-	kb := tg.NewKeyboard([]tg.Row{
-		tg.NewRow(
-			tg.NewBtn(b.tr("🌚 For tmrw"), tg.NewCmd(cmdSchedule, []string{filenameHash, str.I64(sched.Tomorrow()), ""})),
-			tg.NewBtn(b.tr("⏳ For later"), tg.NewCmd(cmdMove, []string{fs.DirToday, filenameHash, "later"})),
-			tg.NewBtn(b.tr("📆 For a day"), tg.NewCmd(cmdShowChooseDay, []string{filenameHash})),
-		),
-		tg.NewRow(
-			tg.NewBtn(b.tr("📌 To Note"), tg.NewCmd(cmdShowToNote, []string{filenameHash})),
-			tg.NewBtn(b.tr("☑️ To Checklist"), tg.NewCmd(cmdShowToChecklist, []string{filenameHash})),
-			tg.NewBtn(b.tr("📝 To Doc"), tg.NewCmd(cmdShowToDoc, []string{filenameHash})),
-		),
-		tg.NewRow(
-			tg.NewBtn(b.tr("➡️ Today"), tg.NewCmd(cmdShowToday, nil)),
-		),
-	})
+	availableCmds := map[string]tg.Cmd{
+		i18n.StrForTomorrow: tg.NewCmd(cmdSchedule, []string{filenameHash, str.I64(sched.Tomorrow()), ""}),
+		i18n.StrForLater:    tg.NewCmd(cmdMove, []string{fs.DirToday, filenameHash, "later"}),
+		i18n.StrForDay:      tg.NewCmd(cmdShowChooseDay, []string{filenameHash}),
+		i18n.StrToNote:      tg.NewCmd(cmdShowToNote, []string{filenameHash}),
+		i18n.StrToChecklist: tg.NewCmd(cmdShowToChecklist, []string{filenameHash}),
+		i18n.StrToDoc:       tg.NewCmd(cmdShowToDoc, []string{filenameHash}),
+		i18n.StrGoToToday:   tg.NewCmd(cmdShowToday, nil),
+	}
+
+	var kb tg.Keyboard
+	userCmds := b.conf.MoveToCmds()
+	for _, userCmd := range userCmds {
+		cmd, ok := availableCmds[userCmd]
+		if !ok {
+			// TODO rem unsupported cmd?
+			continue
+		}
+
+		kb.AddRow(tg.NewBtn(b.tr(userCmd), cmd))
+	}
+	fmt.Printf("%v", userCmds)
 
 	b.delAllKeyboards()
-
-	err := b.show(b.tr("Task added for <b>today</b>!"), kb, tg.MarkupHTML)
+	err := b.show(b.tr("Task added for <b>today</b>!"), &kb, tg.MarkupHTML)
 	if err != nil {
 		return fmt.Errorf("move: %w", err)
 	}
