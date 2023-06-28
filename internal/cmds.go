@@ -26,6 +26,7 @@ const (
 	cmdMoveToNewDoc       = "mv_to_new_doc"
 	cmdMoveToChecklist    = "mv_to_chk"
 	cmdMoveToNewChecklist = "mv_to_new_chk"
+	cmdMoveJournal        = "mv_to_journal"
 	cmdSchedule           = "sc"
 	cmdPomodoro           = "pomodoro"
 	cmdShowRecurringKB    = "recur_kb"

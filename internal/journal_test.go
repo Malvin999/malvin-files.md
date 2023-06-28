@@ -78,8 +78,8 @@ func TestBot_pathToJournal(t *testing.T) {
 			conf := userconfig.NewConfig()
 			conf.SetPathToJournal(tt.pathToJournalConfig)
 			b := &Bot{conf: conf}
-			if got := b.pathToJournal(); got != tt.want {
-				t.Errorf("pathToJournal() = %v, want %v", got, tt.want)
+			if got := b.journalFilename(); got != tt.want {
+				t.Errorf("journalFilename() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -8,26 +8,30 @@ import (
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/text"
+	"zakirullin/dumpbot/internal/fs"
 )
 
 const (
 	dateFormat  = "02, Monday"
 	headerLevel = 4
-	journalDir  = "journal"
 )
 
 func (b *Bot) AddDailyNote(note string) error {
-	path := b.pathToJournal()
 	// TODO: somehow lock the file
-	content, err := b.fs.Content(journalDir, path)
+	filename := b.journalFilename()
+	var content string
+	exists, err := b.fs.Exists(fs.DirJournal, filename)
 	if err != nil {
 		return err
 	}
+	if exists {
+		content, err = b.fs.Content(fs.DirJournal, filename)
+		if err != nil {
+			return err
+		}
+	}
 	content = insertDailyNote(content, note)
-	b.fs.Put(journalDir, path, content)
-
-	return nil
-
+	return b.fs.Put(fs.DirJournal, filename, content)
 }
 
 func insertDailyNote(mdContent, note string) string {
@@ -103,6 +107,6 @@ func newListItem(txt string) *ast.ListItem {
 	return listItem
 }
 
-func (b *Bot) pathToJournal() string {
-	return now().Format(b.conf.PathToJournal())
+func (b *Bot) journalFilename() string {
+	return now().Format(b.conf.JournalFilename())
 }
