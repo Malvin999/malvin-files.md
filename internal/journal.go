@@ -3,6 +3,7 @@ package internal
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/Kunde21/markdownfmt/v3/markdown"
 	"github.com/yuin/goldmark"
@@ -12,26 +13,32 @@ import (
 )
 
 const (
-	dateFormat  = "02, Monday"
-	headerLevel = 4
+	dateFormat         = "02, Monday"
+	headerLevel        = 4
+	intraNoteSeparator = "; "
 )
 
-func (b *Bot) AddDailyNote(note string) error {
+func (b *Bot) AddDailyNote(dir, noteFilename string) error {
 	// TODO: somehow lock the file
-	filename := b.journalFilename()
-	var content string
-	exists, err := b.fs.Exists(fs.DirJournal, filename)
+	content, err := b.fs.Content(dir, noteFilename)
+	if err != nil {
+		return fmt.Errorf("failed to move to journal: can't get note content: %w", err)
+	}
+	note := fs.Title(noteFilename) + intraNoteSeparator + strings.Replace(content, "\n", intraNoteSeparator, -1)
+
+	journalFilename := b.journalFilename()
+	exists, err := b.fs.Exists(fs.DirJournal, journalFilename)
 	if err != nil {
 		return err
 	}
 	if exists {
-		content, err = b.fs.Content(fs.DirJournal, filename)
+		content, err = b.fs.Content(fs.DirJournal, journalFilename)
 		if err != nil {
 			return err
 		}
 	}
 	content = insertDailyNote(content, note)
-	return b.fs.Put(fs.DirJournal, filename, content)
+	return b.fs.Put(fs.DirJournal, journalFilename, content)
 }
 
 func insertDailyNote(mdContent, note string) string {
