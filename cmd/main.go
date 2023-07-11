@@ -6,6 +6,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/lmittmann/tint"
+	"zakirullin/stuffbot/internal/sync"
+
 	"github.com/alicebob/miniredis/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
@@ -22,10 +25,10 @@ import (
 )
 
 func main() {
-	opts := slog.HandlerOptions{
+	opts := &tint.Options{
 		Level: slog.LevelDebug,
 	}
-	logger := slog.New(opts.NewTextHandler(os.Stderr))
+	logger := slog.New(tint.NewHandler(os.Stderr, opts))
 	slog.SetDefault(logger)
 
 	err := godotenv.Load()
@@ -60,6 +63,9 @@ func main() {
 	}
 	defer redis.Close()
 
+	// Initiate per-user locker
+	userLocker := sync.NewPerUserLocker()
+
 	// Workers
 	ticker := time.NewTicker(5 * time.Second)
 	quit := make(chan struct{})
@@ -69,12 +75,18 @@ func main() {
 
 	go func(redis *miniredis.Miniredis, tg *tg.TG) {
 		fsBackend := afero.NewOsFs()
+		var lastFrozenRequestCheckAt time.Time // We use this parameter to avoid logging the same frozen request many times
 		for {
 			select {
 			case <-ticker.C:
 				err := worker.MoveDueTasksToToday(conf.StoragePath, conf.ConfigFilename, fsBackend)
 				if err != nil {
 					fmt.Printf("Worker's error: %s\n", err)
+				}
+				reqs := userLocker.FrozenRequests(time.Second, lastFrozenRequestCheckAt.Add(-time.Second))
+				lastFrozenRequestCheckAt = time.Now()
+				for userID, req := range reqs {
+					slog.Error("Frozen request", "userID", userID, "req", req)
 				}
 			case <-quit:
 				ticker.Stop()
@@ -87,6 +99,7 @@ func main() {
 	tgConfig := tgbotapi.NewUpdate(0)
 	tgConfig.Timeout = 60
 	updates := api.GetUpdatesChan(tgConfig)
+
 	for upd := range updates {
 		go func(upd tgbotapi.Update) {
 			defer func() {
@@ -96,12 +109,16 @@ func main() {
 				}
 			}()
 
-			var updJSON []byte
-			updJSON, _ = json.Marshal(upd)
-			slog.Debug("Bot update: ", "upd", updJSON)
-
 			u := tg.NewUpd(upd)
 			userID := u.UserID()
+
+			var updJSON []byte
+			updJSON, _ = json.Marshal(upd)
+			slog.Debug("Bot update: ", "upd", string(updJSON))
+
+			userLocker.Lock(userID, string(updJSON))
+			defer userLocker.Unlock(userID)
+
 			userPath := fs.UserPath(conf.StoragePath, userID)
 			userFS, err := fs.NewFS(userPath, afero.NewOsFs())
 			if err != nil {
