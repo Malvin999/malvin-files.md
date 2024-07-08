@@ -2,29 +2,20 @@ package journal
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"time"
 
 	"zakirullin/stuffbot/internal/fs"
-	pkgText "zakirullin/stuffbot/pkg/text"
+	"zakirullin/stuffbot/pkg/txt"
 )
 
-var now = time.Now // to be replaced in tests
+var now = time.Now
 
-var newLines = regexp.MustCompile(`\n+`)
-
-const (
-	headerLevel = 4
-)
-
-func AddRecord(dir, noteFilename string, botFs *fs.FS) error {
-	record, err := botFs.RestoreContent(dir, noteFilename)
+func AddRecord(botFs *fs.FS, noteFilename string) error {
+	record, err := botFs.RestoreContent(fs.DirJournal, noteFilename)
 	if err != nil {
 		return fmt.Errorf("failed to move to journal: can't get note content: %w", err)
 	}
-
-	//time.Now().Format("`13:01`")
 
 	journalFilename := now().Format("2024 January.md")
 	exists, err := botFs.Exists(fs.DirJournal, journalFilename)
@@ -38,16 +29,16 @@ func AddRecord(dir, noteFilename string, botFs *fs.FS) error {
 		if err != nil {
 			return err
 		}
-		md = pkgText.NormNewLines(md)
+		md = txt.NormNewLines(md)
 		md = strings.TrimSpace(md)
 	}
 
-	header := fmt.Sprintf("### %d %s", time.Now().Day(), time.Now().Month())
+	header := fmt.Sprintf("#### %d, %s", now().Day(), now().Weekday())
 	if !strings.Contains(md, header) {
-		md = fmt.Sprintf("%s\n%s")
+		md = fmt.Sprintf("%s\n%s", md, header)
 	}
 
-	md = fmt.Sprintf("%s\n%s", md, record)
+	md = fmt.Sprintf("%s\n%s %s\n", md, now().Format("`13:01`"), record)
 
 	return botFs.Put(fs.DirJournal, journalFilename, md)
 }

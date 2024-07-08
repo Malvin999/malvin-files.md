@@ -3,7 +3,7 @@ package sched
 import (
 	"testing"
 
-	"zakirullin/stuffbot/pkg/text"
+	"zakirullin/stuffbot/pkg/txt"
 
 	"github.com/stretchr/testify/require"
 )
@@ -11,7 +11,7 @@ import (
 func TestUcfirst(t *testing.T) {
 	r := require.New(t)
 
-	res := text.Ucfirst("abc")
+	res := txt.Ucfirst("abc")
 
 	r.Equal("Abc", res)
 }
@@ -19,7 +19,7 @@ func TestUcfirst(t *testing.T) {
 func TestUcfirstRu(t *testing.T) {
 	r := require.New(t)
 
-	res := text.Ucfirst("абв")
+	res := txt.Ucfirst("абв")
 
 	r.Equal("Абв", res)
 }

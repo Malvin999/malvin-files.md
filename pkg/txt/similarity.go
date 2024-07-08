@@ -1,4 +1,4 @@
-package text
+package txt
 
 // Similar returns an int value in [0, 100], which stands for match level
 func Similar(str1 string, str2 string) int {

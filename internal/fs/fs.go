@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/afero"
 	"golang.org/x/exp/slices"
 
-	"zakirullin/stuffbot/pkg/text"
+	"zakirullin/stuffbot/pkg/txt"
 )
 
 var (
@@ -195,7 +195,7 @@ func (fs FS) Rename(oldDir, oldFilename, newDir, newFilename string) error {
 func Filename(title string) string {
 	// colon is a reserved character in Windows, so we need to replace it with Modifier Letter Colon (U+A789)
 	title = strings.ReplaceAll(title, ":", "꞉")
-	return text.Ucfirst(title) + ".md"
+	return txt.Ucfirst(title) + ".md"
 }
 
 func (fs FS) Unhash(dir, filenameHash string) (string, error) {
@@ -343,7 +343,7 @@ func (fs FS) RestoreContent(dir, filename string) (string, error) {
 		msg = fmt.Sprintf("%s\n%s", title, content)
 	}
 
-	return strings.TrimSpace(msg), nil
+	return msg, nil
 }
 
 func IsChecklistItem(filename string) bool {
@@ -358,7 +358,7 @@ func Title(filename string) string {
 	stripChecklistChars := regexp.MustCompile(`^-.*?-(.+)`)
 	title := stripChecklistChars.ReplaceAllString(filename, "$1")
 	title = strings.TrimPrefix(strings.TrimSuffix(title, "-"), "-")
-	title = text.Ucfirst(strings.TrimSuffix(strings.TrimSpace(title), ".md"))
+	title = txt.Ucfirst(strings.TrimSuffix(strings.TrimSpace(title), ".md"))
 
 	return title
 }
@@ -430,7 +430,7 @@ func (fs FS) SearchNotes(query string) ([]File, error) {
 	for _, note := range notes {
 		isWildcard := len(search) == 0
 		isSubstring := strings.Contains(strings.ToLower(note.Title), search)
-		isSimilar := text.Similar(strings.ToLower(note.Title), search) > minSearchSimilarity
+		isSimilar := txt.Similar(strings.ToLower(note.Title), search) > minSearchSimilarity
 		if isWildcard || isSubstring || isSimilar {
 			matchedNotes = append(matchedNotes, note)
 		}

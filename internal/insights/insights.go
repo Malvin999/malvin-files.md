@@ -9,7 +9,7 @@ import (
 	"github.com/rivo/uniseg"
 
 	"zakirullin/stuffbot/internal/fs"
-	"zakirullin/stuffbot/pkg/text"
+	"zakirullin/stuffbot/pkg/txt"
 )
 
 // [1 => false, <year day> => false, ...]
@@ -37,7 +37,7 @@ func ReadHabits(botFS *fs.FS, year int) (map[string]Year, error) {
 
 	habits := make(map[string]Year)
 	month := time.January
-	lines := strings.Split(text.NormNewLines(habitsStr), "\n")
+	lines := strings.Split(txt.NormNewLines(habitsStr), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if len(line) == 0 {

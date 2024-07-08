@@ -21,8 +21,8 @@ import (
 	"zakirullin/stuffbot/internal/stats"
 	"zakirullin/stuffbot/internal/userconfig"
 	"zakirullin/stuffbot/pkg/slice"
-	"zakirullin/stuffbot/pkg/text"
 	"zakirullin/stuffbot/pkg/tg"
+	"zakirullin/stuffbot/pkg/txt"
 )
 
 var now = func() time.Time {
@@ -236,8 +236,8 @@ func (b *Bot) allowedTextCmds() []string {
 }
 
 func (b *Bot) save(u UpdInterface) error {
-	msg := text.EntitiesToMarkdown(u.MsgText(), u.MsgEntities())
-	msg = strings.TrimSpace(text.NormNewLines(msg))
+	msg := txt.EntitiesToMarkdown(u.MsgText(), u.MsgEntities())
+	msg = strings.TrimSpace(txt.NormNewLines(msg))
 
 	title, content, err := b.extractTitleAndContent(msg)
 	if err != nil {
@@ -254,8 +254,8 @@ func (b *Bot) save(u UpdInterface) error {
 }
 
 func (b *Bot) saveForward(u UpdInterface) error {
-	msg := text.EntitiesToMarkdown(u.MsgText(), u.MsgEntities())
-	msg = strings.TrimSpace(text.NormNewLines(msg))
+	msg := txt.EntitiesToMarkdown(u.MsgText(), u.MsgEntities())
+	msg = strings.TrimSpace(txt.NormNewLines(msg))
 
 	title, content, err := b.extractTitleAndContent(msg)
 	if err != nil {
@@ -346,7 +346,7 @@ func (b *Bot) extractTitleAndContent(msg string) (string, string, error) {
 
 	parts := strings.SplitN(msg, "\n", 2)
 
-	title := text.Ucfirst(strings.TrimSpace(parts[0]))
+	title := txt.Ucfirst(strings.TrimSpace(parts[0]))
 	content := ""
 	if len(parts) > 1 {
 		content = strings.TrimSpace(parts[1])
@@ -357,7 +357,7 @@ func (b *Bot) extractTitleAndContent(msg string) (string, string, error) {
 		} else {
 			content = fmt.Sprintf("%s\n\n%s", title, content)
 		}
-		title = text.Substr(title, 0, maxTitleLength) + "..."
+		title = txt.Substr(title, 0, maxTitleLength) + "..."
 	}
 
 	return title, content, nil
@@ -400,7 +400,7 @@ func (b *Bot) showMove(params []string) error {
 	filenameHash := params[0]
 
 	availableCmds := map[string]tg.Cmd{
-		i18n.StrForTomorrow: tg.NewCmd(constants.CmdSchedule, []string{filenameHash, text.I64(sched.Tomorrow()), ""}),
+		i18n.StrForTomorrow: tg.NewCmd(constants.CmdSchedule, []string{filenameHash, txt.I64(sched.Tomorrow()), ""}),
 		i18n.StrForLater:    tg.NewCmd(constants.CmdMove, []string{fs.DirToday, filenameHash, "later"}),
 		i18n.StrForDay:      tg.NewCmd(constants.CmdShowChooseDay, []string{filenameHash}),
 		i18n.StrToNote:      tg.NewCmd(constants.CmdShowToNote, []string{filenameHash}),
@@ -474,7 +474,7 @@ func (b *Bot) showList(params []string) error {
 		var btn tg.Btn
 		if file.IsMultiline {
 			cmd := tg.NewCmd(constants.CmdShowMultilineTask, []string{dir, fs.Hash(file.Name)})
-			btn = tg.NewBtn(text.Emoji("👀", file.Title), cmd)
+			btn = tg.NewBtn(txt.Emoji("👀", file.Title), cmd)
 		} else {
 			cmd := tg.NewCmd(constants.CmdComplete, []string{dir, fs.Hash(file.Name)})
 			btn = tg.NewBtn(i18n.Emojify(file.Title), cmd)
@@ -645,7 +645,7 @@ func (b *Bot) showRename(params []string) error {
 	for _, file := range files {
 		var btn tg.Btn
 		cmd := tg.NewCmd(constants.CmdRenameFile, []string{dir, fs.Hash(file.Name)})
-		btn = tg.NewBtn(text.Emoji("👀", file.Title), cmd)
+		btn = tg.NewBtn(txt.Emoji("👀", file.Title), cmd)
 
 		kb.AddRow(btn)
 	}
@@ -725,7 +725,7 @@ func (b *Bot) showTask(params []string) error {
 	if err != nil {
 		return fmt.Errorf("show task: %w", err)
 	}
-	content = text.MarkdownToHtml(content)
+	content = txt.MarkdownToHtml(content)
 
 	var moveToBtn tg.Btn
 	btnLabel := i18n.StrBtnMoveToLater
@@ -937,7 +937,7 @@ func (b *Bot) moveToChecklist(params []string) error {
 			return fmt.Errorf("move to checklist: %w", err)
 		}
 
-		content = strings.TrimSpace(text.NormNewLines(content))
+		content = strings.TrimSpace(txt.NormNewLines(content))
 		lines := strings.Split(content, "\n")
 		for _, line := range lines {
 			err = b.fs.Put(checklist, fs.Filename(line), "")
@@ -962,7 +962,7 @@ func (b *Bot) moveToNewDoc(params []string) error {
 	filenameHash := params[0]
 	doc := params[1]
 
-	err := b.fs.Put("", text.Ucfirst(doc), "")
+	err := b.fs.Put("", txt.Ucfirst(doc), "")
 	if err != nil {
 		return fmt.Errorf("move to doc: can't create empty doc: %w", err)
 	}
@@ -974,7 +974,7 @@ func (b *Bot) moveToNewChecklist(params []string) error {
 	filenameHash := params[0]
 	doc := params[1]
 
-	err := b.fs.Put("", text.Ucfirst(doc), "")
+	err := b.fs.Put("", txt.Ucfirst(doc), "")
 	if err != nil {
 		return fmt.Errorf("move to doc: can't create empty doc: %w", err)
 	}
@@ -989,7 +989,7 @@ func (b *Bot) moveToJournal(params []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to move to journal: can't unhash filename: %w", err)
 	}
-	err = journal.AddRecord(dir, filename, b.fs)
+	err = journal.AddRecord(b.fs, filename)
 	if err != nil {
 		return fmt.Errorf("failed to move to journal: can't add note: %w", err)
 	}
@@ -1096,7 +1096,7 @@ func (b *Bot) showChooseDay(params []string) error {
 
 func (b *Bot) forADayKeyboard(filenameHash string) (*tg.Keyboard, error) {
 	newBtn := func(name, cron string) tg.Btn {
-		return tg.NewBtn(name, tg.NewCmd(constants.CmdSchedule, []string{filenameHash, text.I64(sched.Next(cron)), ""}))
+		return tg.NewBtn(name, tg.NewCmd(constants.CmdSchedule, []string{filenameHash, txt.I64(sched.Next(cron)), ""}))
 	}
 
 	kb := tg.NewKeyboard([]tg.Row{
@@ -1118,7 +1118,7 @@ func (b *Bot) forADayKeyboard(filenameHash string) (*tg.Keyboard, error) {
 		row := tg.NewRow()
 		for i := iAndj[0]; i <= iAndj[1]; i++ {
 			cron := fmt.Sprintf("0 0 %d * *", i)
-			row = append(row, newBtn(text.I64(int64(i)), cron))
+			row = append(row, newBtn(txt.I64(int64(i)), cron))
 		}
 		kb.AddRow(row)
 	}
@@ -1442,7 +1442,7 @@ func (b *Bot) showRecurringKeyBoard(params []string) error {
 	filenameHash := params[0]
 
 	newBtn := func(name, cron string) tg.Btn {
-		return tg.NewBtn(name, tg.NewCmd(constants.CmdSchedule, []string{filenameHash, text.I64(sched.Next(cron)), cron}))
+		return tg.NewBtn(name, tg.NewCmd(constants.CmdSchedule, []string{filenameHash, txt.I64(sched.Next(cron)), cron}))
 	}
 
 	kb := tg.NewKeyboard([]tg.Row{
@@ -1469,7 +1469,7 @@ func (b *Bot) showRecurringKeyBoard(params []string) error {
 		for day := 1; day < 8; day++ {
 			i := week*7 + day
 			cron := fmt.Sprintf("0 0 %d * *", i)
-			row = append(row, newBtn(text.I64(int64(i)), cron))
+			row = append(row, newBtn(txt.I64(int64(i)), cron))
 		}
 		kb.AddRow(row)
 	}

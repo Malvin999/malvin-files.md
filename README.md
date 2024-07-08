@@ -76,7 +76,7 @@ To lessen roundrip to redis (is it tangible at all?)
 - `Maintainability`: The code is easy for a future programmer to modify correctly.  
 - `Consistency`: The code is consistent across the codebase  
 
-Refer to [developer's handbook](https://github.com/zakirullin/cognitive-load) for more comprehensive guiding rules.
+Refer to [the following handbook](https://github.com/zakirullin/cognitive-load) for more comprehensive guiding rules.
 
 ## Guidelines
 - With portability in mind, everything is stored in **plain text files**
