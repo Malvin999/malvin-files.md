@@ -3,12 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
-	"github.com/lmittmann/tint"
-	"zakirullin/stuffbot/internal/sync"
 
+	"github.com/lmittmann/tint"
 	"github.com/alicebob/miniredis/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/joho/godotenv"
@@ -20,6 +20,7 @@ import (
 	"zakirullin/stuffbot/internal/db"
 	"zakirullin/stuffbot/internal/fs"
 	"zakirullin/stuffbot/internal/sched/worker"
+	"zakirullin/stuffbot/internal/sync"
 	"zakirullin/stuffbot/internal/userconfig"
 	"zakirullin/stuffbot/pkg/tg"
 )
@@ -73,6 +74,7 @@ func main() {
 		close(quit)
 	}(quit)
 
+	// Due tasks scheduler
 	go func(redis *miniredis.Miniredis, tg *tg.TG) {
 		fsBackend := afero.NewOsFs()
 		var lastFrozenRequestCheckAt time.Time // We use this parameter to avoid logging the same frozen request many times
@@ -94,6 +96,17 @@ func main() {
 			}
 		}
 	}(redis, telegram)
+
+	// TODO graceful shutdown etc
+	go func() {
+		router := http.NewServeMux()
+		router.HandleFunc("GET /habits/{id}", func(w http.ResponseWriter, r *http.Request) {
+		  id := r.PathValue("id")
+		  fmt.Fprintf(w, "habits task with id=%v\n", id)
+		})
+	  
+		http.ListenAndServe(":8080", router)
+	}()
 
 	// Service
 	tgConfig := tgbotapi.NewUpdate(0)

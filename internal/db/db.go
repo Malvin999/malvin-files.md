@@ -17,6 +17,7 @@ const (
 	redisInputExpectation                = "input_expectation"
 )
 
+// TODO we don't need Redis, use Golang's memory?
 // DB Maybe user ID here?
 type DB struct {
 	redis *miniredis.Miniredis
