@@ -52,6 +52,7 @@ $ git checkout -b feature/feature_name
 Any file can be uniquely identified by filename and dir. We only support one level of nesting.
 
 ## ADRs (Architecture Decision Records)
+- `gofumpt` for stricter formatting. `gofumpt` is happy with a subset of the formats that gofmt is happy with. The less we have to choose between different formating options, the better
 - FS's structure should have userFS name, to reflect the fact it user user-namespaced
 - Note term is way too vague. Let's try to use "file" term, without any high level abstraction (like note) 
 - Gave up on AST parsing/rendering. We had lots of corner cases via AST and the code was way complex. Markdown isn't that hard to parse, we can do it via good old straigforward code. We have 3x times less code now, and it is way mentally taxing to read.

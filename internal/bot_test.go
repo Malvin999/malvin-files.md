@@ -590,9 +590,9 @@ func TestSettingsMainPanel(t *testing.T) {
 // Quick Panel Data-driven tests
 
 var (
-	btn_documents_del  = tg.NewBtn("📝 Documents ➖", tg.NewCmd("panel_del", []string{"doc"}))
-	btn_checklists_del = tg.NewBtn("☑️ Checklists ➖", tg.NewCmd("panel_del", []string{"checklists"}))
-	btn_postpone_del   = tg.NewBtn("🦥 Postpone ➖", tg.NewCmd("panel_del", []string{"postpone"}))
+	btnDocumentsDel  = tg.NewBtn("📝 Documents ➖", tg.NewCmd("panel_del", []string{"doc"}))
+	btnChecklistsDel = tg.NewBtn("☑️ Checklists ➖", tg.NewCmd("panel_del", []string{"checklists"}))
+	btnPostponeDel   = tg.NewBtn("🦥 Postpone ➖", tg.NewCmd("panel_del", []string{"postpone"}))
 )
 
 var (
@@ -601,9 +601,9 @@ var (
 )
 
 var (
-	btn_documents_add  = tg.NewBtn("📝 Documents ➕", tg.NewCmd("panel_add", []string{"doc"}))
-	btn_checklists_add = tg.NewBtn("☑️ Checklists ➕", tg.NewCmd("panel_add", []string{"checklists"}))
-	btn_postpone_add   = tg.NewBtn("🦥 Postpone ➕", tg.NewCmd("panel_add", []string{"postpone"}))
+	btnDocumentsAdd  = tg.NewBtn("📝 Documents ➕", tg.NewCmd("panel_add", []string{"doc"}))
+	btnChecklistsAdd = tg.NewBtn("☑️ Checklists ➕", tg.NewCmd("panel_add", []string{"checklists"}))
+	btnPostponeAdd   = tg.NewBtn("🦥 Postpone ➕", tg.NewCmd("panel_add", []string{"postpone"}))
 )
 
 func TestConfigureQP_Empty_Default(t *testing.T) {
@@ -612,9 +612,9 @@ func TestConfigureQP_Empty_Default(t *testing.T) {
 		fake.NewUpdCmdFake(-1, tg.NewCmd("configure_panel", nil)),
 		[]tg.Row{
 			delimiter,
-			btn_documents_add,
-			btn_checklists_add,
-			btn_postpone_add,
+			btnDocumentsAdd,
+			btnChecklistsAdd,
+			btnPostponeAdd,
 			backBtn,
 		},
 	}, t)
@@ -625,10 +625,10 @@ func TestConfigureQP_Empty_AddDoc(t *testing.T) {
 		[]string{""},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_add", []string{"doc"})),
 		[]tg.Row{
-			btn_documents_del,
+			btnDocumentsDel,
 			delimiter,
-			btn_checklists_add,
-			btn_postpone_add,
+			btnChecklistsAdd,
+			btnPostponeAdd,
 			backBtn,
 		},
 	}, t)
@@ -639,10 +639,10 @@ func TestConfigureQP_Doc_AddCheckList(t *testing.T) {
 		[]string{"doc"},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_add", []string{"checklists"})),
 		[]tg.Row{
-			btn_documents_del,
-			btn_checklists_del,
+			btnDocumentsDel,
+			btnChecklistsDel,
 			delimiter,
-			btn_postpone_add,
+			btnPostponeAdd,
 			backBtn,
 		},
 	}, t)
@@ -653,9 +653,9 @@ func TestConfigureQP_DocChecklists_AddPostpone(t *testing.T) {
 		[]string{"doc", "checklists"},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_add", []string{"postpone"})),
 		[]tg.Row{
-			btn_documents_del,
-			btn_checklists_del,
-			btn_postpone_del,
+			btnDocumentsDel,
+			btnChecklistsDel,
+			btnPostponeDel,
 			delimiter,
 			backBtn,
 		},
@@ -667,9 +667,9 @@ func TestConfigureQP_DocChecklistsPostpone_Show(t *testing.T) {
 		[]string{"doc", "checklists", "postpone"},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("configure_panel", nil)),
 		[]tg.Row{
-			btn_documents_del,
-			btn_checklists_del,
-			btn_postpone_del,
+			btnDocumentsDel,
+			btnChecklistsDel,
+			btnPostponeDel,
 			delimiter,
 			backBtn,
 		},
@@ -681,10 +681,10 @@ func TestConfigureQP_DocChecklistsPostpone_DelChecklists(t *testing.T) {
 		[]string{"doc", "checklists", "postpone"},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{"checklists"})),
 		[]tg.Row{
-			btn_documents_del,
-			btn_postpone_del,
+			btnDocumentsDel,
+			btnPostponeDel,
 			delimiter,
-			btn_checklists_add,
+			btnChecklistsAdd,
 			backBtn,
 		},
 	}, t)
@@ -695,10 +695,10 @@ func TestConfigureQP_DocPostpone_DelDoc(t *testing.T) {
 		[]string{"doc", "postpone"},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{"doc"})),
 		[]tg.Row{
-			btn_postpone_del,
+			btnPostponeDel,
 			delimiter,
-			btn_documents_add,
-			btn_checklists_add,
+			btnDocumentsAdd,
+			btnChecklistsAdd,
 			backBtn,
 		},
 	}, t)
@@ -710,9 +710,9 @@ func TestConfigureQP_Postpone_DelPostpone(t *testing.T) {
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{"postpone"})),
 		[]tg.Row{
 			delimiter,
-			btn_documents_add,
-			btn_checklists_add,
-			btn_postpone_add,
+			btnDocumentsAdd,
+			btnChecklistsAdd,
+			btnPostponeAdd,
 			backBtn,
 		},
 	}, t)

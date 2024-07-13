@@ -10,12 +10,11 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"golang.org/x/exp/slog"
 
-	"zakirullin/stuffbot/internal/constants"
-	"zakirullin/stuffbot/internal/journal"
-
 	"zakirullin/stuffbot/i18n"
+	"zakirullin/stuffbot/internal/constants"
 	"zakirullin/stuffbot/internal/db"
 	"zakirullin/stuffbot/internal/fs"
+	"zakirullin/stuffbot/internal/journal"
 	"zakirullin/stuffbot/internal/plugins"
 	"zakirullin/stuffbot/internal/sched"
 	"zakirullin/stuffbot/internal/stats"
@@ -1399,7 +1398,7 @@ func (b *Bot) showConfigureQuickPanel(params []string) error {
 
 func (b *Bot) addToPanel(params []string) error {
 	if len(params) == 0 {
-		return fmt.Errorf("No params suplied to addToPanel")
+		return fmt.Errorf("no params suplied to addToPanel")
 	}
 	// Search whether a command is valid
 	found := false
@@ -1411,11 +1410,11 @@ func (b *Bot) addToPanel(params []string) error {
 	}
 
 	if !found {
-		return fmt.Errorf("Unknown command: %s", params[0])
+		return fmt.Errorf("unknown command: %s", params[0])
 	}
 
 	if !b.conf.AddPanelButton(params[0]) {
-		return fmt.Errorf("Button already exists in user's prefs: %s", params[0])
+		return fmt.Errorf("button already exists in user's prefs: %s", params[0])
 	}
 	b.showConfigureQuickPanel([]string{})
 	return nil
@@ -1423,10 +1422,10 @@ func (b *Bot) addToPanel(params []string) error {
 
 func (b *Bot) delFromPanel(params []string) error {
 	if len(params) == 0 {
-		return fmt.Errorf("No params suplied to delFromPanel")
+		return fmt.Errorf("no params suplied to delFromPanel")
 	}
 	if !b.conf.DelPanelButton(params[0]) {
-		return fmt.Errorf("Button doesn't exist in user's prefs: %s", params[0])
+		return fmt.Errorf("button doesn't exist in user's prefs: %s", params[0])
 	}
 
 	b.showConfigureQuickPanel([]string{})
