@@ -102,7 +102,7 @@
 <div class="container">
 <table>
     <tbody>
-        {{ range $habit, $year := . }}
+        {{ range $habit, $year := .habits }}
             <tr>
                 {{ range $day, $status := .}}
                     <td data-day="{{$day}}" class="day {{ if eq $status 1 }}checked{{ end }}"><div class="text">{{$habit}}</div></td>
@@ -110,7 +110,9 @@
             </tr>
         {{ end }}
     <tr>
-        <td class="emoji today_emoji" data-power="1">🤕</td>
+        {{ range .moods }}
+            <td class="emoji today_emoji" data-power="{{ . }}">{{ index $.moodEmojis . }}</td>
+        {{ end }}
     </tr>
     </tbody>
 </table>

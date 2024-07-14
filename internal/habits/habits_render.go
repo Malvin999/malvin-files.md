@@ -23,8 +23,13 @@ func Render(userFS *fs.FS) ([]byte, error) {
 		return nil, fmt.Errorf("can't render habit: %w", err)
 	}
 
+	moods, ok := habits[mood]
+	if ok {
+		delete(habits, mood)
+	}
+
 	var out bytes.Buffer
-	err = tmpl.Execute(&out, habits)
+	err = tmpl.Execute(&out, map[string]any{"habits": habits, "moods": moods, "moodEmojis": moodEmojis})
 	if err != nil {
 		return nil, fmt.Errorf("can't render habits template: %w", err)
 	}

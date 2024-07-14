@@ -723,7 +723,7 @@ func TestConfigureQP_Empty_DelPostpone(t *testing.T) {
 		[]string{""},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{"postpone"})),
 		[]tg.Row{},
-	}, "Button doesn't exist in user's prefs: postpone", t)
+	}, "button doesn't exist in user's prefs: postpone", t)
 }
 
 func TestConfigureQP_Empty_DelUnknown(t *testing.T) {
@@ -731,7 +731,7 @@ func TestConfigureQP_Empty_DelUnknown(t *testing.T) {
 		[]string{""},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{"wrong"})),
 		[]tg.Row{},
-	}, "Button doesn't exist in user's prefs: wrong", t)
+	}, "button doesn't exist in user's prefs: wrong", t)
 }
 
 func TestConfigureQP_Empty_AddUnknown(t *testing.T) {
@@ -739,7 +739,7 @@ func TestConfigureQP_Empty_AddUnknown(t *testing.T) {
 		[]string{""},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_add", []string{"wrong"})),
 		[]tg.Row{},
-	}, "Unknown command: wrong", t)
+	}, "unknown command: wrong", t)
 }
 
 func TestConfigureQP_Empty_AddEmpty(t *testing.T) {
@@ -747,7 +747,7 @@ func TestConfigureQP_Empty_AddEmpty(t *testing.T) {
 		[]string{""},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_add", []string{})),
 		[]tg.Row{},
-	}, "No params suplied to addToPanel", t)
+	}, "no params suplied to addToPanel", t)
 }
 
 func TestConfigureQP_Empty_DelEmpty(t *testing.T) {
@@ -755,7 +755,7 @@ func TestConfigureQP_Empty_DelEmpty(t *testing.T) {
 		[]string{""},
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{})),
 		[]tg.Row{},
-	}, "No params suplied to delFromPanel", t)
+	}, "no params suplied to delFromPanel", t)
 }
 
 func RunQuickPanelTc(tc PrefTableTestCase, t *testing.T) {
