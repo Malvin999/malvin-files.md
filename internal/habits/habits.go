@@ -166,7 +166,6 @@ func Write(userFS *fs.FS, year int, habits map[string]Year) error {
 	content := ""
 	day := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
 	for day.Year() < year+1 {
-		// Generating all habits for a month
 		habitsForMonth := ""
 		for _, habitName := range habitKeys {
 			statuses := ""
@@ -181,7 +180,7 @@ func Write(userFS *fs.FS, year int, habits map[string]Year) error {
 					atLeastOneCompletion = true
 				}
 				statuses += emoji
-
+				
 				dayOfMonth = dayOfMonth.AddDate(0, 0, 1)
 			}
 			if atLeastOneCompletion {
@@ -190,7 +189,10 @@ func Write(userFS *fs.FS, year int, habits map[string]Year) error {
 		}
 
 		if len(habitsForMonth) != 0 {
-			content += fmt.Sprintf("### %s\n%s\n", day.Month(), habitsForMonth)
+			if len(content) > 0 {
+				content += "\n"
+			}
+			content += fmt.Sprintf("### %s\n%s", day.Month(), habitsForMonth)
 		}
 
 		day = day.AddDate(0, 1, 0)

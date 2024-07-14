@@ -14,7 +14,7 @@ import (
 	"zakirullin/stuffbot/internal/fs"
 )
 
-//go:embed testdata/month_habits_gibberish.md
+//go:embed testdata/month_habits.md
 var monthMD string
 
 //go:embed testdata/last_month_habits.md
@@ -33,7 +33,7 @@ func TestHabits(t *testing.T) {
 	habits, err := Habits(userFS, 1970)
 	r.NoError(err)
 
-	r.Len(habits, 6)
+	r.Len(habits, 5)
 	year, ok := habits["Went to gym"]
 	r.True(ok)
 
@@ -105,4 +105,23 @@ func TestLastMonthHabitsMoods(t *testing.T) {
 	r.Len(year, 31)
 
 	r.EqualValues(Year{1: 5, 2: 0, 3: 3, 4: 1, 5: 0, 6: 5, 7: 5, 8: 0, 9: 0, 10: 0, 11: 5, 12: 0, 13: 5, 14: 2, 15: 4, 16: 1, 17: 0, 18: 5, 19: 0, 20: 4, 21: 0, 22: 5, 23: 0, 24: 5, 25: 4, 26: 0, 27: 5, 28: 4, 29: 0, 30: 5, 31: 0}, year)
+}
+
+func TestWrite(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+	userFS.Write("insights", "2024 Habits.md", monthMD)
+
+	habits, err := Habits(userFS, 2024)
+	r.NoError(err)
+
+	err = Write(userFS, 2024, habits)
+	r.NoError(err)
+
+	updatedMonthMD, err := userFS.Read("insights", "2024 Habits.md")
+	r.NoError(err)
+
+	r.Equal(monthMD, updatedMonthMD)
 }
