@@ -119,8 +119,12 @@ func (tg *TG) buildBtn(btn Btn) tgbotapi.InlineKeyboardButton {
 	b := tgbotapi.InlineKeyboardButton{
 		Text: btn.Name,
 	}
-	if btn.Cmd.Type == "query" {
-		b.SwitchInlineQueryCurrentChat = &btn.Cmd.Params[0]
+	if btn.Cmd.Type == CmdTypeInlineQueryCurrentChat {
+		param := ""
+		if len(btn.Cmd.Params) > 1 {
+			param = btn.Cmd.Params[0]
+		}
+		b.SwitchInlineQueryCurrentChat = &param
 	} else {
 		str := string(serializedCmd)
 		b.CallbackData = &str

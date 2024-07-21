@@ -601,6 +601,7 @@ var (
 )
 
 var (
+	btnSearch         = tg.NewBtn("🔎 Search ➕", tg.NewCmd("panel_add", []string{"search"}))
 	btnDocumentsAdd   = tg.NewBtn("📝 Documents ➕", tg.NewCmd("panel_add", []string{"doc"}))
 	btnChecklistsAdd  = tg.NewBtn("☑️ Checklists ➕", tg.NewCmd("panel_add", []string{"checklists"}))
 	btnPostponeAdd    = tg.NewBtn("🦥 Postpone ➕", tg.NewCmd("panel_add", []string{"postpone"}))
@@ -615,6 +616,7 @@ func TestConfigureQP_Empty_Default(t *testing.T) {
 		fake.NewUpdCmdFake(-1, tg.NewCmd("configure_panel", nil)),
 		[]tg.Row{
 			delimiter,
+			btnSearch,
 			btnDocumentsAdd,
 			btnChecklistsAdd,
 			btnPostponeAdd,
@@ -633,6 +635,7 @@ func TestConfigureQP_Empty_AddDoc(t *testing.T) {
 		[]tg.Row{
 			btnDocumentsDel,
 			delimiter,
+			btnSearch,
 			btnChecklistsAdd,
 			btnPostponeAdd,
 			btnReadChecklist,
@@ -651,6 +654,7 @@ func TestConfigureQP_Doc_AddCheckList(t *testing.T) {
 			btnDocumentsDel,
 			btnChecklistsDel,
 			delimiter,
+			btnSearch,
 			btnPostponeAdd,
 			btnReadChecklist,
 			btnWatchChecklist,
@@ -669,6 +673,7 @@ func TestConfigureQP_DocChecklists_AddPostpone(t *testing.T) {
 			btnChecklistsDel,
 			btnPostponeDel,
 			delimiter,
+			btnSearch,
 			btnReadChecklist,
 			btnWatchChecklist,
 			btnShopChecklist,
@@ -686,6 +691,7 @@ func TestConfigureQP_DocChecklistsPostpone_Show(t *testing.T) {
 			btnChecklistsDel,
 			btnPostponeDel,
 			delimiter,
+			btnSearch,
 			btnReadChecklist,
 			btnWatchChecklist,
 			btnShopChecklist,
@@ -702,6 +708,7 @@ func TestConfigureQP_DocChecklistsPostpone_DelChecklists(t *testing.T) {
 			btnDocumentsDel,
 			btnPostponeDel,
 			delimiter,
+			btnSearch,
 			btnChecklistsAdd,
 			btnReadChecklist,
 			btnWatchChecklist,
@@ -718,6 +725,7 @@ func TestConfigureQP_DocPostpone_DelDoc(t *testing.T) {
 		[]tg.Row{
 			btnPostponeDel,
 			delimiter,
+			btnSearch,
 			btnDocumentsAdd,
 			btnChecklistsAdd,
 			btnReadChecklist,
@@ -734,6 +742,7 @@ func TestConfigureQP_Postpone_DelPostpone(t *testing.T) {
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{"postpone"})),
 		[]tg.Row{
 			delimiter,
+			btnSearch,
 			btnDocumentsAdd,
 			btnChecklistsAdd,
 			btnPostponeAdd,

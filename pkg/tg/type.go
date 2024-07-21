@@ -12,8 +12,8 @@ type Btn struct {
 }
 
 const (
-	CallbackCmd            = "cmd"
-	InlineQueryCurrentChat = "iq"
+	CmdTypeCallback               = "cmd"
+	CmdTypeInlineQueryCurrentChat = "iq"
 )
 
 func NewBtn(name string, cmd Cmd) Btn {
