@@ -187,7 +187,6 @@ func TestToday(t *testing.T) {
 	r.Equal(tg.NewKeyboard([]tg.Row{
 		tg.NewBtn("First task", tg.NewCmd("comp", []string{"today", "0824149b387"})),
 		tg.NewBtn("🥈 Second task", tg.NewCmd("comp", []string{"today", "2940ad40402"})),
-		tg.NewBtn("⏳", tg.NewCmd("later", nil)),
 	},
 	), tgram.SentKeyboard)
 }
@@ -207,7 +206,6 @@ func TestToday_QuickMenuFilled(t *testing.T) {
 			tg.NewBtn("☑️", tg.NewCmd("checklists", []string{})),
 			tg.NewBtn("🦥", tg.NewCmd("postpone", []string{})),
 		),
-		tg.NewBtn("⏳", tg.NewCmd("later", nil)),
 	},
 	), tgram.SentKeyboard)
 }
@@ -252,11 +250,11 @@ func TestTodayQuickMenuFilled(t *testing.T) {
 	r.Equal("<b>1</b> left", tgram.LastSentText)
 	r.Equal(tg.NewKeyboard([]tg.Row{
 		tg.NewBtn("First task", tg.NewCmd("comp", []string{"today", "0824149b387"})),
-		tg.NewRow(tg.NewBtn("📄", tg.NewCmd("files", []string{})),
+		tg.NewRow(
+			tg.NewBtn("📄", tg.NewCmd("files", []string{})),
 			tg.NewBtn("☑️", tg.NewCmd("checklists", []string{})),
 			tg.NewBtn("🦥", tg.NewCmd("postpone", []string{})),
 		),
-		tg.NewBtn("⏳", tg.NewCmd("later", nil)),
 	},
 	), tgram.SentKeyboard)
 }
@@ -286,7 +284,6 @@ func TestTodayWithMultilineTasks(t *testing.T) {
 	r.Equal(tg.NewKeyboard([]tg.Row{
 		tg.NewBtn("👀 First task", tg.NewCmd("task", []string{"today", "0824149b387"})),
 		tg.NewBtn("🥈 Second task", tg.NewCmd("comp", []string{"today", "2940ad40402"})),
-		tg.NewBtn("⏳", tg.NewCmd("later", nil)),
 	},
 	), tgram.SentKeyboard)
 }
@@ -599,6 +596,7 @@ var (
 )
 
 var (
+	btnLater          = tg.NewBtn("⏳ Later ➕", tg.NewCmd("panel_add", []string{"later"}))
 	btnSearch         = tg.NewBtn("🔎 Search ➕", tg.NewCmd("panel_add", []string{"search"}))
 	btnFilesAdd       = tg.NewBtn("📄 Files ➕", tg.NewCmd("panel_add", []string{"files"}))
 	btnChecklistsAdd  = tg.NewBtn("☑️ Checklists ➕", tg.NewCmd("panel_add", []string{"checklists"}))
@@ -615,6 +613,7 @@ func TestConfigureQP_Empty_Default(t *testing.T) {
 		fake.NewUpdCmdFake(-1, tg.NewCmd("configure_panel", nil)),
 		[]tg.Row{
 			delimiter,
+			btnLater,
 			btnSearch,
 			btnFilesAdd,
 			btnChecklistsAdd,
@@ -635,6 +634,7 @@ func TestConfigureQP_Empty_AddDoc(t *testing.T) {
 		[]tg.Row{
 			btnFilesDel,
 			delimiter,
+			btnLater,
 			btnSearch,
 			btnChecklistsAdd,
 			btnPostponeAdd,
@@ -655,6 +655,7 @@ func TestConfigureQP_Doc_AddCheckList(t *testing.T) {
 			btnFilesDel,
 			btnChecklistsDel,
 			delimiter,
+			btnLater,
 			btnSearch,
 			btnPostponeAdd,
 			btnReadChecklist,
@@ -675,6 +676,7 @@ func TestConfigureQP_DocChecklists_AddPostpone(t *testing.T) {
 			btnChecklistsDel,
 			btnPostponeDel,
 			delimiter,
+			btnLater,
 			btnSearch,
 			btnReadChecklist,
 			btnWatchChecklist,
@@ -694,6 +696,7 @@ func TestConfigureQP_DocChecklistsPostpone_Show(t *testing.T) {
 			btnChecklistsDel,
 			btnPostponeDel,
 			delimiter,
+			btnLater,
 			btnSearch,
 			btnReadChecklist,
 			btnWatchChecklist,
@@ -712,6 +715,7 @@ func TestConfigureQP_DocChecklistsPostpone_DelChecklists(t *testing.T) {
 			btnFilesDel,
 			btnPostponeDel,
 			delimiter,
+			btnLater,
 			btnSearch,
 			btnChecklistsAdd,
 			btnReadChecklist,
@@ -730,6 +734,7 @@ func TestConfigureQP_DocPostpone_DelDoc(t *testing.T) {
 		[]tg.Row{
 			btnPostponeDel,
 			delimiter,
+			btnLater,
 			btnSearch,
 			btnFilesAdd,
 			btnChecklistsAdd,
@@ -748,6 +753,7 @@ func TestConfigureQP_Postpone_DelPostpone(t *testing.T) {
 		fake.NewUpdCmdFake(-1, tg.NewCmd("panel_del", []string{"postpone"})),
 		[]tg.Row{
 			delimiter,
+			btnLater,
 			btnSearch,
 			btnFilesAdd,
 			btnChecklistsAdd,

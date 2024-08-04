@@ -34,6 +34,7 @@ const (
 	maxTitleLength         = 100
 	inlineResultsCacheTime = 15 // seconds
 	btnsPerRow             = 3
+	quickBtnsPerRow        = 4
 	maxMsgLength           = 4096 // UTF-8 characters
 	maxMsgsToSendAtOnce    = 5
 )
@@ -453,19 +454,22 @@ func (b *Bot) showMoveTo(params []string) error {
 	return nil
 }
 
-func (b *Bot) quickPanelRow() []tg.Btn {
+func (b *Bot) quickPanelBtns() []tg.Btn {
 	quickPanelRow := tg.NewRow()
 	// We iterate through hardcoded panel to preserve order of buttons in UI
-	for _, btn := range userconfig.QuickPanelAvailableBtns {
-		if b.conf.HasQuickPanelCmd(btn.Cmd) {
-			params := []string{}
-			if btn.Cmd == constants.CmdWebAppHabits {
-				habitsUrl := fmt.Sprintf("%s/habits_v2/%d", config.Config.Host, b.userID)
-				params = []string{habitsUrl}
-			}
+	for _, cmd := range b.conf.QuickPanelCmds() {
+		for _, btn := range userconfig.QuickPanelAvailableBtns {
+			if btn.Cmd == cmd {
+				params := []string{}
+				if btn.Cmd == constants.CmdWebAppHabits {
+					habitsUrl := fmt.Sprintf("%s/habits_v2/%d", config.Config.Host, b.userID)
+					params = []string{habitsUrl}
+				}
 
-			button := tg.NewBtn(btn.Emoji, tg.NewCustomCmd(btn.Cmd, params, btn.CmdType))
-			quickPanelRow = append(quickPanelRow, button)
+				button := tg.NewBtn(btn.Emoji, tg.NewCustomCmd(btn.Cmd, params, btn.CmdType))
+				quickPanelRow = append(quickPanelRow, button)
+				break
+			}
 		}
 	}
 
@@ -492,11 +496,13 @@ func (b *Bot) showTodayTasks(params []string) error {
 		kb.AddRow(btn)
 	}
 
-	quickPanelRow := b.quickPanelRow()
-	if len(quickPanelRow) > 0 {
-		kb.AddRow(quickPanelRow)
+	quickPanelBtns := b.quickPanelBtns()
+	if len(quickPanelBtns) > 0 {
+		quickPanelBtnsByRows := slice.Chunk(quickPanelBtns, quickBtnsPerRow)
+		for _, row := range quickPanelBtnsByRows {
+			kb.AddRow(row)
+		}
 	}
-	kb.AddRow(tg.NewBtn(i18n.StrBtnLater, tg.NewCmd(constants.CmdLater, nil)))
 
 	msg := b.todayLabel()
 	err = b.show(msg, &kb, tg.MarkupHTML)
