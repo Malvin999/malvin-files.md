@@ -42,6 +42,7 @@ func (tg *TG) Send(userID int64, text string, kb *Keyboard, markup string) (int,
 
 func (tg *TG) Edit(userID int64, msgID int, text string, kb *Keyboard, markup string) error {
 	msg := tgbotapi.NewEditMessageText(userID, msgID, text)
+
 	msg.ReplyMarkup = tg.buildInlineKeyboard(kb)
 	msg.ParseMode = markup
 
@@ -92,7 +93,7 @@ func (tg *TG) AnswerInlineQuery(queryID string, results []interface{}, cacheTime
 }
 
 func (tg *TG) buildInlineKeyboard(kb *Keyboard) *tgbotapi.InlineKeyboardMarkup {
-	if kb == nil {
+	if kb == nil || len(kb.Btns) == 0 {
 		return nil
 	}
 
