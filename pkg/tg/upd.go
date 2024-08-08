@@ -95,7 +95,7 @@ func (u *Upd) InlineQuery() (string, bool) {
 
 func (u *Upd) InlineQueryOffset() int {
 	if u.raw.InlineQuery == nil {
-		return 0
+		return -1
 	}
 
 	offset, _ := strconv.Atoi(u.raw.InlineQuery.Offset)
@@ -131,6 +131,20 @@ func (u *Upd) IsSentViaBot() bool {
 	}
 
 	return message.ViaBot != nil
+}
+
+// ReplyToMsgID returns -1 if there's no reply to message
+func (u *Upd) ReplyToMsgID() int {
+	message := u.raw.Message
+	if message == nil {
+		return -1
+	}
+
+	if message.ReplyToMessage == nil {
+		return -1
+	}
+
+	return message.ReplyToMessage.MessageID
 }
 
 // Takes into account Telegram's UTF-16 encoding

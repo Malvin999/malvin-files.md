@@ -12,7 +12,7 @@ func NewFakeDB() *FakeDB {
 }
 
 func (db *FakeDB) LastKeyboardMsgID(userID int64) int {
-	return 0
+	return -1
 }
 
 func (db *FakeDB) SetLastKeyboardMsgID(userID int64, ID int) {
@@ -36,6 +36,10 @@ func (db *FakeDB) SetFilenameByMsgID(userID int64, msgID int, filename string) {
 }
 
 func (db *FakeDB) FilenameByMsgID(userID int64, msgID int) string {
+	return ""
+}
+
+func (db *FakeDB) DirByMsgID(userID int64, msgID int) string {
 	return ""
 }
 

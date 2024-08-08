@@ -53,6 +53,7 @@ type UpdInterface interface {
 	InlineQuery() (string, bool)
 	InlineQueryOffset() int
 	IsSentViaBot() bool
+	ReplyToMsgID() int
 }
 
 // TGInterface provides a simple interface to telegram API
@@ -71,8 +72,9 @@ type DBInterface interface {
 	InputExpectation(userID int64) *tg.Cmd
 	SetInputExpectation(userID int64, cmd tg.Cmd)
 	DelInputExpectation(userID int64)
-	SetFilenameByMsgID(userID int64, msgID int, filename string)
 	FilenameByMsgID(userID int64, msgID int) string
+	SetFilenameByMsgID(userID int64, msgID int, filename string)
+	DirByMsgID(userID int64, msgID int) string
 	SetDirByMsgID(userID int64, msgID int, filename string)
 }
 
@@ -164,6 +166,11 @@ func (b *Bot) Answer(u UpdInterface) error {
 		return b.saveForward(u)
 	}
 
+	isReply := u.ReplyToMsgID() != -1
+	if isReply {
+		return b.add(u)
+	}
+
 	return b.save(u)
 }
 
@@ -185,7 +192,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		constants.CmdShowShopChecklist:  b.showShop,
 		// Button's commands (callbacks)
 		constants.CmdRenameFile:         b.showRenameFile,
-		constants.CmdShowMultilineTask:  b.showTask,
+		constants.CmdShowMultilineTask:  b.showMultilineTask,
 		constants.CmdShowFile:           b.showFile,
 		constants.CmdShowChecklist:      b.showChecklist,
 		constants.CmdShowChooseDay:      b.showChooseDay,
@@ -262,6 +269,7 @@ func (b *Bot) save(u UpdInterface) error {
 		return fmt.Errorf("save: %w", err)
 	}
 
+	title = fs.SanitizeFilename(title)
 	filename := fs.Filename(title)
 	err = b.createOrAdd(fs.DirToday, filename, content)
 	if err != nil {
@@ -269,6 +277,39 @@ func (b *Bot) save(u UpdInterface) error {
 	}
 
 	return b.showMoveTo([]string{fs.Hash(filename)})
+}
+
+func (b *Bot) add(u UpdInterface) error {
+	msg := txt.EntitiesToMarkdown(u.MsgText(), u.MsgEntities())
+	msg = strings.TrimSpace(txt.NormNewLines(msg))
+
+	dir := b.db.DirByMsgID(b.userID, u.ReplyToMsgID())
+	filename := b.db.FilenameByMsgID(b.userID, u.ReplyToMsgID())
+	if dir == "" || filename == "" {
+		// TODO?
+		return nil
+	}
+	existingContent, err := b.fs.Read(dir, filename)
+	if err != nil {
+		return fmt.Errorf("add: can't read: %w", err)
+	}
+
+	header := fmt.Sprintf("### %s", now().Format("02.01.2006 Monday"))
+	var content string
+	if !strings.Contains(existingContent, header) {
+		content = fmt.Sprintf("%s\n%s\n%s", strings.TrimSpace(existingContent), header, msg)
+	} else {
+		content = fmt.Sprintf("%s\n%s", strings.TrimSpace(existingContent), msg)
+	}
+
+	err = b.fs.Write(dir, filename, content)
+	if err != nil {
+		return fmt.Errorf("add: can't write: %w", err)
+	}
+
+	b.delAllKeyboards()
+
+	return b.ShowTodayTasks(nil)
 }
 
 func (b *Bot) saveForward(u UpdInterface) error {
@@ -279,6 +320,7 @@ func (b *Bot) saveForward(u UpdInterface) error {
 	if err != nil {
 		return fmt.Errorf("save forward: %w", err)
 	}
+	title = fs.SanitizeFilename(title)
 	filename := fs.Filename(title)
 
 	// When a user forwards message + title we receive 2 updates from TG.
@@ -407,9 +449,8 @@ func (b *Bot) tr(str string, args ...any) string {
 // Or show the new one (in case of photo)
 func (b *Bot) show(text string, kb *tg.Keyboard, markup string) error {
 	mid := b.db.LastKeyboardMsgID(b.userID)
-	fmt.Printf("MID %d\n", mid)
 	textChunks := txt.SplitTextIntoChunks(text, maxMsgLength)
-	if mid == 0 || len(textChunks) > 1 {
+	if mid == -1 || len(textChunks) > 1 {
 		b.delAllKeyboards()
 
 		// If our msg is too long, we send a few messages.
@@ -779,7 +820,7 @@ func (b *Bot) showShop(params []string) error {
 	return b.showChecklist([]string{fs.Hash(fs.DirShop)})
 }
 
-func (b *Bot) showTask(params []string) error {
+func (b *Bot) showMultilineTask(params []string) error {
 	dir := params[0]
 	filenameHash := params[1]
 
@@ -811,9 +852,15 @@ func (b *Bot) showTask(params []string) error {
 		),
 	})
 
-	err = b.show(fmt.Sprintf("%s\n%s", fs.Title(filename), content), kb, tg.MarkupHTML)
+	err = b.show(content, kb, tg.MarkupHTML)
 	if err != nil {
 		return fmt.Errorf("show task: %w", err)
+	}
+
+	msgID := b.db.LastKeyboardMsgID(b.userID)
+	if msgID != -1 {
+		b.db.SetFilenameByMsgID(b.userID, msgID, filename)
+		b.db.SetDirByMsgID(b.userID, msgID, dir)
 	}
 
 	return nil
@@ -848,7 +895,7 @@ func (b *Bot) showFile(params []string) error {
 	}
 
 	msgID := b.db.LastKeyboardMsgID(b.userID)
-	if msgID != 0 {
+	if msgID != -1 {
 		b.db.SetFilenameByMsgID(b.userID, msgID, filename)
 		b.db.SetDirByMsgID(b.userID, msgID, dir)
 	}
@@ -1141,7 +1188,7 @@ func (b *Bot) schedule(params []string) error {
 func (b *Bot) delAllKeyboards() {
 	var msgIDs []int
 	mid := b.db.LastKeyboardMsgID(b.userID)
-	if mid != 0 {
+	if mid != -1 {
 		b.db.DelLastKeyboardMsgID(b.userID)
 		msgIDs = append(msgIDs, mid)
 	}

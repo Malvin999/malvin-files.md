@@ -47,7 +47,7 @@ func MoveDueTasksToToday(
 		}
 
 		userconf := userconfig.NewConfig()
-		userconfPath := userFS.Path("", configFilename)
+		userconfPath := userFS.UnsafePath("", configFilename)
 		err = userconf.LoadOrCreate(userconfPath)
 		if err != nil {
 			return fmt.Errorf("schedule worker: can't load user config: %s", err)

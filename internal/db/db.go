@@ -25,7 +25,7 @@ func NewDB() *DB {
 func (db *DB) LastKeyboardMsgID(userID int64) int {
 	id, ok := lastKeyboardMsgIDs.Load(lastKeyboardMsgIDKey(userID))
 	if !ok {
-		return 0
+		return -1
 	}
 
 	return id.(int)
@@ -62,7 +62,10 @@ func (db *DB) SetFilenameByMsgID(userID int64, msgID int, filename string) {
 }
 
 func (db *DB) FilenameByMsgID(userID int64, msgID int) string {
-	filename, _ := filenameByMsgID.Load(filenameByMsgIDKey(userID, msgID))
+	filename, ok := filenameByMsgID.Load(filenameByMsgIDKey(userID, msgID))
+	if !ok {
+		return ""
+	}
 
 	return filename.(string)
 }
@@ -71,8 +74,11 @@ func (db *DB) SetDirByMsgID(userID int64, msgID int, filename string) {
 	dirByMsgID.Store(dirByMsgIDKey(userID, msgID), filename)
 }
 
-func (db *DB) dirByMsgID(userID int64, msgID int) string {
-	filename, _ := dirByMsgID.Load(dirByMsgIDKey(userID, msgID))
+func (db *DB) DirByMsgID(userID int64, msgID int) string {
+	filename, ok := dirByMsgID.Load(dirByMsgIDKey(userID, msgID))
+	if !ok {
+		return ""
+	}
 
 	return filename.(string)
 }

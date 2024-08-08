@@ -125,7 +125,7 @@ func main() {
 			}
 
 			userconf := userconfig.NewConfig()
-			userconfPath := userFS.Path("", config.Config.ConfigFilename)
+			userconfPath := userFS.UnsafePath("", config.Config.ConfigFilename)
 			err = userconf.LoadOrCreate(userconfPath)
 			if err != nil {
 				slog.Error("Bot error: can't get or create conf", "err", err)

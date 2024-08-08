@@ -115,7 +115,7 @@ func (fs FS) CreateUserDirs() error {
 }
 
 func (fs FS) Exists(dir, filename string) (bool, error) {
-	path := fs.Path(dir, filename)
+	path := fs.UnsafePath(dir, filename)
 	isSafe, err := fs.isSafe(path)
 	if err != nil {
 		return false, fmt.Errorf("exists: can't check if the file is safe to access '%s': %w", path, err)
@@ -133,7 +133,7 @@ func (fs FS) Exists(dir, filename string) (bool, error) {
 }
 
 func (fs FS) Read(dir, filename string) (string, error) {
-	path := fs.Path(dir, filename)
+	path := fs.UnsafePath(dir, filename)
 	isSafe, err := fs.isSafe(path)
 	if err != nil {
 		return "", fmt.Errorf("fs read: can't check if the file is safe to access '%s': %w", path, err)
@@ -151,7 +151,7 @@ func (fs FS) Read(dir, filename string) (string, error) {
 }
 
 func (fs FS) Write(dir, filename, content string) error {
-	path := fs.Path(dir, filename)
+	path := fs.UnsafePath(dir, filename)
 	isSafe, err := fs.isSafe(path)
 	if err != nil {
 		return fmt.Errorf("fs write: check if file is safe to access '%s': %w", path, err)
@@ -176,7 +176,7 @@ func (fs FS) Write(dir, filename, content string) error {
 }
 
 func (fs FS) MakeDir(dir string) error {
-	path := fs.Path(dir, "")
+	path := fs.UnsafePath(dir, "")
 	isSafe, err := fs.isSafe(path)
 	if err != nil {
 		return fmt.Errorf("fs make dir: check if file is safe to access '%s': %w", path, err)
@@ -194,7 +194,7 @@ func (fs FS) MakeDir(dir string) error {
 }
 
 func (fs FS) Del(dir, filename string) error {
-	path := fs.Path(dir, filename)
+	path := fs.UnsafePath(dir, filename)
 	isSafe, err := fs.isSafe(path)
 	if err != nil {
 		return fmt.Errorf("fs del: check if file is safe to access '%s': %w", path, err)
@@ -212,7 +212,7 @@ func (fs FS) Del(dir, filename string) error {
 }
 
 func (fs FS) Rename(oldDir, oldFilename, newDir, newFilename string) error {
-	oldPath := fs.Path(oldDir, oldFilename)
+	oldPath := fs.UnsafePath(oldDir, oldFilename)
 	isSafe, err := fs.isSafe(oldPath)
 	if err != nil {
 		return fmt.Errorf("fs rename: check if file is safe to access '%s': %w", oldPath, err)
@@ -221,7 +221,7 @@ func (fs FS) Rename(oldDir, oldFilename, newDir, newFilename string) error {
 		return fmt.Errorf("fs can't rename from '%s': %w", oldPath, errUnsafePath)
 	}
 
-	newPath := fs.Path(newDir, newFilename)
+	newPath := fs.UnsafePath(newDir, newFilename)
 	isSafe, err = fs.isSafe(newPath)
 	if err != nil {
 		return fmt.Errorf("fs rename: check if file is safe to access '%s': %w", newPath, err)
@@ -257,11 +257,11 @@ func (fs FS) Unhash(dir, filenameHash string) (string, error) {
 
 	// Compatibility, first we check for full Name match,
 	// When do we need it?
-	for _, file := range filenames {
-		if file.Name == filenameHash {
-			return file.Name, nil
-		}
-	}
+	//for _, file := range filenames {
+	//	if file.Name == filenameHash {
+	//		return file.Name, nil
+	//	}
+	//}
 
 	for _, file := range filenames {
 		if strings.HasPrefix(file.Name, filenameHash) {
@@ -273,7 +273,7 @@ func (fs FS) Unhash(dir, filenameHash string) (string, error) {
 }
 
 func (fs FS) FilesAndDirs(dir string) ([]File, error) {
-	userPath := fs.Path(dir, "")
+	userPath := fs.UnsafePath(dir, "")
 	isSafe, err := fs.isSafe(userPath)
 	if err != nil {
 		return nil, fmt.Errorf("exists: check if file is safe to access '%s': %w", userPath, err)
@@ -318,7 +318,7 @@ func (fs FS) Dirs() ([]File, error) {
 
 	var dirs []File
 	for _, file := range files {
-		isDir, err := afero.IsDir(fs.backend, fs.Path(DirRoot, file.Name))
+		isDir, err := afero.IsDir(fs.backend, fs.UnsafePath(DirRoot, file.Name))
 		if err != nil {
 			return nil, fmt.Errorf("can't get dirs: %w", err)
 		}
@@ -334,7 +334,7 @@ func (fs FS) Dirs() ([]File, error) {
 
 // Maybe we should replace / with | and use filepath.Clean by default
 // instead of throwing an error up the stack
-// TODO test all Fs' public the methods for Path traversal
+// TODO test all Fs' public the methods for UnsafePath traversal
 // TODO after you cover everything with the tests, we may remove this method
 // because we build our own paths
 func (fs FS) isSafe(path string) (bool, error) {
@@ -376,7 +376,7 @@ func (fs FS) isSafe(path string) (bool, error) {
 }
 
 func (fs FS) IsMultiline(dir, filename string) (bool, error) {
-	path := fs.Path(dir, filename)
+	path := fs.UnsafePath(dir, filename)
 	stat, err := fs.backend.Stat(path)
 	if err != nil {
 		return false, fmt.Errorf("can't check for multiline: %w", err)
@@ -391,8 +391,6 @@ func (fs FS) md5(filename string) string {
 }
 
 func Filename(title string) string {
-	// colon is a reserved character in Windows, so we need to replace it with Modifier Letter Colon (U+A789)
-	title = strings.ReplaceAll(title, ":", "꞉")
 	return txt.Ucfirst(title) + ".md"
 }
 
@@ -482,7 +480,7 @@ func (fs FS) Touch(dir, filename string) error {
 		return fmt.Errorf("touch: %w", err)
 	}
 	if exists {
-		err = fs.backend.Chtimes(fs.Path(dir, filename), time.Now(), time.Now())
+		err = fs.backend.Chtimes(fs.UnsafePath(dir, filename), time.Now(), time.Now())
 		if err != nil {
 			return fmt.Errorf("touch: can't update file's ctime: %w", err)
 		}
@@ -495,9 +493,11 @@ func (fs FS) Touch(dir, filename string) error {
 	return nil
 }
 
-func (fs FS) Path(dir, filename string) string {
-	dir = strings.ReplaceAll(dir, "/", "|")
-	filename = strings.ReplaceAll(filename, "/", "|")
+// UnsafePath builds a user-specific path.
+// It'S NOT SAFE to use this method with user input.
+// Sanitize Early, call SanitizeFilename
+// as soon as you get on dir and filename from user input
+func (fs FS) UnsafePath(dir, filename string) string {
 	p := path.Join(fs.rootPath, dir, filename)
 
 	return p
@@ -514,11 +514,17 @@ func SanitizeFilename(filename string) string {
 	filename = strings.ReplaceAll(filename, "/", escapedForwardSlash)
 	filename = strings.ReplaceAll(filename, "\\", escapedBackwardSlash)
 
+	// colon is a reserved character in Windows, so we need to replace it with Modifier Letter Colon (U+A789)
+	filename = strings.ReplaceAll(filename, ":", "꞉")
+
 	return filename
 }
 
 func UnsanitizeFilename(filename string) string {
-	return ""
+	filename = strings.ReplaceAll(filename, escapedForwardSlash, "/")
+	filename = strings.ReplaceAll(filename, escapedBackwardSlash, "\\")
+
+	return filename
 }
 
 func Title(filename string) string {

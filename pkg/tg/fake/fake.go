@@ -64,6 +64,10 @@ func (m *Upd) IsSentViaBot() bool {
 	return false
 }
 
+func (m *Upd) ReplyToMsgID() int {
+	return -1
+}
+
 type TG struct {
 	SentTexts      []string
 	LastSentText   string

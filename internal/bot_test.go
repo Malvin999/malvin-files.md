@@ -793,3 +793,19 @@ func TestShowLongMessageSplitByNewLine(t *testing.T) {
 	r.Len(tgram.SentTexts, 2)
 	r.Equal("abc", tgram.LastSentText)
 }
+
+func TestShowMultilineFile(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+	userFS.Write("today", "New file.md", "New file\nContent")
+
+	tgram := fake.NewTG()
+
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("task", []string{fs.DirToday, "501ef2410e2"})))
+	r.NoError(err)
+
+	r.Equal("New file\nContent", tgram.SentTexts[0])
+}

@@ -237,7 +237,7 @@ func TestFS_TouchExisting(t *testing.T) {
 	err := fs.Write("today", "a.md", "A")
 	r.NoError(err)
 
-	path := fs.Path("today", "a.md")
+	path := fs.UnsafePath("today", "a.md")
 	fi, err := fs.backend.Stat(path)
 	r.NoError(err)
 	orig_ctime := Ctime(fi)
@@ -362,11 +362,11 @@ func TestFS_PathTraversalAttack(t *testing.T) {
 	fs, _ := NewFS("/", afero.NewMemMapFs())
 	fs.rootPath = "/"
 
-	path := fs.Path("../root/.ssh/", "authorized_keys")
-	r.Equal("/..|root|.ssh|/authorized_keys", path)
+	path := fs.UnsafePath("../root/.ssh/", "authorized_keys")
+	r.Equal("/root/.ssh/authorized_keys", path)
 
-	path = fs.Path("note", "../root/.ssh/authorized_keys")
-	r.Equal("/note/..|root|.ssh|authorized_keys", path)
+	path = fs.UnsafePath("note", "../root/.ssh/authorized_keys")
+	r.Equal("/root/.ssh/authorized_keys", path)
 }
 
 func TestFS_OnlyUserDirs(t *testing.T) {
@@ -425,4 +425,13 @@ func TestSanitizeFilename(t *testing.T) {
 	r.Equal("ab", SanitizeFilename("a\x00b"))
 	r.Equal("a{|}b", SanitizeFilename("a/b"))
 	r.Equal("a{||}b", SanitizeFilename("a\\b"))
+	r.Equal("a{|}b{||}", SanitizeFilename("\x00a\x00/b\\"))
+}
+
+func TestUnsanitizeFilename(t *testing.T) {
+	r := require.New(t)
+
+	r.Equal("a/b", UnsanitizeFilename("a{|}b"))
+	r.Equal("a\\b", UnsanitizeFilename("a{||}b"))
+	r.Equal("a/b\\", UnsanitizeFilename("a{|}b{||}"))
 }
