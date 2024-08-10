@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -194,14 +195,27 @@ func (fs FS) MakeDir(dir string) error {
 	return nil
 }
 
-// TempFile returns a temporary file and its path.
-func (fs FS) TempFile() (io.WriteCloser, string, error) {
-	outFile, err := afero.TempFile(fs.backend, "", "")
+// TmpFile creates a temporary file in the specified directory.
+// Not all operating systems or file systems support moving a file atomically
+// from different directories or volumes.
+// This problem, for example, occurs with k8s or docker where
+// the temporary path may be in a different volume than the target path.
+func (fs FS) TmpFile(dir, filename string) (io.WriteCloser, error) {
+	filePath := fs.UnsafePath(dir, filename)
+	isSafe, err := fs.isSafe(filePath)
 	if err != nil {
-		return nil, "", fmt.Errorf("fs can't create temp file: %w", err)
+		return nil, fmt.Errorf("fs temp img file: check if file is safe to access '%s': %w", filePath, err)
+	}
+	if !isSafe {
+		return nil, fmt.Errorf("fs temp img file: unsafe path '%s': %w", filePath, errUnsafePath)
 	}
 
-	return outFile, outFile.Name(), nil
+	outFile, err := fs.backend.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
+	if err != nil {
+		return nil, fmt.Errorf("fs can't create temp file: %w", err)
+	}
+
+	return outFile, nil
 }
 
 func (fs FS) Del(dir, filename string) error {
@@ -244,24 +258,6 @@ func (fs FS) Rename(oldDir, oldFilename, newDir, newFilename string) error {
 	err = fs.backend.Rename(oldPath, newPath)
 	if err != nil {
 		return fmt.Errorf("can't rename from '%s' to '%s': %w", oldPath, newPath, err)
-	}
-
-	return nil
-}
-
-func (fs FS) UnsafeRename(unsafePath, newDir, newFilename string) error {
-	newPath := fs.UnsafePath(newDir, newFilename)
-	isSafe, err := fs.isSafe(newPath)
-	if err != nil {
-		return fmt.Errorf("fs rename: check if file is safe to access '%s': %w", newPath, err)
-	}
-	if !isSafe {
-		return fmt.Errorf("fs can't rename to '%s': %w", newPath, errUnsafePath)
-	}
-
-	err = fs.backend.Rename(unsafePath, newPath)
-	if err != nil {
-		return fmt.Errorf("can't rename from '%s' to '%s': %w", unsafePath, newPath, err)
 	}
 
 	return nil
@@ -363,7 +359,7 @@ func (fs FS) Dirs() ([]File, error) {
 
 // Maybe we should replace / with | and use filepath.Clean by default
 // instead of throwing an error up the stack
-// TODO test all Fs' public the methods for UnsafePath traversal
+// TODO test all FS' public the methods for UnsafePath traversal
 // TODO after you cover everything with the tests, we may remove this method
 // because we build our own paths
 func (fs FS) isSafe(path string) (bool, error) {
@@ -721,6 +717,7 @@ func Exists(path string) (bool, error) {
 }
 
 // TODO fix permissions?
+// TODO defaultBackend?
 func WriteFile(filename string, data []byte) error {
 	return afero.WriteFile(DefaultBackend, filename, data, 0o644)
 }
