@@ -111,7 +111,7 @@ func (b *Bot) Answer(u UpdInterface) error {
 
 	for _, plugin := range botPlugins {
 		if plugin.ExecutePlugin(u.MsgText()) {
-			return nil
+			return b.ShowTodayTasks(nil)
 		}
 	}
 
