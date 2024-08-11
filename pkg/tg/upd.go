@@ -80,6 +80,16 @@ func (u *Upd) MsgEntities() []tgbotapi.MessageEntity {
 	return nil
 }
 
+func (u *Upd) CaptionEntities() []tgbotapi.MessageEntity {
+	if u.raw.Message != nil {
+		if (u.raw.Message.CaptionEntities) != nil {
+			return u.raw.Message.CaptionEntities
+		}
+	}
+
+	return nil
+}
+
 func (u *Upd) CallbackQueryID() (string, bool) {
 	if u.raw.CallbackQuery == nil {
 		return "", false
@@ -145,6 +155,7 @@ func (u *Upd) IsSentViaBot() bool {
 }
 
 // ReplyToMsgID returns -1 if there's no reply to message
+// TODO get rid of -1
 func (u *Upd) ReplyToMsgID() int {
 	message := u.raw.Message
 	if message == nil {

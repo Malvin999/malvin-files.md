@@ -42,6 +42,10 @@ func (m *Upd) MsgEntities() []tgbotapi.MessageEntity {
 	return nil
 }
 
+func (m *Upd) CaptionEntities() []tgbotapi.MessageEntity {
+	return nil
+}
+
 func (m *Upd) CallbackQueryID() (string, bool) {
 	return "", true
 }

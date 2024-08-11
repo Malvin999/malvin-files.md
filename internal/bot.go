@@ -49,6 +49,7 @@ type UpdInterface interface {
 	UserID() int64
 	Cmd() *tg.Cmd
 	MsgEntities() []tgbotapi.MessageEntity
+	CaptionEntities() []tgbotapi.MessageEntity
 	IsForwarded() bool
 	CallbackQueryID() (string, bool)
 	InlineQueryID() (string, bool)
@@ -174,12 +175,6 @@ func (b *Bot) Answer(u UpdInterface) error {
 		return b.saveFromForward(u)
 	}
 
-	// Handle replies
-	isReply := u.ReplyToMsgID() != -1
-	if isReply {
-		return b.addToExistingFile(u)
-	}
-
 	// Handle photos
 	if _, hasPhoto := u.PhotoOrImageID(); hasPhoto {
 		return b.saveFromPhoto(u)
@@ -283,6 +278,12 @@ func (b *Bot) saveFromRegularMsg(u UpdInterface) error {
 		return fmt.Errorf("save: %w", err)
 	}
 
+	// Adding to an existing file
+	isReply := u.ReplyToMsgID() != -1
+	if isReply {
+		return b.addToRepliedFile(u.ReplyToMsgID(), content)
+	}
+
 	sanitizedTitle := fs.SanitizeFilename(title)
 	// Store original title if it was sanitized
 	if title != sanitizedTitle && len(content) == 0 {
@@ -316,9 +317,18 @@ func (b *Bot) saveFromPhoto(u UpdInterface) error {
 	imgPath := fmt.Sprintf("../%s/%s", fs.DirImg, imgFilename)
 	content := fmt.Sprintf("![[%s|center|400]]", imgPath)
 	if u.Caption() != "" {
-		content = fmt.Sprintf("%s\n%s", content, u.Caption())
+		caption := txt.EntitiesToMarkdown(u.Caption(), u.CaptionEntities())
+		caption = strings.TrimSpace(txt.NormNewLines(caption))
+		content = fmt.Sprintf("%s\n%s", content, caption)
 	}
 
+	// Adding to an existing file
+	isReply := u.ReplyToMsgID() != -1
+	if isReply {
+		return b.addToRepliedFile(u.ReplyToMsgID(), content)
+	}
+
+	// Creating a new file
 	title := strings.TrimSpace(u.Caption())
 	if len(title) > maxTitleLength {
 		title = txt.Substr(title, 0, maxTitleLength) + "..."
@@ -381,30 +391,26 @@ func (b *Bot) saveFromForward(u UpdInterface) error {
 	return b.showMoveTo([]string{fs.Hash(filename)})
 }
 
-func (b *Bot) addToExistingFile(u UpdInterface) error {
-	msg := txt.EntitiesToMarkdown(u.MsgText(), u.MsgEntities())
-	msg = strings.TrimSpace(txt.NormNewLines(msg))
-
-	dir := b.db.DirByMsgID(b.userID, u.ReplyToMsgID())
-	filename := b.db.FilenameByMsgID(b.userID, u.ReplyToMsgID())
+func (b *Bot) addToRepliedFile(replyToMsgID int, newContent string) error {
+	dir := b.db.DirByMsgID(b.userID, replyToMsgID)
+	filename := b.db.FilenameByMsgID(b.userID, replyToMsgID)
 	if dir == "" || filename == "" {
 		// TODO?
 		return nil
 	}
-	existingContent, err := b.fs.Read(dir, filename)
+	allContent, err := b.fs.Read(dir, filename)
 	if err != nil {
 		return fmt.Errorf("add: can't read: %w", err)
 	}
 
 	header := fmt.Sprintf("### %s", now().Format("02.01.2006 Monday"))
-	var content string
-	if !strings.Contains(existingContent, header) {
-		content = fmt.Sprintf("%s\n%s\n%s", strings.TrimSpace(existingContent), header, msg)
+	if !strings.Contains(allContent, header) {
+		allContent = fmt.Sprintf("%s\n%s\n%s", strings.TrimSpace(allContent), header, newContent)
 	} else {
-		content = fmt.Sprintf("%s\n%s", strings.TrimSpace(existingContent), msg)
+		allContent = fmt.Sprintf("%s\n%s", strings.TrimSpace(allContent), newContent)
 	}
 
-	err = b.fs.Write(dir, filename, content)
+	err = b.fs.Write(dir, filename, newContent)
 	if err != nil {
 		return fmt.Errorf("add: can't write: %w", err)
 	}
