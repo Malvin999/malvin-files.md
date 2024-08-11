@@ -235,6 +235,41 @@ func TestSaveFromPhotoWithoutCaption(t *testing.T) {
 	r.Equal("![[../img/tg_PHOTO_ID|center|400]]", content)
 }
 
+func TestSaveFromReplyPhotoWithCaption(t *testing.T) {
+	r := require.New(t)
+
+	savedNow := now
+	defer func() {
+		now = savedNow
+	}()
+	now = func() time.Time {
+		return time.Date(2024, 8, 11, 9, 54, 0, 0, time.UTC)
+	}
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+	err = userFS.Write("today", "Existing file.md", "Existing content")
+	r.NoError(err)
+
+	tgram := fake.NewTG()
+
+	database := db.NewDB()
+	database.SetDirByMsgID(-1, 255, "today")
+	database.SetFilenameByMsgID(-1, 255, "Existing file.md")
+	bot := NewBot(-1, tgram, userFS, database, &userconfig.DefaultConfig)
+
+	upd := fake.NewUpd(-1, "")
+	upd.PhotoID = "PHOTO_ID"
+	upd.PhotoCaption = "Caption"
+	upd.ReplyToMessageID = 255
+	err = bot.Answer(upd)
+	r.NoError(err)
+
+	content, err := bot.fs.Read("today", "Existing file.md")
+	r.NoError(err)
+	r.Equal("Existing content\n### 11.08.2024 Sunday\n![[../img/tg_PHOTO_ID|center|400]]\nCaption", content)
+}
+
 func TestAddTaskToLater(t *testing.T) {
 	r := require.New(t)
 
