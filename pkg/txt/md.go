@@ -1,6 +1,7 @@
 package txt
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
 )
@@ -141,8 +142,6 @@ func recursive(input string, parser Parser, depth int) []token {
 	return results
 }
 
-// some applies the parser for more than one time. Each parse result is combined with the previous result.
-// And each parse can generate multiple results.
 func some(parser Parser) Parser {
 	return func(input string) []token {
 		return recursive(input, parser, 0)
@@ -170,6 +169,12 @@ func markdown() Parser {
 	}
 }
 
+func delayed(parser func() Parser) Parser {
+	return func(input string) []token {
+		return parser()(input)
+	}
+}
+
 func MarkdownToHtml(md string) string {
 	var htmlEscaper = strings.NewReplacer(
 		`&`, "&amp;",
@@ -184,12 +189,26 @@ func MarkdownToHtml(md string) string {
 
 	text := markdown()
 	code := and(term("`"), and(text, term("`")))
-	italic := or(and(openTerm("*"), and(or(code, text), closeTerm("*"))), and(openTerm("_"), and(or(code, text), closeTerm("_"))))
-	italicOrText := or(italic, text)
-	bold := or(and(openTerm("**"), and(some(italicOrText), closeTerm("**"))), and(openTerm("__"), and(some(italicOrText), closeTerm("__"))))
+
+	var italic Parser
+	var bold Parser
+
+	italic = or(
+		and(openTerm("*"), some(or(or(delayed(func() Parser { return bold }), or(code, text)), closeTerm("*")))),
+		and(openTerm("_"), some(or(or(delayed(func() Parser { return bold }), or(code, text)), closeTerm("_")))),
+	)
+
+	bold = or(
+		and(openTerm("**"), some(or(or(delayed(func() Parser { return italic }), or(code, text)), closeTerm("**")))),
+		and(openTerm("__"), some(or(or(delayed(func() Parser { return italic }), or(code, text)), closeTerm("__")))),
+	)
+
 	span := or(bold, or(italic, or(code, text)))
 	doc := some(span)
 
+	for _, tok := range doc(md) {
+		fmt.Printf("%v\n", tok.consumed)
+	}
 	for _, tok := range doc(md) {
 		return tok.consumed
 	}
