@@ -6,6 +6,7 @@ import (
 
 	"github.com/robfig/cron/v3"
 
+	"zakirullin/stuffbot/internal/fs"
 	"zakirullin/stuffbot/internal/userconfig"
 )
 
@@ -49,14 +50,13 @@ func ScheduleReport(conf *userconfig.Config) string {
 	var report string
 	scheduledTasks := conf.Schedules()
 	for _, task := range scheduledTasks {
-		report += fmt.Sprintf("%s: %s\n", formatTaskDate(time.Unix(task.ScheduledAt, 0)), task.Filename)
+		report += fmt.Sprintf("<b>%s</b>: %s\n", formatTaskDate(time.Unix(task.ScheduledAt, 0)), fs.Title(task.Filename))
 	}
 
 	return report
 }
 
 func formatTaskDate(taskTime time.Time) string {
-	// Truncate times to only compare dates, ignoring the time of day.
 	today := now().Truncate(24 * time.Hour)
 	taskDate := taskTime.Truncate(24 * time.Hour)
 

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"time"
 
 	"golang.org/x/exp/slog"
@@ -125,7 +126,12 @@ func (c *Config) PomodoroDuration() time.Duration {
 }
 
 func (c *Config) Schedules() []Schedule {
-	return c.raw.Schedules
+	schedules := c.raw.Schedules
+	sort.Slice(c.raw.Schedules, func(i, j int) bool {
+		return c.raw.Schedules[i].ScheduledAt > c.raw.Schedules[j].ScheduledAt
+	})
+
+	return schedules
 }
 
 // AddToSchedule task from archive or later at scheduleAt (Unix timestamp, sec). Tasks appear in today folder.
