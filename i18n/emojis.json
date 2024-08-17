@@ -1077,7 +1077,9 @@
     "love",
     "like",
     "affection",
-    "valentines"
+    "valentines",
+    "move to journal"
+
   ],
   "💙": [
     "blue_heart",
@@ -4642,7 +4644,8 @@
     "oldschool",
     "show",
     "television",
-    "watch"
+    "watch",
+    "to watch"
   ],
   "🧈": [
     "butter",
@@ -5909,6 +5912,7 @@
     "oldschool",
     "time",
     "later",
+    "move to later",
     "countdown"
   ],
   "⌚": [
@@ -6119,7 +6123,8 @@
     "space",
     "night",
     "evening",
-    "sleep"
+    "sleep",
+    "move to tmrw"
   ],
   "🌒": [
     "waxing_crescent_moon",
@@ -7652,7 +7657,8 @@
     "library",
     "study",
     "read",
-    "прочитать"
+    "прочитать",
+    "to read"
   ],
   "📓": [
     "notebook",
@@ -7687,7 +7693,8 @@
     "paper",
     "information",
     "file",
-    "files"
+    "files",
+    "to file"
   ],
   "📰": [
     "newspaper",
@@ -7963,7 +7970,8 @@
     "tear_off_calendar",
     "schedule",
     "date",
-    "planning"
+    "planning",
+    "move to a day"
   ],
   "🗒️": [
     "spiral_notepad",
@@ -8403,7 +8411,8 @@
   "🛒": [
     "shopping_cart",
     "trolley",
-    "shop"
+    "shop",
+    "to shop"
   ],
   "🚬": [
     "cigarette",

@@ -154,7 +154,7 @@ func (b *Bot) showMoveToBtnsSettings(params []string) error {
 				continue
 			}
 
-			name := fmt.Sprintf("%s %s %s", i18n.Emoji(btn.Name), btn.Name, delBtn)
+			name := fmt.Sprintf("%s %s", btn.Name, delBtn)
 			enabledCmd := tg.NewCmd(consts.CmdDelFromMoveToBtns, []string{btn.Cmd.Name})
 			kb.AddRow(tg.NewBtn(name, enabledCmd))
 			usedCmds = append(usedCmds, cmd)
@@ -177,7 +177,7 @@ func (b *Bot) showMoveToBtnsSettings(params []string) error {
 			continue
 		}
 		// Command is not enabled, so add it to disabled list
-		name := fmt.Sprintf("%s %s %s", i18n.Emoji(btn.Name), btn.Name, addBtn)
+		name := fmt.Sprintf("%s %s", btn.Name, addBtn)
 		disabledCmd := tg.NewCmd(consts.CmdAddToMoveToBtns, []string{btn.Cmd.Name})
 		kb.AddRow(tg.NewBtn(name, disabledCmd))
 	}

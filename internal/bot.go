@@ -213,12 +213,15 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		consts.CmdCompleteChecklist:      b.completeChecklist,
 		consts.CmdShowScheduleForDay:     b.showChooseDay,
 		consts.CmdShowMoveToFile:         b.showMoveToFile,
-		consts.CmdShowToChecklist:        b.showToChecklist,
+		consts.CmdShowMoveToChecklist:    b.showToChecklist,
 		consts.CmdMoveToDir:              b.moveToDir,
 		consts.CmdMoveToNewDir:           b.moveToNewDir,
 		consts.CmdMoveToExistingFile:     b.moveToExistingFile,
 		consts.CmdMoveToNewFile:          b.moveToNewFile,
 		consts.CmdMoveToChecklist:        b.moveToChecklist,
+		consts.CmdMoveToRead:             b.moveToRead,
+		consts.CmdMoveToWatch:            b.moveToWatch,
+		consts.CmdMoveToShop:             b.moveToShop,
 		consts.CmdMoveToNewChecklist:     b.moveToNewChecklist,
 		consts.CmdMoveToJournal:          b.moveToJournal,
 		consts.CmdSchedule:               b.schedule,
@@ -1131,6 +1134,24 @@ func (b *Bot) moveToChecklist(params []string) error {
 	_ = b.fs.Del(fs.DirToday, filename)
 
 	return b.ShowTodayTasks(nil)
+}
+
+func (b *Bot) moveToRead(params []string) error {
+	filenameHash := params[0]
+
+	return b.moveToChecklist([]string{filenameHash, fs.Hash(fs.DirRead)})
+}
+
+func (b *Bot) moveToWatch(params []string) error {
+	filenameHash := params[0]
+
+	return b.moveToChecklist([]string{filenameHash, fs.Hash(fs.DirWatch)})
+}
+
+func (b *Bot) moveToShop(params []string) error {
+	filenameHash := params[0]
+
+	return b.moveToChecklist([]string{filenameHash, fs.Hash(fs.DirShop)})
 }
 
 func (b *Bot) moveToNewFile(params []string) error {
