@@ -628,7 +628,7 @@ func (b *Bot) showLaterTasks(params []string) error {
 	for _, file := range files {
 		var btn tg.Btn
 		name := i18n.Emojify(fs.UnsanitizeFilename(file.Title))
-		if scheduledAt, ok := scheduled[name]; ok {
+		if scheduledAt, ok := scheduled[file.Name]; ok {
 			name = txt.Emoji(scheduledAt, name)
 		}
 		if file.IsMultiline {
@@ -1242,7 +1242,8 @@ func (b *Bot) moveToJournal(params []string) error {
 func (b *Bot) moveToLater(params []string) error {
 	filenameHash := params[0]
 
-	return b.([]string{filenameHash, fs.Hash(fs.DirShop)})
+	// TODO no need to hash dir later/today?
+	return b.moveToDir([]string{fs.DirLater, fs.DirToday, filenameHash})
 }
 
 func (b *Bot) complete(params []string) error {
