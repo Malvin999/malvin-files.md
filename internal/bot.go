@@ -83,10 +83,10 @@ type DBInterface interface {
 	SetFilenameByMsgID(userID int64, msgID int, filename string)
 	DirByMsgID(userID int64, msgID int) string
 	SetDirByMsgID(userID int64, msgID int, filename string)
-	QuickCommand(userID int64) (string, bool)
-	SetQuickCommand(userID int64, cmd string)
-	QuickCommandParams(userID int64) ([]string, bool)
-	SetQuickCommandParams(userID int64, params []string)
+	RecentCommand(userID int64) (string, bool)
+	SetRecentCommand(userID int64, cmd string)
+	RecentCommandParams(userID int64) ([]string, bool)
+	SetRecentCommandParams(userID int64, params []string)
 }
 
 // Bot provides commands that can be invoked by a user so to query
@@ -416,8 +416,8 @@ func (b *Bot) addToRepliedFile(replyToMsgID int, newContent string) error {
 
 	b.delAllKeyboards()
 
-	b.db.SetQuickCommand(b.userID, consts.CmdMoveToExistingFile)
-	b.db.SetQuickCommandParams(b.userID, []string{fs.ShortHash(existingFilename), fs.ShortHash(fs.DirToday)})
+	b.db.SetRecentCommand(b.userID, consts.CmdMoveToExistingFile)
+	b.db.SetRecentCommandParams(b.userID, []string{fs.ShortHash(existingFilename), fs.ShortHash(fs.DirToday)})
 
 	return b.ShowTodayTasks(nil)
 }
@@ -548,19 +548,19 @@ func (b *Bot) showMoveTo(params []string) error {
 	}
 
 	lastRow := tg.NewRow()
-	quickCmd, ok := b.db.QuickCommand(b.userID)
+	recentCmd, ok := b.db.RecentCommand(b.userID)
 	if ok {
-		args, _ := b.db.QuickCommandParams(b.userID)
+		args, _ := b.db.RecentCommandParams(b.userID)
 		args = append(args, filenameHash)
 		targetFilename := args[0]
 		unhashedTarget, err := b.fs.Unhash(fs.DirRoot, targetFilename)
 		if err == nil {
 			icon := i18n.Emojify("file")
-			if quickCmd == consts.CmdMoveToDir {
+			if recentCmd == consts.CmdMoveToDir {
 				icon = i18n.Emojify("dir")
 			}
 			name := fmt.Sprintf("%s %s", icon, fs.Title(unhashedTarget))
-			lastRow = append(lastRow, tg.NewBtn(name, tg.NewCmd(quickCmd, args)))
+			lastRow = append(lastRow, tg.NewBtn(name, tg.NewCmd(recentCmd, args)))
 		}
 	}
 	lastRow = append(lastRow, tg.NewBtn(i18n.StrGoToToday, tg.NewCmd(consts.CmdShowToday, nil)))
@@ -596,10 +596,10 @@ func (b *Bot) ShowTodayTasks(params []string) error {
 		kb.AddRow(btn)
 	}
 
-	quickPanelBtns := b.quickBtns()
-	if len(quickPanelBtns) > 0 {
-		quickPanelBtnsByRows := slice.Chunk(quickPanelBtns, quickBtnsPerRow)
-		for _, row := range quickPanelBtnsByRows {
+	quickBtns := b.quickBtns()
+	if len(quickBtns) > 0 {
+		quickBtnsByRows := slice.Chunk(quickBtns, quickBtnsPerRow)
+		for _, row := range quickBtnsByRows {
 			kb.AddRow(row)
 		}
 	}
@@ -1028,10 +1028,10 @@ func (b *Bot) moveToDir(params []string) error {
 		return fmt.Errorf("move: can't move: %w", err)
 	}
 
-	b.db.SetQuickCommand(b.userID, consts.CmdMoveToDir)
+	b.db.SetRecentCommand(b.userID, consts.CmdMoveToDir)
 	// Move from dir is today, because quick command
 	// appears when file is in today dir
-	b.db.SetQuickCommandParams(b.userID, []string{toDirHash, fs.Hash(fs.DirToday)})
+	b.db.SetRecentCommandParams(b.userID, []string{toDirHash, fs.Hash(fs.DirToday)})
 
 	return b.ShowTodayTasks(nil)
 }
@@ -1098,8 +1098,8 @@ func (b *Bot) moveToExistingFile(params []string) error {
 		return fmt.Errorf("move to file: can't save file: %w", err)
 	}
 
-	b.db.SetQuickCommand(b.userID, consts.CmdMoveToExistingFile)
-	b.db.SetQuickCommandParams(b.userID, []string{fs.ShortHash(existingFilename), fs.ShortHash(fs.DirToday)})
+	b.db.SetRecentCommand(b.userID, consts.CmdMoveToExistingFile)
+	b.db.SetRecentCommandParams(b.userID, []string{fs.ShortHash(existingFilename), fs.ShortHash(fs.DirToday)})
 
 	return b.ShowTodayTasks(nil)
 }

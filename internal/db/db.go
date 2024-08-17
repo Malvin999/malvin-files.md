@@ -12,8 +12,8 @@ var filenameByMsgID sync.Map
 var dirByMsgID sync.Map
 var lastKeyboardMsgIDs sync.Map
 var inputExpectations sync.Map
-var quickCommands sync.Map
-var quickCommandTargets sync.Map
+var recentCommands sync.Map
+var recentCommandsTargets sync.Map
 
 // DB Do we need a type at all?
 type DB struct {
@@ -84,8 +84,8 @@ func (db *DB) SetDirByMsgID(userID int64, msgID int, filename string) {
 	dirByMsgID.Store(dirByMsgIDKey(userID, msgID), filename)
 }
 
-func (db *DB) QuickCommand(userID int64) (string, bool) {
-	cmd, ok := quickCommands.Load(userID)
+func (db *DB) RecentCommand(userID int64) (string, bool) {
+	cmd, ok := recentCommands.Load(userID)
 	if !ok {
 		return "", false
 	}
@@ -93,12 +93,12 @@ func (db *DB) QuickCommand(userID int64) (string, bool) {
 	return cmd.(string), true
 }
 
-func (db *DB) SetQuickCommand(userID int64, cmd string) {
-	quickCommands.Store(userID, cmd)
+func (db *DB) SetRecentCommand(userID int64, cmd string) {
+	recentCommands.Store(userID, cmd)
 }
 
-func (db *DB) QuickCommandParams(userID int64) ([]string, bool) {
-	params, ok := quickCommandTargets.Load(userID)
+func (db *DB) RecentCommandParams(userID int64) ([]string, bool) {
+	params, ok := recentCommandsTargets.Load(userID)
 	if !ok {
 		return nil, false
 	}
@@ -106,8 +106,8 @@ func (db *DB) QuickCommandParams(userID int64) ([]string, bool) {
 	return params.([]string), true
 }
 
-func (db *DB) SetQuickCommandParams(userID int64, params []string) {
-	quickCommandTargets.Store(userID, params)
+func (db *DB) SetRecentCommandParams(userID int64, params []string) {
+	recentCommandsTargets.Store(userID, params)
 }
 
 func lastKeyboardMsgIDKey(userID int64) string {
