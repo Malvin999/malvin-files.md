@@ -66,19 +66,21 @@ func MoveDueTasksToToday(
 			bot.ShowTodayTasks(nil)
 
 			slog.Debug("Scheduled task moved to today", schedule.Filename, "filename")
-			if len(schedule.Cron) != 0 {
-				runAt := sched.Next(schedule.Cron)
-				userconf.AddToSchedule(schedule.Filename, runAt, schedule.Cron)
-				slog.Debug("Task was rescheduled", "filename", schedule.Filename, "schedule", schedule.Cron, "runAt", runAt)
-				continue
-			}
 
 			err = userconf.LoadOrCreate(userconfPath)
 			if err != nil {
 				return fmt.Errorf("schedule worker: can't load user config before save: %s", err)
 			}
-
 			userconf.DelFromSchedule(schedule.Filename)
+
+			// Schedule a recurring task
+			if len(schedule.Cron) != 0 {
+				scheduledAt := sched.Next(schedule.Cron)
+				userconf.AddToSchedule(schedule.Filename, scheduledAt, schedule.Cron)
+				slog.Debug("Task was rescheduled", "filename", schedule.Filename, "schedule", schedule.Cron, "scheduledAt", scheduledAt)
+				continue
+			}
+
 			err = userconf.Save(userconfPath)
 			if err != nil {
 				return fmt.Errorf("schedule worker: can't save user config: %s", err)
