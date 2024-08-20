@@ -32,7 +32,7 @@ func TestSaveFromTextMsg(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpd(-1, "New task"))
 	r.NoError(err)
 
@@ -55,7 +55,7 @@ func TestSaveFromLongTextMsg(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpd(-1, strings.Repeat("a", 101)))
 	r.NoError(err)
 
@@ -79,7 +79,7 @@ func TestSaveFromTextMsgWithSanitize(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpd(-1, "New task/"))
 	r.NoError(err)
 
@@ -111,7 +111,7 @@ func TestAddMultilineTaskToToday(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpd(-1, "New task\nContent"))
 	r.NoError(err)
 
@@ -135,7 +135,7 @@ func TestAddTaskWithSpecCharsToToday(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpd(-1, "New task\nUrl! http://g.com (Also_text] ##header\n-item1\n-item2\n1+1=2"))
 	r.NoError(err)
 
@@ -171,7 +171,7 @@ func TestSaveFromRegularReply(t *testing.T) {
 	database := db.NewFakeDB()
 	database.SetDirByMsgID(-1, 255, "today")
 	database.SetFilenameByMsgID(-1, 255, "Existing file.md")
-	bot := NewBot(-1, tgram, userFS, database, &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, database, userconfig.NewFakeConfig())
 
 	upd := fake.NewUpd(-1, "Line")
 	upd.ReplyToMessageID = 255
@@ -195,7 +195,7 @@ func TestSaveFromPhotoWithCaption(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	upd := fake.NewUpd(-1, "")
 	upd.PhotoID = "PHOTO_ID"
 	upd.PhotoCaption = "Caption"
@@ -222,7 +222,7 @@ func TestSaveFromPhotoWithLongCaption(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	upd := fake.NewUpd(-1, "")
 	upd.PhotoID = "PHOTO_ID"
 	upd.PhotoCaption = strings.Repeat("a", 101)
@@ -242,7 +242,7 @@ func TestSaveFromPhotoWithSanitizedCaption(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	upd := fake.NewUpd(-1, "")
 	upd.PhotoID = "PHOTO_ID"
 	upd.PhotoCaption = "Caption/"
@@ -277,7 +277,7 @@ func TestSaveFromPhotoWithoutCaption(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	upd := fake.NewUpd(-1, "")
 	upd.PhotoID = "PHOTO_ID"
 	err = bot.Answer(upd)
@@ -316,7 +316,7 @@ func TestSaveFromReplyPhotoWithCaption(t *testing.T) {
 	database := db.NewFakeDB()
 	database.SetDirByMsgID(-1, 255, "today")
 	database.SetFilenameByMsgID(-1, 255, "Existing file.md")
-	bot := NewBot(-1, tgram, userFS, database, &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, database, userconfig.NewFakeConfig())
 
 	upd := fake.NewUpd(-1, "")
 	upd.PhotoID = "PHOTO_ID"
@@ -342,7 +342,7 @@ func TestAddTaskToLater(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("mv", []string{"later", "today", "0824149b387"})))
 	r.NoError(err)
 
@@ -367,7 +367,7 @@ func TestCompleteTask(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("c", []string{"today", "0824149b387"})))
 	r.NoError(err)
 
@@ -409,7 +409,7 @@ func TestToday(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("today", nil)))
 	r.NoError(err)
 
@@ -449,7 +449,7 @@ func TestLater(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("later", nil)))
 	r.NoError(err)
 
@@ -527,7 +527,7 @@ func TestTodayWithMultilineTasks(t *testing.T) {
 	tgram := fake.NewTG()
 
 	upd := fake.NewUpdCmdFake(-1, tg.NewCmd("today", nil))
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(upd)
 	r.NoError(err)
 
@@ -551,7 +551,7 @@ func TestFiles(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("files", nil)))
 	r.NoError(err)
 
@@ -577,7 +577,7 @@ func TestChecklists(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("checklists", nil)))
 	r.NoError(err)
 
@@ -601,7 +601,7 @@ func TestAddSingleItemToChecklist(t *testing.T) {
 	r.NoError(err)
 
 	tgram := fake.NewTG()
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("mv_to_chk", []string{"7b72407ca70", "-checklist1-"})))
 	r.NoError(err)
 
@@ -626,7 +626,7 @@ func TestAddMultipleItemsToChecklist(t *testing.T) {
 	r.NoError(err)
 
 	tgram := fake.NewTG()
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("mv_to_chk", []string{"7b72407ca70", "-checklist1-"})))
 	r.NoError(err)
 
@@ -647,7 +647,7 @@ func TestShowChecklist(t *testing.T) {
 	r.NoError(err)
 
 	tgram := fake.NewTG()
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("checklist", []string{"8d2335b5ff3"})))
 	r.NoError(err)
 
@@ -670,7 +670,7 @@ func TestCompleteItemInChecklist(t *testing.T) {
 	r.NoError(err)
 
 	tgram := fake.NewTG()
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("check_comp", []string{"8d2335b5ff3", "7b72407ca70"})))
 	r.NoError(err)
 
@@ -741,7 +741,7 @@ func makeBot(t *testing.T, conf *userconfig.Config) (*Bot, *fake.TG, *require.As
 }
 
 func TestSettingsMainPanel(t *testing.T) {
-	bot, tgram, r := makeBot(t, &userconfig.DefaultConfig)
+	bot, tgram, r := makeBot(t, userconfig.NewFakeConfig())
 	err := bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("settings", nil)))
 	r.NoError(err)
 	r.Equal("Settings:", tgram.LastSentText)
@@ -1018,7 +1018,7 @@ func TestShowToFileNoDirs(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.showMoveToFile([]string{"345fbd7ab08"})
 	r.NoError(err)
 
@@ -1040,7 +1040,7 @@ func TestShowMoveToFile(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.showMoveToFile([]string{"345fbd7ab08"})
 	r.NoError(err)
 
@@ -1060,7 +1060,7 @@ func TestShow(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.show("text", nil, tg.MarkupHTML)
 	r.NoError(err)
 
@@ -1075,7 +1075,7 @@ func TestShowLongMessage(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.show(strings.Repeat("a", 4096)+"b", nil, tg.MarkupHTML)
 	r.NoError(err)
 
@@ -1094,7 +1094,7 @@ func TestShowLongMessageWithColoredEmojis(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.show(strings.Repeat("a", 4095)+"🟢", nil, tg.MarkupHTML)
 	r.NoError(err)
 
@@ -1109,7 +1109,7 @@ func TestShowLongMessageWithColoredEmoji(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.show(strings.Repeat("a", 4095)+"⚪️", nil, tg.MarkupHTML)
 	r.NoError(err)
 
@@ -1124,7 +1124,7 @@ func TestShowLongMessageSplitByNewLine(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.show(strings.Repeat("a", 4094)+"\nabc", nil, tg.MarkupHTML)
 	r.NoError(err)
 
@@ -1141,7 +1141,7 @@ func TestShowMultilineFile(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("task", []string{fs.DirToday, "501ef2410e2"})))
 	r.NoError(err)
 
@@ -1169,7 +1169,7 @@ func TestMoveToExistingFile(t *testing.T) {
 	r.NoError(err)
 
 	tgram := fake.NewTG()
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	upd := fake.NewUpdCmdFake(-1, tg.NewCmd("mf", []string{"1c8f819d075", "", "501ef2410e2"}))
 	err = bot.Answer(upd)
 	r.NoError(err)
@@ -1200,7 +1200,7 @@ func TestMoveToExistingFileExistingRecord(t *testing.T) {
 	r.NoError(err)
 
 	tgram := fake.NewTG()
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	upd := fake.NewUpdCmdFake(-1, tg.NewCmd("mf", []string{"1c8f819d075", "", "501ef2410e2"}))
 	err = bot.Answer(upd)
 	r.NoError(err)
@@ -1219,7 +1219,7 @@ func TestShowMoveTo(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpd(-1, "New task\nContent"))
 	r.NoError(err)
 
@@ -1247,7 +1247,7 @@ func TestShowScheduleEmpty(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("schedule", nil)))
 	r.NoError(err)
 
@@ -1352,7 +1352,7 @@ func TestAngerInTodayTasks(t *testing.T) {
 
 	tgram := fake.NewTG()
 
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.Answer(fake.NewUpdCmdFake(-1, tg.NewCmd("today", nil)))
 	r.NoError(err)
 
@@ -1374,7 +1374,7 @@ func TestMoveToChecklistSplittable(t *testing.T) {
 	r.NoError(err)
 
 	tgram := fake.NewTG()
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), &userconfig.DefaultConfig)
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), userconfig.NewFakeConfig())
 	err = bot.moveToChecklist([]string{"Item1.md", "-checklist-"})
 	r.NoError(err)
 

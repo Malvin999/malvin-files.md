@@ -57,7 +57,7 @@ type config struct {
 	Language                  string     `json:"language"`
 	HomeCmd                   string     `json:"homeCommand"`
 	MoveToCmds                []string   `json:"moveToCommands"`
-	PomodoroDurationInMinutes float64    `json:"pomodoroDurationInMinutes"`
+	PomodoroDurationInMinutes int64      `json:"pomodoroDurationInMinutes"`
 	Schedules                 []Schedule `json:"schedules"`
 	QuickCmds                 []string   `json:"quickCommands"`
 }
@@ -101,7 +101,7 @@ func (c *Config) SetPomodoroDuration(duration time.Duration) error {
 	if err != nil {
 		return fmt.Errorf("set pomodoro duration: can't read config: %w", err)
 	}
-	conf.PomodoroDurationInMinutes = duration.Minutes()
+	conf.PomodoroDurationInMinutes = int64(duration.Minutes())
 	err = c.write(c.path, conf)
 	if err != nil {
 		return fmt.Errorf("set pomodoro duration: can't write config: %w", err)
@@ -113,7 +113,7 @@ func (c *Config) SetPomodoroDuration(duration time.Duration) error {
 func (c *Config) PomodoroDuration() time.Duration {
 	conf, _ := c.read(c.path)
 
-	return time.Duration(conf.PomodoroDurationInMinutes * float64(time.Minute))
+	return time.Duration(conf.PomodoroDurationInMinutes * int64(time.Minute))
 }
 
 func (c *Config) Schedules() ([]Schedule, error) {

@@ -1,3 +1,4 @@
+// Package db provides an in-memory database for storing user-specific temporary data.
 package db
 
 import (
