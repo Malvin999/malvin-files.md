@@ -264,6 +264,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 
 func (b *Bot) extractCmd(u UpdInterface) (*tg.Cmd, error) {
 	cmd := u.Cmd()
+	fmt.Printf("%v\n", cmd)
 	if cmd != nil {
 		b.db.DelInputExpectation(b.userID)
 
@@ -287,14 +288,14 @@ func (b *Bot) extractCmd(u UpdInterface) (*tg.Cmd, error) {
 
 	for _, shortcutCmd := range b.AllowedShortcutCmds() {
 		// Compile the regular expression to match `/t` as a whole word with spaces around it
-		re := regexp.MustCompile(fmt.Sprintf(`\s*/%s\s*\b`, shortcutCmd))
+		fmt.Printf("%v\n", u.MsgText())
+		re := regexp.MustCompile(fmt.Sprintf(`/%s$|/%s\s+`, shortcutCmd, shortcutCmd))
 
-		loc := re.FindStringIndex(u.MsgText())
-		if loc == nil {
+		if !re.MatchString(u.MsgText()) {
 			continue
 		}
 
-		text := u.MsgText()[:loc[0]] + u.MsgText()[loc[1]:]
+		text := strings.Replace(u.MsgText(), "/"+shortcutCmd, "", 1)
 		text = txt.Ucfirst(strings.TrimSpace(text))
 		shortCmd := tg.NewCmd(shortcutCmd, []string{text})
 

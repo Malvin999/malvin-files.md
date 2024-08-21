@@ -98,6 +98,7 @@ func (fs FS) CreateDirsIfNotExist() error {
 		DirWatch,
 		DirShop,
 		DirHabits,
+		DirJournal,
 		DirInsights,
 	} {
 		userPath := path.Join(fs.rootPath, dir)

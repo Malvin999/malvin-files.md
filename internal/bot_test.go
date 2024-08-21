@@ -1421,3 +1421,39 @@ func TestExtractCmdAtTheEnd(t *testing.T) {
 	r.Equal("t", cmd.Name)
 	r.Equal([]string{"Task for tomorrow"}, cmd.Params)
 }
+
+func TestAddToJournalFromShortcut(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	err = userFS.CreateDirsIfNotExist()
+	r.NoError(err)
+
+	tgram := fake.NewTG()
+
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
+	err = bot.Answer(fake.NewUpd(-1, "/j record"))
+	r.NoError(err)
+
+	files, err := userFS.FilesAndDirs("journal")
+	r.NoError(err)
+	r.Len(files, 1)
+}
+
+func TestAddToJournalFromShortcutRu(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	err = userFS.CreateDirsIfNotExist()
+	r.NoError(err)
+
+	tgram := fake.NewTG()
+
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
+	err = bot.Answer(fake.NewUpd(-1, "/ж запись"))
+	r.NoError(err)
+
+	files, err := userFS.FilesAndDirs("journal")
+	r.NoError(err)
+	r.Len(files, 1)
+}
