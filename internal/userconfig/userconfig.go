@@ -17,6 +17,7 @@ import (
 
 var defaultConfig = config{
 	Language: "en",
+	Timezone: "UTC",
 	HomeCmd:  "today",
 	MoveToCmds: []string{
 		consts.CmdScheduleForTmrw,
@@ -51,6 +52,7 @@ type Schedule struct {
 
 type config struct {
 	Language                  string     `json:"language"`
+	Timezone                  string     `json:"timezone"`
 	HomeCmd                   string     `json:"homeCommand"`
 	MoveToCmds                []string   `json:"moveToCommands"`
 	PomodoroDurationInMinutes int64      `json:"pomodoroDurationInMinutes"`
@@ -79,6 +81,27 @@ func (c *Config) CreateDefaultIfNotExists() error {
 	return nil
 }
 
+func (c *Config) Timezone() *time.Location {
+	conf, _ := c.read(c.filename)
+
+	if conf.Timezone == "" {
+		return time.UTC
+	}
+
+	location, err := time.LoadLocation(conf.Timezone)
+	if err != nil {
+		return time.UTC
+	}
+
+	return location
+}
+
+func (c *Config) PomodoroDuration() time.Duration {
+	conf, _ := c.read(c.filename)
+
+	return time.Duration(conf.PomodoroDurationInMinutes * int64(time.Minute))
+}
+
 func (c *Config) SetPomodoroDuration(duration time.Duration) error {
 	if duration <= 0 || duration > 24*time.Hour {
 		return fmt.Errorf("set pomodoro duration: duration is invalid: %v", duration)
@@ -99,12 +122,6 @@ func (c *Config) SetPomodoroDuration(duration time.Duration) error {
 	}
 
 	return nil
-}
-
-func (c *Config) PomodoroDuration() time.Duration {
-	conf, _ := c.read(c.filename)
-
-	return time.Duration(conf.PomodoroDurationInMinutes * int64(time.Minute))
 }
 
 func (c *Config) Schedules() ([]Schedule, error) {

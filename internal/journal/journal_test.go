@@ -78,7 +78,7 @@ func TestAddRecord(t *testing.T) {
 			r.NoError(err)
 			userFS.Write(fs.DirJournal, "2023.05 May.md", test.md)
 
-			err = AddRecord(userFS, test.record)
+			err = AddRecord(userFS, test.record, time.UTC)
 			r.NoError(err)
 
 			md, err := userFS.Read(fs.DirJournal, "2023.05 May.md")
@@ -101,7 +101,7 @@ func TestAddEmojiNewFile(t *testing.T) {
 		return time.Date(2024, time.January, 1, 1, 0, 0, 0, time.UTC)
 	}
 
-	err = AddEmoji(userFS, "🙂")
+	err = AddEmoji(userFS, "🙂", time.UTC)
 	r.NoError(err)
 
 	content, err := userFS.Read("journal", "2024.01 January.md")
@@ -125,7 +125,7 @@ func TestAddEmojiExistingFile(t *testing.T) {
 		return time.Date(2024, time.January, 1, 1, 0, 0, 0, time.UTC)
 	}
 
-	err = AddEmoji(userFS, "🙂")
+	err = AddEmoji(userFS, "🙂", time.UTC)
 	r.NoError(err)
 
 	content, err := userFS.Read("journal", "2024.01 January.md")
@@ -149,7 +149,7 @@ func TestAddEmojiExistingFileMissingDay(t *testing.T) {
 		return time.Date(2024, time.January, 1, 1, 0, 0, 0, time.UTC)
 	}
 
-	err = AddEmoji(userFS, "🙂")
+	err = AddEmoji(userFS, "🙂", time.UTC)
 	r.NoError(err)
 
 	content, err := userFS.Read("journal", "2024.01 January.md")
@@ -173,7 +173,7 @@ func TestAddMoodEmojiExistingFileExistingEmojis(t *testing.T) {
 		return time.Date(2024, time.January, 1, 1, 0, 0, 0, time.UTC)
 	}
 
-	err = AddEmoji(userFS, "🙂")
+	err = AddEmoji(userFS, "🙂", time.UTC)
 	r.NoError(err)
 
 	content, err := userFS.Read("journal", "2024.01 January.md")
@@ -197,7 +197,7 @@ func TestAddRegularEmojiExistingFileExistingEmojis(t *testing.T) {
 		return time.Date(2024, time.January, 1, 1, 0, 0, 0, time.UTC)
 	}
 
-	err = AddEmoji(userFS, "🎃")
+	err = AddEmoji(userFS, "🎃", time.UTC)
 	r.NoError(err)
 
 	content, err := userFS.Read("journal", "2024.01 January.md")

@@ -724,7 +724,7 @@ func TestBotTodayLabelIcons(t *testing.T) {
 	r.NotContains(label, "🍅")
 }
 
-func makeBot(t *testing.T, conf ConfigInterface) (*Bot, *fake.TG, *require.Assertions) {
+func makeBot(t *testing.T, conf *userconfig.Config) (*Bot, *fake.TG, *require.Assertions) {
 	r := require.New(t)
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
@@ -1352,7 +1352,7 @@ func TestMoveToChecklistSplittable(t *testing.T) {
 	r.ElementsMatch([]string{"Item1.md", "Item2.md"}, items)
 }
 
-func fakeConfig() ConfigInterface {
+func fakeConfig() *userconfig.Config {
 	userFS, _ := fs.NewFS("/-1", afero.NewMemMapFs())
 	cfg := userconfig.NewConfig(userFS, -1, "config.json")
 	cfg.CreateDefaultIfNotExists()

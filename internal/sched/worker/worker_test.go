@@ -296,7 +296,7 @@ func TestMoveDueTasksDoesntMove(t *testing.T) {
 	exists, err := userFS.Exists("archive", "due task.md")
 	r.NoError(err)
 	r.True(exists)
-	
+
 	sc, err = cfg.Schedules()
 	r.NoError(err)
 	r.Len(sc, 1)

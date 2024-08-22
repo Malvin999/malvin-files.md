@@ -16,9 +16,9 @@ var now = time.Now
 
 // AddRecord adds a record for the current day.
 // Creates a file if there's no one for the current month
-func AddRecord(userFS *fs.FS, record string) error {
+func AddRecord(userFS *fs.FS, record string, timezone *time.Location) error {
 	record = strings.TrimSpace(record)
-	journalFilename := todayJournalFilename()
+	journalFilename := todayJournalFilename(timezone)
 	exists, err := userFS.Exists(fs.DirJournal, journalFilename)
 	if err != nil {
 		return err
@@ -37,8 +37,8 @@ func AddRecord(userFS *fs.FS, record string) error {
 		}
 	}
 
-	if !strings.Contains(md, todayHeader()) {
-		md += todayHeader() + "\n"
+	if !strings.Contains(md, todayHeader(timezone)) {
+		md += todayHeader(timezone) + "\n"
 	}
 
 	imgPattern := `(!\[\[.*?\]\]\s+)(.*)`
@@ -46,11 +46,11 @@ func AddRecord(userFS *fs.FS, record string) error {
 	matches := re.FindStringSubmatch(record)
 	if len(matches) > 2 {
 		// If there's an image - place text under the image
-		modifiedText := fmt.Sprintf("%s%s ", matches[1], now().Format("`15:04`"))
+		modifiedText := fmt.Sprintf("%s%s ", matches[1], now().In(timezone).Format("`15:04`"))
 		record = strings.Replace(record, matches[1], modifiedText, 1)
 		record = fmt.Sprintf("%s\n", strings.TrimSpace(record))
 	} else {
-		record = fmt.Sprintf("%s %s\n", now().Format("`15:04`"), record)
+		record = fmt.Sprintf("%s %s\n", now().In(timezone).Format("`15:04`"), record)
 	}
 
 	md += record
@@ -60,19 +60,19 @@ func AddRecord(userFS *fs.FS, record string) error {
 
 // AddEmoji adds an emoji to the current day's record
 // Creates a file if there's no one for the current month
-func AddEmoji(userFS *fs.FS, emoji string) error {
+func AddEmoji(userFS *fs.FS, emoji string, timezone *time.Location) error {
 	if len(emoji) == 0 {
 		return nil
 	}
 
-	journalFilename := todayJournalFilename()
+	journalFilename := todayJournalFilename(timezone)
 	exists, err := userFS.Exists(fs.DirJournal, journalFilename)
 	if err != nil {
 		return err
 	}
 
 	if !exists {
-		md := fmt.Sprintf("%s %s", todayHeader(), emoji)
+		md := fmt.Sprintf("%s %s", todayHeader(timezone), emoji)
 		return userFS.Write(fs.DirJournal, journalFilename, md)
 	}
 
@@ -83,7 +83,7 @@ func AddEmoji(userFS *fs.FS, emoji string) error {
 	md = txt.NormNewLines(md)
 	md = strings.TrimSpace(md)
 
-	todayHeaderRE := regexp.MustCompile(fmt.Sprintf(`(%s) *(.*)`, todayHeader()))
+	todayHeaderRE := regexp.MustCompile(fmt.Sprintf(`(%s) *(.*)`, todayHeader(timezone)))
 	if todayHeaderRE.MatchString(md) {
 		replacement := fmt.Sprintf(`$1 ${2}%s`, emoji)
 		// Prepend day's mood emoji in front of all other emojis
@@ -92,7 +92,7 @@ func AddEmoji(userFS *fs.FS, emoji string) error {
 		}
 		md = todayHeaderRE.ReplaceAllString(md, replacement)
 	} else {
-		md += fmt.Sprintf("\n%s %s", todayHeader(), emoji)
+		md += fmt.Sprintf("\n%s %s", todayHeader(timezone), emoji)
 	}
 
 	err = userFS.Write(fs.DirJournal, journalFilename, md)
@@ -103,10 +103,11 @@ func AddEmoji(userFS *fs.FS, emoji string) error {
 	return nil
 }
 
-func todayJournalFilename() string {
-	return now().Format("2006.01 January.md")
+func todayJournalFilename(timezone *time.Location) string {
+	return now().In(timezone).Format("2006.01 January.md")
 }
 
-func todayHeader() string {
-	return fmt.Sprintf("#### %d %s, %s", now().Day(), now().Format("January"), now().Weekday())
+func todayHeader(timezone *time.Location) string {
+	nowTZ := now().In(timezone)
+	return fmt.Sprintf("#### %d %s, %s", nowTZ.Day(), nowTZ.Format("January"), nowTZ.Weekday())
 }

@@ -13,6 +13,7 @@ import (
 	"zakirullin/stuffbot/internal/fs"
 	"zakirullin/stuffbot/internal/habits"
 	"zakirullin/stuffbot/internal/journal"
+	"zakirullin/stuffbot/internal/userconfig"
 	"zakirullin/stuffbot/pkg/txt"
 )
 
@@ -92,7 +93,9 @@ func habitsServer() {
 				emoji = "⚡️"
 			}
 		}
-		err = journal.AddEmoji(userFS, emoji)
+
+		userConf := userconfig.NewConfig(userFS, userID, config.Config.ConfigFilename)
+		err = journal.AddEmoji(userFS, emoji, userConf.Timezone())
 		if err != nil {
 			w.Write([]byte("can't write journal"))
 		}

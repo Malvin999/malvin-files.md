@@ -89,21 +89,6 @@ type DBInterface interface {
 	SetRecentCommandParams(userID int64, params []string)
 }
 
-type ConfigInterface interface {
-	AddQuickCmd(cmd string) error
-	QuickCmds() ([]string, error)
-	DelQuickCmd(cmd string) error
-	SetPomodoroDuration(duration time.Duration) error
-	PomodoroDuration() time.Duration
-	Schedules() ([]userconfig.Schedule, error)
-	AddToSchedule(filename string, scheduleAt int64, cron string) error
-	DelFromSchedule(filename string, scheduledAt int64) error
-	ShouldSplitChecklist(checklist string) bool
-	AddMoveToCmd(cmd string) error
-	MoveToCmds() ([]string, error)
-	DelMoveToCmd(cmd string) error
-}
-
 // Bot provides commands that can be invoked by a user so to query
 // server files and database. A user can also send all sort of things
 // to bot (texts, photos) - in that case we'd save everything.
@@ -112,7 +97,7 @@ type Bot struct {
 	tg     TGInterface
 	fs     *fs.FS
 	db     DBInterface
-	conf   ConfigInterface
+	conf   *userconfig.Config
 }
 
 type BotPluginInterface interface {
@@ -121,7 +106,7 @@ type BotPluginInterface interface {
 
 var now = time.Now
 
-func NewBot(userID int64, tg TGInterface, fs *fs.FS, db DBInterface, conf ConfigInterface) *Bot {
+func NewBot(userID int64, tg TGInterface, fs *fs.FS, db DBInterface, conf *userconfig.Config) *Bot {
 	botPlugins = append(botPlugins,
 		plugins.NewWorldClockPlugin(userID, tg),
 	)
@@ -1287,7 +1272,7 @@ func (b *Bot) moveToJournal(params []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to move to journal: can't unhash filename: %w", err)
 	}
-	err = journal.AddRecord(b.fs, filename)
+	err = journal.AddRecord(b.fs, filename, b.conf.Timezone())
 	if err != nil {
 		return fmt.Errorf("failed to move to journal: can't add note: %w", err)
 	}
@@ -1303,7 +1288,7 @@ func (b *Bot) addToJournalFromShortcut(params []string) error {
 	content := params[0]
 
 	// TODO change to pass text
-	err := journal.AddRecord(b.fs, content)
+	err := journal.AddRecord(b.fs, content, b.conf.Timezone())
 	if err != nil {
 		return fmt.Errorf("failed to move to journal: can't add note: %w", err)
 	}
@@ -1345,7 +1330,7 @@ func (b *Bot) complete(params []string) error {
 	}
 
 	// We can tolerate failure of writing to journal, since that's not single source of truth
-	_ = journal.AddRecord(b.fs, fmt.Sprintf("✅ %s", fs.Title(filename)))
+	_ = journal.AddRecord(b.fs, fmt.Sprintf("✅ %s", fs.Title(filename)), b.conf.Timezone())
 
 	return b.ShowTodayTasks(nil)
 }
