@@ -10,7 +10,7 @@ import (
 
 	"zakirullin/stuffbot/internal/fs"
 	"zakirullin/stuffbot/internal/userconfig"
-	"zakirullin/stuffbot/pkg/tg/fake"
+	"zakirullin/stuffbot/pkg/tg"
 )
 
 func init() {
@@ -23,7 +23,7 @@ func init() {
 //	r := require.New(t)
 //	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 //	r.NoError(err)
-//	tgram := fake.NewTG()
+//	tgram := tg.NewFakeTG()
 //	redis, err := miniredis.Run()
 //	r.NoError(err)
 //	defer redis.Close()
@@ -64,7 +64,7 @@ func init() {
 // 	err = userFS.CreateUserDirs()
 // 	r.NoError(err)
 
-// 	tgram := fake.NewTG()
+// 	tgram := tg.NewFakeTG()
 // 	redis, err := miniredis.Run()
 // 	r.NoError(err)
 // 	defer redis.Close()
@@ -102,7 +102,7 @@ func init() {
 //	fsBackend := afero.NewMemMapFs()
 //	userFS, err := fs.NewFS("/-1", fsBackend)
 //	r.NoError(err)
-//	tgram := fake.NewTG()
+//	tgram := tg.NewFakeTG()
 //	redis, err := miniredis.Run()
 //	r.NoError(err)
 //	defer redis.Close()
@@ -161,7 +161,7 @@ func TestMoveDueTasksFromArchive(t *testing.T) {
 	r.Equal("", sc[0].Cmd)
 	r.Equal("", sc[0].Cron)
 
-	tgram := fake.NewTG()
+	tgram := tg.NewFakeTG()
 	err = MoveDueTasks("/", "config.json", fsBackend, tgram)
 	r.NoError(err)
 
@@ -203,7 +203,7 @@ func TestMoveDueTasksFromLater(t *testing.T) {
 	r.Equal("", sc[0].Cmd)
 	r.Equal("", sc[0].Cron)
 
-	tgram := fake.NewTG()
+	tgram := tg.NewFakeTG()
 	err = MoveDueTasks("/", "config.json", fsBackend, tgram)
 	r.NoError(err)
 
@@ -245,7 +245,7 @@ func TestMoveDueTasksMovesToLater(t *testing.T) {
 	r.Equal("", sc[0].Cmd)
 	r.Equal("", sc[0].Cron)
 
-	tgram := fake.NewTG()
+	tgram := tg.NewFakeTG()
 	err = MoveDueTasks("/", "config.json", fsBackend, tgram)
 	r.NoError(err)
 
@@ -289,7 +289,7 @@ func TestMoveDueTasksDoesntMove(t *testing.T) {
 	r.Equal("", sc[0].Cmd)
 	r.Equal("", sc[0].Cron)
 
-	tgram := fake.NewTG()
+	tgram := tg.NewFakeTG()
 	err = MoveDueTasks("/", "config.json", fsBackend, tgram)
 	r.NoError(err)
 

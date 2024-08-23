@@ -15,7 +15,7 @@ const (
 	MarkupHTML     = "Html"
 )
 
-// TG is a simple wrapper over Telegram API.
+// FakeTG is a simple wrapper over Telegram API.
 // It can send/edit messages with Keyboard attached.
 type TG struct {
 	api *tgbotapi.BotAPI

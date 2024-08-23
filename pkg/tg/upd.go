@@ -25,7 +25,7 @@ var (
 	}
 )
 
-// Upd is a simple wrapper over Telegram Update object
+// FakeUpd is a simple wrapper over Telegram Update object
 type Upd struct {
 	raw tgbotapi.Update
 }
@@ -209,7 +209,7 @@ func (u *Upd) photoID() (string, bool) {
 		return "", false
 	}
 
-	// Pick the photo with the maximum size, as TG
+	// Pick the photo with the maximum size, as FakeTG
 	// makes some small crops
 	photoSize := 0
 	photoID := ""

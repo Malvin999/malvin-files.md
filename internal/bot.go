@@ -403,7 +403,7 @@ func (b *Bot) saveFromForward(u UpdInterface) error {
 	title = fs.SanitizeFilename(title)
 	filename := fs.Filename(title)
 
-	// When a user forwards message + title we receive 2 updates from TG.
+	// When a user forwards message + title we receive 2 updates from FakeTG.
 	// First we receive title, then the message itself. We must add our
 	// forwarded message to previously saved task (by title).
 	// We do sleep here because previous file might not be saved.
@@ -484,7 +484,7 @@ func (b *Bot) search(u UpdInterface) error {
 	queryID, _ := u.InlineQueryID()
 	nextOffset := strconv.Itoa(u.InlineQueryOffset() + maxInlineResults)
 	err = b.tg.AnswerInlineQuery(queryID, results, inlineResultsCacheTime, nextOffset)
-	// TG library has a bug of unmarshalling sent result, we'll mute that temporarely
+	// FakeTG library has a bug of unmarshalling sent result, we'll mute that temporarely
 	if err != nil && !strings.HasSuffix(err.Error(), "Go value of type tgbotapi.Message") {
 		return fmt.Errorf("inline reply: %w", err)
 	}

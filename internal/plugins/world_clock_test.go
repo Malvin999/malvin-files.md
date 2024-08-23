@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"zakirullin/stuffbot/pkg/tg/fake"
-
 	"github.com/stretchr/testify/require"
+
+	"zakirullin/stuffbot/pkg/tg"
 )
 
 func TestWorldClock_ExecutePlugin_With_Time(t *testing.T) {
 	r := require.New(t)
-	tg := fake.NewTG()
+	tg := tg.NewFakeTG()
 	worldClockPlugin := NewWorldClockPlugin(1, tg)
 
 	result := worldClockPlugin.ExecutePlugin("15.06.2023 15:30:00")
@@ -20,7 +20,7 @@ func TestWorldClock_ExecutePlugin_With_Time(t *testing.T) {
 
 func TestWorldClock_ExecutePlugin_With_Timestamp(t *testing.T) {
 	r := require.New(t)
-	tg := fake.NewTG()
+	tg := tg.NewFakeTG()
 	worldClockPlugin := NewWorldClockPlugin(1, tg)
 
 	result := worldClockPlugin.ExecutePlugin("1686850214")
@@ -29,7 +29,7 @@ func TestWorldClock_ExecutePlugin_With_Timestamp(t *testing.T) {
 
 func TestWorldClock_ExecutePlugin_With_BotCommand(t *testing.T) {
 	r := require.New(t)
-	tg := fake.NewTG()
+	tg := tg.NewFakeTG()
 	worldClockPlugin := NewWorldClockPlugin(1, tg)
 
 	result := worldClockPlugin.ExecutePlugin("cmdShowStart")
@@ -38,7 +38,7 @@ func TestWorldClock_ExecutePlugin_With_BotCommand(t *testing.T) {
 
 func TestWorldClock_parseTimestamp(t *testing.T) {
 	r := require.New(t)
-	tg := fake.NewTG()
+	tg := tg.NewFakeTG()
 	worldClockPlugin := NewWorldClockPlugin(1, tg)
 
 	result, err := worldClockPlugin.parseTimestamp("1686850214")
@@ -49,7 +49,7 @@ func TestWorldClock_parseTimestamp(t *testing.T) {
 
 func TestWorldClock_parseTimestamp_When_InvalidTimestamp(t *testing.T) {
 	r := require.New(t)
-	tg := fake.NewTG()
+	tg := tg.NewFakeTG()
 	worldClockPlugin := NewWorldClockPlugin(1, tg)
 
 	_, err := worldClockPlugin.parseTimestamp("ff6480214")
@@ -58,7 +58,7 @@ func TestWorldClock_parseTimestamp_When_InvalidTimestamp(t *testing.T) {
 
 func TestWorldClock_parseTime(t *testing.T) {
 	r := require.New(t)
-	tg := fake.NewTG()
+	tg := tg.NewFakeTG()
 	worldClockPlugin := NewWorldClockPlugin(1, tg)
 
 	result, err := worldClockPlugin.parseTime("15.06.2023 15:30:00")
@@ -69,7 +69,7 @@ func TestWorldClock_parseTime(t *testing.T) {
 
 func TestWorldClock_parseTime_When_InvalidTime(t *testing.T) {
 	r := require.New(t)
-	tg := fake.NewTG()
+	tg := tg.NewFakeTG()
 	worldClockPlugin := NewWorldClockPlugin(1, tg)
 
 	_, err := worldClockPlugin.parseTime("15_06_2023 15:30:00")
@@ -78,7 +78,7 @@ func TestWorldClock_parseTime_When_InvalidTime(t *testing.T) {
 
 func TestWorldClock_parseDate(t *testing.T) {
 	r := require.New(t)
-	tg := fake.NewTG()
+	tg := tg.NewFakeTG()
 	worldClockPlugin := NewWorldClockPlugin(1, tg)
 
 	result, err := worldClockPlugin.parseDate("15.06.2023")
@@ -89,7 +89,7 @@ func TestWorldClock_parseDate(t *testing.T) {
 
 func TestWorldClock_parseDate_When_InvalidDate(t *testing.T) {
 	r := require.New(t)
-	tg := fake.NewTG()
+	tg := tg.NewFakeTG()
 	worldClockPlugin := NewWorldClockPlugin(1, tg)
 
 	_, err := worldClockPlugin.parseDate("41.06.2023")
@@ -98,7 +98,7 @@ func TestWorldClock_parseDate_When_InvalidDate(t *testing.T) {
 
 func TestWorldClock_buildMessage(t *testing.T) {
 	r := require.New(t)
-	tg := fake.NewTG()
+	tg := tg.NewFakeTG()
 	worldClockPlugin := NewWorldClockPlugin(1, tg)
 
 	time := time.Date(2023, time.June, 15, 15, 30, 0, 0, time.UTC)

@@ -1,8 +1,8 @@
-// Backlink is a small script which is meant to insert backlinks into our notes
+// Package scripts Backlink is a small script which is meant to insert backlinks into our notes
 // You can run it manually on your knowledge base, or you can run it periodically
 // Should be run with working directory set to your root knowledge base
 // WARNING! Cases with "|" in urls aren't handled yet, so duplicate urls possible
-package main
+package scripts
 
 import (
 	"fmt"

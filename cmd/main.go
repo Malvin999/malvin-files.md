@@ -49,7 +49,7 @@ func main() {
 
 	api, err := tgbotapi.NewBotAPI(config.Config.BotAPIToken)
 	if err != nil {
-		panic(fmt.Sprintf("Can't create TG api: %s\n", err))
+		panic(fmt.Sprintf("Can't create FakeTG api: %s\n", err))
 	}
 	telegram := tg.NewTG(api)
 
