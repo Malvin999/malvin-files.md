@@ -40,6 +40,7 @@ const (
 	btnsPerRow             = 3
 	quickBtnsPerRow        = 4
 	maxBtns                = 50
+	maxBtnsInChecklist     = 5 // For -read- and -watch- checklists, so we're less likely to be overwhelmed :)
 	maxInlineResults       = 50
 	maxMsgLength           = 4096 // In UTF-8 characters, skin-tone emojis count as 2
 	maxMsgsToSendAtOnce    = 5    // For lengthy messages
@@ -1072,7 +1073,12 @@ func (b *Bot) showChecklist(params []string) error {
 	}
 	items = fs.SortByCtimeDesc(items)
 	slices.Reverse(items)
-	items = items[max(0, len(items)-maxBtns):]
+
+	maxButtons := maxBtns
+	if checklist == fs.DirRead || checklist == fs.DirWatch {
+		maxButtons = maxBtnsInChecklist
+	}
+	items = items[max(0, len(items)-maxButtons):]
 
 	kb := tg.NewKeyboard(nil)
 	for _, item := range items {
