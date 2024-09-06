@@ -130,7 +130,7 @@ func (b *Bot) Answer(u UpdInterface) error {
 
 	for _, plugin := range botPlugins {
 		if plugin.TryToRun(u.MsgText()) {
-			return b.ShowTodayTasks(nil)
+			return b.ShowToday(nil)
 		}
 	}
 
@@ -205,7 +205,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 	handlers := map[string]func([]string) error{
 		// Direct user commands
 		consts.CmdShowStart:          b.showStart,
-		consts.CmdShowToday:          b.ShowTodayTasks,
+		consts.CmdShowToday:          b.ShowToday,
 		consts.CmdShowLater:          b.showLaterTasks,
 		consts.CmdShowFiles:          b.showFiles,
 		consts.CmdShowChecklists:     b.showChecklists,
@@ -464,7 +464,7 @@ func (b *Bot) addToRepliedFile(replyToMsgID int, newContent string) error {
 	b.db.SetRecentCommand(b.userID, consts.CmdMoveToExistingFile)
 	b.db.SetRecentCommandParams(b.userID, []string{fs.ShortHash(existingFilename), fs.ShortHash(fs.DirToday)})
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) answerSearch(u UpdInterface) error {
@@ -586,13 +586,16 @@ func (b *Bot) show(text string, kb *tg.Keyboard, markup string) error {
 
 func (b *Bot) showMoveTo(params []string) error {
 	filenameHash := params[0]
+	if b.cfg.FilesOnlyMode() {
+		return b.showMoveToFileOrDir([]string{filenameHash})
+	}
 
 	var kb tg.Keyboard
 	userMoveToBtns := b.moveToBtns(filenameHash)
 	if len(userMoveToBtns) == 0 {
 		b.delAllKeyboards()
 
-		return b.ShowTodayTasks(nil)
+		return b.ShowToday(nil)
 	}
 
 	// Add recent command if any
@@ -629,7 +632,11 @@ func (b *Bot) showMoveTo(params []string) error {
 	return nil
 }
 
-func (b *Bot) ShowTodayTasks(_ []string) error {
+func (b *Bot) ShowToday(_ []string) error {
+	if b.cfg.FilesOnlyMode() {
+		return b.showFiles(nil)
+	}
+
 	files, err := b.fs.FilesAndDirs(fs.DirToday)
 	if err != nil {
 		return fmt.Errorf("show list: can't get files in %s dir: %w", fs.DirToday, err)
@@ -743,24 +750,7 @@ func (b *Bot) showFiles(_ []string) error {
 		return fmt.Errorf("show files: can't get dirs: %w", err)
 	}
 
-	dirs := fs.OnlyNoteDirs(fs.OnlyDirs(files))
-	var dirBtns []tg.Btn
-	for _, dir := range dirs {
-		cmd := tg.NewCustomCmd("", []string{dir.Name}, tg.CmdTypeInlineQueryCurrentChat)
-		btn := tg.NewBtn(fmt.Sprintf("%s %s", i18n.Emoji("dir"), dir.Title), cmd)
-		dirBtns = append(dirBtns, btn)
-	}
-
-	var kb tg.Keyboard
-	dirBtnsByRows := slice.Chunk(dirBtns, btnsPerRow)
-	for _, row := range dirBtnsByRows {
-		kb.AddRow(row)
-	}
-	shouldAddSeparator := len(dirs) > 0 && len(files) > 0
-	if shouldAddSeparator {
-		kb.AddRow(tg.NewBtn("-", tg.NewCmd(consts.CmdDoNothing, nil)))
-	}
-
+	// Add files
 	files = fs.ExcludeConfig(fs.OnlyMDFiles(files))
 	var fileBtns []tg.Btn
 	for _, file := range files {
@@ -769,11 +759,32 @@ func (b *Bot) showFiles(_ []string) error {
 		fileBtns = append(fileBtns, btn)
 	}
 	fileBtnsByRows := slice.Chunk(fileBtns, btnsPerRow)
+	var kb tg.Keyboard
+
 	for _, row := range fileBtnsByRows {
 		kb.AddRow(row)
 	}
+	dirs := fs.OnlyNoteDirs(fs.OnlyDirs(files))
+	shouldAddSeparator := len(files) > 0 && len(dirs) > 0
+	if shouldAddSeparator {
+		kb.AddRow(tg.NewBtn("-", tg.NewCmd(consts.CmdDoNothing, nil)))
+	}
 
-	kb.AddRow(tg.NewBtn(i18n.StrToday, tg.NewCmd(consts.CmdShowToday, nil)))
+	// Add dirs
+	var dirBtns []tg.Btn
+	for _, dir := range dirs {
+		cmd := tg.NewCustomCmd("", []string{dir.Name}, tg.CmdTypeInlineQueryCurrentChat)
+		btn := tg.NewBtn(fmt.Sprintf("%s %s", i18n.Emoji("dir"), dir.Title), cmd)
+		dirBtns = append(dirBtns, btn)
+	}
+	dirBtnsByRows := slice.Chunk(dirBtns, btnsPerRow)
+	for _, row := range dirBtnsByRows {
+		kb.AddRow(row)
+	}
+
+	if !b.cfg.FilesOnlyMode() {
+		kb.AddRow(tg.NewBtn(i18n.StrToday, tg.NewCmd(consts.CmdShowToday, nil)))
+	}
 
 	err = b.show(b.tr("📄 Your files:")+wideSpacer, &kb, tg.MarkupHTML)
 	if err != nil {
@@ -949,7 +960,7 @@ func (b *Bot) rename(params []string) error {
 		return fmt.Errorf("move: can't move: %w", err)
 	}
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) showStats(_ []string) error {
@@ -1133,7 +1144,7 @@ func (b *Bot) send(msg string) error {
 func (b *Bot) showStart(_ []string) error {
 	_ = b.send("Welcome!")
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) moveToDir(params []string) error {
@@ -1175,7 +1186,7 @@ func (b *Bot) moveToDir(params []string) error {
 		b.db.SetRecentCommandParams(b.userID, []string{toDirHash, fs.Hash(fs.DirToday)})
 	}
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) moveToNewDir(params []string) error {
@@ -1198,7 +1209,7 @@ func (b *Bot) moveToExistingFile(params []string) error {
 
 	// TODO add test for adding to same file, it seems it is broken (after we added short hash)
 	if newFilenameHash == existingFilenameHash {
-		return b.ShowTodayTasks(nil)
+		return b.ShowToday(nil)
 	}
 
 	existingFilename, err := b.fs.Unhash(fs.DirRoot, existingFilenameHash)
@@ -1236,7 +1247,7 @@ func (b *Bot) moveToExistingFile(params []string) error {
 	b.db.SetRecentCommand(b.userID, consts.CmdMoveToExistingFile)
 	b.db.SetRecentCommandParams(b.userID, []string{fs.ShortHash(existingFilename), fs.ShortHash(fs.DirToday)})
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) moveToChecklist(params []string) error {
@@ -1283,7 +1294,7 @@ func (b *Bot) moveToChecklist(params []string) error {
 	// We can tolerate this
 	_ = b.fs.Del(fs.DirToday, filename)
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) moveToRead(params []string) error {
@@ -1336,7 +1347,7 @@ func (b *Bot) moveToNewFile(params []string) error {
 	b.db.SetRecentCommand(b.userID, consts.CmdMoveToExistingFile)
 	b.db.SetRecentCommandParams(b.userID, []string{fs.ShortHash(newFilenameFromUserInput), fs.ShortHash(fs.DirToday)})
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) moveToNewChecklist(params []string) error {
@@ -1375,7 +1386,7 @@ func (b *Bot) moveToJournal(params []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to move to journal: can't delete note: %w", err)
 	}
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) addToJournalFromShortcut(params []string) error {
@@ -1390,7 +1401,7 @@ func (b *Bot) addToJournalFromShortcut(params []string) error {
 	msg := i18n.Tr("Saved to <b>Journal</b>")
 	_, _ = b.tg.Send(b.userID, msg, nil, tg.MarkupHTML)
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 // TODO add tests
@@ -1420,7 +1431,7 @@ func (b *Bot) addToRecentFileFromShortcut(params []string) error {
 	msg := fmt.Sprintf(i18n.Tr("Added to <b>%s</b>"), fs.Title(existingFilename))
 	_, _ = b.tg.Send(b.userID, msg, nil, tg.MarkupHTML)
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) moveToLater(params []string) error {
@@ -1459,7 +1470,7 @@ func (b *Bot) complete(params []string) error {
 		return b.showLaterTasks(nil)
 	}
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) completeChecklistItem(params []string) error {
@@ -1544,7 +1555,7 @@ func (b *Bot) schedule(params []string) error {
 		return fmt.Errorf("schedule: can't rename file %s: %w", filename, err)
 	}
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) scheduleForTmrw(params []string) error {
@@ -1814,7 +1825,7 @@ func (b *Bot) togglePomodoro(_ []string) error {
 		if err != nil {
 			return fmt.Errorf("toggle pomodoro: failed to show pomodoro hint message %w", err)
 		}
-		return b.ShowTodayTasks(nil)
+		return b.ShowToday(nil)
 	}
 
 	// Create Pomodoro task
@@ -1832,7 +1843,7 @@ func (b *Bot) togglePomodoro(_ []string) error {
 		return fmt.Errorf("toggle pomodoro: failed to show pomodoro hint message %w", err)
 	}
 
-	return b.ShowTodayTasks(nil)
+	return b.ShowToday(nil)
 }
 
 func (b *Bot) showToADayRecurring(params []string) error {

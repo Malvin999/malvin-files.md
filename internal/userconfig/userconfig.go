@@ -18,7 +18,6 @@ import (
 var defaultConfig = config{
 	Language: "en",
 	Timezone: "UTC",
-	HomeCmd:  "today",
 	MoveToCmds: []string{
 		consts.CmdScheduleForTmrw,
 		consts.CmdLater,
@@ -31,6 +30,7 @@ var defaultConfig = config{
 	Schedules:                 []Schedule{},
 	QuickCmds:                 []string{},
 	AllowTwoEmojisInButton:    false,
+	FilesOnlyMode:             false,
 }
 
 var (
@@ -54,12 +54,12 @@ type Schedule struct {
 type config struct {
 	Language                  string     `json:"language"`
 	Timezone                  string     `json:"timezone"`
-	HomeCmd                   string     `json:"homeCommand"`
 	MoveToCmds                []string   `json:"moveToCommands"`
 	PomodoroDurationInMinutes int64      `json:"pomodoroDurationInMinutes"`
 	Schedules                 []Schedule `json:"schedules"`
 	QuickCmds                 []string   `json:"quickCommands"`
 	AllowTwoEmojisInButton    bool       `json:"allowTwoEmojisInButton"`
+	FilesOnlyMode             bool       `json:"filesOnlyMode"`
 }
 
 func NewConfig(userFS *fs.FS, userID int64, filename string) *Config {
@@ -96,6 +96,13 @@ func (c *Config) Timezone() *time.Location {
 	}
 
 	return location
+}
+
+// TODO release test everything in this mode
+func (c *Config) FilesOnlyMode() bool {
+	cfg, _ := c.read(c.filename)
+
+	return cfg.FilesOnlyMode
 }
 
 func (c *Config) PomodoroDuration() time.Duration {

@@ -12,7 +12,6 @@ import (
 const defaultTestCfg = `{
     "language": "en",
     "timezone": "UTC",
-    "homeCommand": "today",
     "moveToCommands": [
         "sc_tmrw",
         "later",
@@ -23,13 +22,13 @@ const defaultTestCfg = `{
     "pomodoroDurationInMinutes": 50,
     "schedules": [],
     "quickCommands": [],
-    "allowTwoEmojisInButton": false
+    "allowTwoEmojisInButton": false,
+    "filesOnlyMode": false
 }`
 
 const timezoneTestCfg = `{
     "language": "en",
     "timezone": "Europe/Nicosia",
-    "homeCommand": "today",
     "moveToCommands": [
         "sc_tmrw",
         "later",
@@ -40,13 +39,13 @@ const timezoneTestCfg = `{
     "pomodoroDurationInMinutes": 50,
     "schedules": [],
     "quickCommands": [],
-    "allowTwoEmojisInButton": false
+    "allowTwoEmojisInButton": false,
+    "filesOnlyMode": false
 }`
 
 const invalidTimezoneTestCfg = `{
     "language": "en",
     "timezone": "invalid/timezone",
-    "homeCommand": "today",
     "moveToCommands": [
         "sc_tmrw",
         "later",
@@ -58,6 +57,7 @@ const invalidTimezoneTestCfg = `{
     "schedules": [],
     "quickCommands": [],
     "allowTwoEmojisInButton": false
+    "filesOnlyMode": false
 }`
 
 func TestCreateDefaultIfNotExists(t *testing.T) {
