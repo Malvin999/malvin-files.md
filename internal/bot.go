@@ -752,7 +752,7 @@ func (b *Bot) showFiles(_ []string) error {
 		return fmt.Errorf("show files: can't get dirs: %w", err)
 	}
 
-	// Add files
+	var kb tg.Keyboard
 	mdFiles := fs.ExcludeConfig(fs.OnlyMDFiles(files))
 	var fileBtns []tg.Btn
 	for _, file := range mdFiles {
@@ -761,15 +761,8 @@ func (b *Bot) showFiles(_ []string) error {
 		fileBtns = append(fileBtns, btn)
 	}
 	fileBtnsByRows := slice.Chunk(fileBtns, btnsPerRow)
-	var kb tg.Keyboard
-
 	for _, row := range fileBtnsByRows {
 		kb.AddRow(row)
-	}
-	dirs := fs.OnlyNoteDirs(fs.OnlyDirs(files))
-	shouldAddSeparator := len(mdFiles) > 0 && len(dirs) > 0
-	if shouldAddSeparator {
-		kb.AddRow(tg.NewBtn("-", tg.NewCmd(consts.CmdDoNothing, nil)))
 	}
 	kb.AddRow(tg.NewBtn(i18n.Tr("🔎 Search"), tg.NewCmd(consts.CmdInlineQuerySearchEveryWhere, nil)))
 
