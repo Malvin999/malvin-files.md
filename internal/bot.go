@@ -1925,8 +1925,9 @@ func (b *Bot) addToFile(filename, content string) error {
 func (b *Bot) showHelp(_ []string) error {
 	msg := strings.Repeat("a", 4090)
 	msg = msg + "<b>aaaaaa</b>"
+	_, err := b.tg.Send(b.userID, msg, nil, tg.MarkupHTML)
 
-	return nil
+	return err
 }
 
 func extractPlainText(u UpdInterface) string {
