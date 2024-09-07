@@ -108,12 +108,7 @@ func FirstWord(str string) string {
 }
 
 // TODO ignore html in code blocks
-func EscapeHTMLInMarkdown(str string) string {
-	// Placeholders for code blocks
-	// First replace ``` to avoid replacing ` inside code blocks
-	str, codePlaceholders := ReplaceWithPlaceholders(str, "(?s)```.*?```", "c0debl0ck")
-	str, inlinePlaceholders := ReplaceWithPlaceholders(str, "`[^`]*`", "inl1ne")
-
+func EscapeHTML(str string) string {
 	// HTML escaping
 	var htmlEscaper = strings.NewReplacer(
 		"&", "&amp;",
@@ -121,10 +116,6 @@ func EscapeHTMLInMarkdown(str string) string {
 		">", "&gt;",
 	)
 	str = htmlEscaper.Replace(str)
-
-	// Restore the code blocks
-	str = RestoreFromPlaceholders(str, codePlaceholders)
-	str = RestoreFromPlaceholders(str, inlinePlaceholders)
 
 	return str
 }
