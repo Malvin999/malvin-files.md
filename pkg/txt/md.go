@@ -151,7 +151,7 @@ func markdown() Parser {
 	}
 }
 
-// Html converts user's markdown to Telegram-supported subset of HTML
+// MDtoHTML converts user's markdown to Telegram-supported subset of HTML
 // Telegram supported tags:
 // <b>bold</b>, <strong>bold</strong>
 // <i>italic</i>, <em>italic</em>
@@ -167,10 +167,10 @@ func markdown() Parser {
 // <pre><code class="language-python">pre-formatted fixed-width code block written in the Python programming language</code></pre>
 // <blockquote>Block quotation started\nBlock quotation continued\nThe last line of the block quotation</blockquote>
 // <blockquote expandable>Expandable block quotation started\nExpandable block quotation continued\nExpandable block quotation continued\nHidden by default part of the block quotation started\nExpandable block quotation continued\nThe last line of the block quotation</blockquote>
-func Html(md string) string {
+func MDtoHTML(md string) string {
 	mdWithoutCode := EscapeHTML(md)
-	mdWithoutCode, inlinePlaceholders := ReplaceWithPlaceholders(md, "`[^`]*`", "inl1ne")
 	mdWithoutCode, codePlaceholders := ReplaceWithPlaceholders(mdWithoutCode, "(?s)```.*?```", "c0debl0ck")
+	mdWithoutCode, inlinePlaceholders := ReplaceWithPlaceholders(mdWithoutCode, "`[^`]*`", "inl1ne")
 	// By this point our markdown is safe to send as HTML via Telegram.
 	// There won't be any issues like "missing closing HTML tag",
 	// for the cases when our markdown has some html tags.
@@ -181,8 +181,8 @@ func Html(md string) string {
 	if len(docs) > 0 {
 		mdWithoutCode = docs[0].consumed
 	}
-	mdWithCode := RestoreFromPlaceholders(mdWithoutCode, inlinePlaceholders)
-	mdWithCode = RestoreFromPlaceholders(mdWithCode, codePlaceholders)
+	mdWithCode := RestoreFromPlaceholders(mdWithoutCode, codePlaceholders)
+	mdWithCode = RestoreFromPlaceholders(mdWithCode, inlinePlaceholders)
 
 	// Covert ` and ``` to HTML tags
 	reCodeBlock := regexp.MustCompile("(?s)```(.*?)```")

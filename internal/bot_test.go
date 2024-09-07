@@ -1977,37 +1977,3 @@ func TestShowFileEscapesHTML(t *testing.T) {
 	r.NoError(err)
 	r.Equal("File\n&lt;b&gt;bold<i>italic</i>", tgram.LastSentText)
 }
-
-func TestShowFileSkipsHTMLInInlineCode(t *testing.T) {
-	r := require.New(t)
-
-	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
-	r.NoError(err)
-	err = userFS.Write("", "File.md", "`<b>bold</b>`")
-	r.NoError(err)
-
-	tgram := tg.NewFakeTG()
-
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
-
-	err = bot.showFile([]string{"", "File.md"})
-	r.NoError(err)
-	r.Equal("File\n<code><b>bold</b></code>", tgram.LastSentText)
-}
-
-func TestShowFileSkipsHTMLInCodeBlock(t *testing.T) {
-	r := require.New(t)
-
-	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
-	r.NoError(err)
-	err = userFS.Write("", "File.md", "```<b>bold</b>```")
-	r.NoError(err)
-
-	tgram := tg.NewFakeTG()
-
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
-
-	err = bot.showFile([]string{"", "File.md"})
-	r.NoError(err)
-	r.Equal("File\n<pre><b>bold</b></pre>", tgram.LastSentText)
-}

@@ -115,9 +115,8 @@ func EscapeHTML(str string) string {
 		"<", "&lt;",
 		">", "&gt;",
 	)
-	str = htmlEscaper.Replace(str)
 
-	return str
+	return htmlEscaper.Replace(str)
 }
 
 // TODO add tests

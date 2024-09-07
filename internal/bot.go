@@ -593,10 +593,10 @@ func (b *Bot) showMD(probablyInvalidMD string, kb *tg.Keyboard) error {
 		lastChunk := textChunks[len(textChunks)-1]
 		textChunks = textChunks[0 : len(textChunks)-1]
 		for _, textChunk := range textChunks {
-			_, _ = b.tg.Send(b.userID, txt.Html(textChunk), nil, tg.MarkupHTML)
+			_, _ = b.tg.Send(b.userID, txt.MDtoHTML(textChunk), nil, tg.MarkupHTML)
 		}
 
-		mid, err := b.tg.Send(b.userID, txt.Html(lastChunk), kb, tg.MarkupHTML)
+		mid, err := b.tg.Send(b.userID, txt.MDtoHTML(lastChunk), kb, tg.MarkupHTML)
 		if err != nil {
 			return fmt.Errorf("show: %w", err)
 		}
@@ -606,7 +606,7 @@ func (b *Bot) showMD(probablyInvalidMD string, kb *tg.Keyboard) error {
 		return nil
 	}
 
-	return b.tg.Edit(b.userID, mid, txt.Html(probablyInvalidMD), kb, tg.MarkupHTML)
+	return b.tg.Edit(b.userID, mid, txt.MDtoHTML(probablyInvalidMD), kb, tg.MarkupHTML)
 }
 
 func (b *Bot) showMoveTo(params []string) error {
@@ -1033,7 +1033,7 @@ func (b *Bot) showMultilineTask(params []string) error {
 	if err != nil {
 		return fmt.Errorf("show task: %w", err)
 	}
-	content = txt.Html(content)
+	content = txt.MDtoHTML(content)
 
 	var moveToBtn tg.Btn
 	btnLabel := i18n.StrMoveToLaterLong
