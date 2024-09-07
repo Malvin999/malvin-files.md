@@ -169,7 +169,7 @@ func markdown() Parser {
 // <blockquote expandable>Expandable block quotation started\nExpandable block quotation continued\nExpandable block quotation continued\nHidden by default part of the block quotation started\nExpandable block quotation continued\nThe last line of the block quotation</blockquote>
 func Html(md string) string {
 	mdWithoutCode, inlinePlaceholders := ReplaceWithPlaceholders(md, "`[^`]*`", "inl1ne")
-	mdWithoutCode, codePlaceholders := ReplaceWithPlaceholders(md, "(?s)```.*?```", "c0debl0ck")
+	mdWithoutCode, codePlaceholders := ReplaceWithPlaceholders(mdWithoutCode, "(?s)```.*?```", "c0debl0ck")
 	mdWithoutCode = EscapeHTMLInMarkdown(mdWithoutCode)
 	// By this point our markdown is safe to send as HTML via Telegram.
 	// There won't be any issues like "missing closing HTML tag",
@@ -184,10 +184,11 @@ func Html(md string) string {
 	mdWithCode := RestoreFromPlaceholders(mdWithoutCode, inlinePlaceholders)
 	mdWithCode = RestoreFromPlaceholders(mdWithCode, codePlaceholders)
 
-	reInlineCode := regexp.MustCompile("`(.*?)`")
-	mdWithCode = reInlineCode.ReplaceAllString(mdWithCode, "<code>$1</code>")
+	// Covert ` and ``` to HTML tags
 	reCodeBlock := regexp.MustCompile("(?s)```(.*?)```")
 	mdWithCode = reCodeBlock.ReplaceAllString(mdWithCode, "<pre>$1</pre>")
+	reInlineCode := regexp.MustCompile("`(.*?)`")
+	mdWithCode = reInlineCode.ReplaceAllString(mdWithCode, "<code>$1</code>")
 
 	return mdWithCode
 }

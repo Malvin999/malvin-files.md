@@ -110,8 +110,9 @@ func FirstWord(str string) string {
 // TODO ignore html in code blocks
 func EscapeHTMLInMarkdown(str string) string {
 	// Placeholders for code blocks
-	str, inlinePlaceholders := ReplaceWithPlaceholders(str, "`[^`]*`", "inl1ne")
+	// First replace ``` to avoid replacing ` inside code blocks
 	str, codePlaceholders := ReplaceWithPlaceholders(str, "(?s)```.*?```", "c0debl0ck")
+	str, inlinePlaceholders := ReplaceWithPlaceholders(str, "`[^`]*`", "inl1ne")
 
 	// HTML escaping
 	var htmlEscaper = strings.NewReplacer(
@@ -122,12 +123,13 @@ func EscapeHTMLInMarkdown(str string) string {
 	str = htmlEscaper.Replace(str)
 
 	// Restore the code blocks
-	str = RestoreFromPlaceholders(str, inlinePlaceholders)
 	str = RestoreFromPlaceholders(str, codePlaceholders)
+	str = RestoreFromPlaceholders(str, inlinePlaceholders)
 
 	return str
 }
 
+// TODO add tests
 func ReplaceWithPlaceholders(str, regex, placeholder string) (string, map[string]string) {
 	re := regexp.MustCompile(regex)
 	placeholders := make(map[string]string)
@@ -135,10 +137,10 @@ func ReplaceWithPlaceholders(str, regex, placeholder string) (string, map[string
 
 	// Function to replace each match with a placeholder
 	result := re.ReplaceAllStringFunc(str, func(match string) string {
-		placeholder := fmt.Sprintf("{{%s_%d}}", placeholder, counter)
-		placeholders[placeholder] = match
+		p := fmt.Sprintf("#%s%d#", placeholder, counter)
+		placeholders[p] = match
 		counter++
-		return placeholder
+		return p
 	})
 
 	return result, placeholders

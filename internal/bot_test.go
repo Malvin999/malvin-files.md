@@ -1975,7 +1975,7 @@ func TestShowFileEscapesHTML(t *testing.T) {
 
 	err = bot.showFile([]string{"", "File.md"})
 	r.NoError(err)
-	r.Equal("File\n&lt;b&gt;bold*italic*", tgram.LastSentText)
+	r.Equal("File\n&lt;b&gt;bold<i>italic</i>", tgram.LastSentText)
 }
 
 func TestShowFileSkipsHTMLInInlineCode(t *testing.T) {
@@ -1992,7 +1992,7 @@ func TestShowFileSkipsHTMLInInlineCode(t *testing.T) {
 
 	err = bot.showFile([]string{"", "File.md"})
 	r.NoError(err)
-	r.Equal("File\n`<b>bold</b>`", tgram.LastSentText)
+	r.Equal("File\n<code><b>bold</b></code>", tgram.LastSentText)
 }
 
 func TestShowFileSkipsHTMLInCodeBlock(t *testing.T) {
@@ -2009,5 +2009,5 @@ func TestShowFileSkipsHTMLInCodeBlock(t *testing.T) {
 
 	err = bot.showFile([]string{"", "File.md"})
 	r.NoError(err)
-	r.Equal("File\n```<b>bold</b>```", tgram.LastSentText)
+	r.Equal("File\n<pre><b>bold</b></pre>", tgram.LastSentText)
 }
