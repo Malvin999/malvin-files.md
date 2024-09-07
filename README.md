@@ -76,9 +76,11 @@ We differentiate the following types of files (with `/` denoting your root folde
 
 ## Performance
 The app is  blazing fast :) If you're afraid of using files or mutexes unnecessarily for performance reasons, take a look at this:  
-Mutex lock/unlock = `25 ns`  
-Read 4K randomly from SSD = `150,000 ns`  
-`1 ms` = `1,000,000 ns`
+```
+Mutex lock/unlock = 25 ns
+Read 4K randomly from SSD = 150,000 ns
+1 ms = 1,000,000 ns
+```
 
 ## ADRs (Architecture Decision Records)
 - We use granular locks (in db, journal, userconfig) instead of one global per user lock so to avoid bottlenecks. Workers might use 3rd party API like ChatGPT, and we don't want to hold user's lock all that time.
