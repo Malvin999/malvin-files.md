@@ -6,6 +6,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestMDtoHTML(t *testing.T) {
+	r := require.New(t)
+
+	md := "### Header\n**bold**\n*italic*"
+	html := MDtoHTML(md)
+
+	r.Equal("<b>Header</b>\n<b>bold</b>\n<i>italic</i>", html)
+}
+
 func TestMDtoHTMLHeader(t *testing.T) {
 	r := require.New(t)
 
