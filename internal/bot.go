@@ -1547,12 +1547,14 @@ func (b *Bot) addToRecentFileOrNoteFromShortcut(params []string) error {
 		return nil
 	}
 
-	existingFilename, err := b.fs.Unhash(fs.DirRoot, args[0])
-	if err != nil {
-		return fmt.Errorf("failed to move to recent file: can't unhash filename: %w", err)
-	}
-
+	var existingFilename string
 	if cmd == consts.CmdMoveToExistingFile {
+		var err error
+		existingFilename, err = b.fs.Unhash(fs.DirRoot, args[0])
+		if err != nil {
+			return fmt.Errorf("failed to move to recent file or note: can't unhash filename: %w", err)
+		}
+
 		err = b.addToFile(fs.DirRoot, existingFilename, content)
 		if err != nil {
 			return fmt.Errorf("failed to move to recent file: can't add note: %w", err)
@@ -1563,6 +1565,10 @@ func (b *Bot) addToRecentFileOrNoteFromShortcut(params []string) error {
 		dir, err := b.fs.Unhash(fs.DirRoot, args[1])
 		if err != nil {
 			return fmt.Errorf("failed to move to recent note: can't unhash dir: %w", err)
+		}
+		existingFilename, err = b.fs.Unhash(fs.DirRoot, args[0])
+		if err != nil {
+			return fmt.Errorf("failed to move to recent file or note: can't unhash filename: %w", err)
 		}
 
 		err = b.addToFile(dir, existingFilename, content)
