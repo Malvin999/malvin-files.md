@@ -524,7 +524,7 @@ func (b *Bot) answerFileRequest(msg string) error {
 
 		// User selects same file, no need to do anything
 		if dir == fs.DirRoot && filename == newFilename {
-			return nil
+			return b.ShowToday(nil)
 		}
 
 		content, err := b.fs.Read(fs.DirRoot, newFilename)
