@@ -512,6 +512,7 @@ func (b *Bot) answerFileRequest(msg string) error {
 	b.delAllKeyboards()
 
 	// TODO add tests
+	// User wants to add his text to a selected file
 	c := b.db.InputExpectation(b.userID)
 	if c != nil {
 		b.db.DelInputExpectation(b.userID)
@@ -520,6 +521,12 @@ func (b *Bot) answerFileRequest(msg string) error {
 		if err != nil {
 			return fmt.Errorf("inline query: can't unhash filename %s: %w", newFilenameHash, err)
 		}
+
+		// User selects same file, no need to do anything
+		if dir == fs.DirRoot && filename == newFilename {
+			return nil
+		}
+
 		content, err := b.fs.Read(fs.DirRoot, newFilename)
 		if err != nil {
 			return fmt.Errorf("inline query: can't read file %s: %w", newFilename, err)
@@ -536,9 +543,9 @@ func (b *Bot) answerFileRequest(msg string) error {
 		if err != nil {
 			return fmt.Errorf("inline query: can't add to file %s: %w", filename, err)
 		}
-	
+
 		// Just an informative message
-		_, _ = b.tg.Send(b.userID, fmt.Sprintf(i18n.Tr("Saved to %s"), fs.Title(filename)), nil, tg.MarkupHTML)
+		_, _ = b.tg.Send(b.userID, fmt.Sprintf(i18n.Tr("Saved to <b>%s</b>"), fs.Title(filename)), nil, tg.MarkupHTML)
 
 		return b.ShowToday(nil)
 	}
