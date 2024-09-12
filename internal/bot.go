@@ -286,9 +286,8 @@ func (b *Bot) extractCmd(u UpdInterface) (*tg.Cmd, error) {
 
 			// TODO extract formatting from tg entities  (adding `recs` to journal have no effect)
 			// it doesn't work for some reason
-			text := extractPlainText(u)
+			text := extractMarkdown(u)
 			text = string(re.ReplaceAll([]byte(text), []byte("")))
-			text = txt.Ucfirst(strings.TrimSpace(text))
 			shortCmd := tg.NewCmd(canonicalCMD, []string{text})
 
 			return &shortCmd, nil
@@ -318,7 +317,7 @@ func (b *Bot) allowedTextCmds() []string {
 }
 
 func (b *Bot) saveFromRegularMsg(u UpdInterface) error {
-	content := extractPlainText(u)
+	content := extractMarkdown(u)
 	title, err := b.extractTitle(content)
 	if err != nil {
 		return fmt.Errorf("save: %w", err)
@@ -393,7 +392,7 @@ func (b *Bot) saveFromPhoto(u UpdInterface) error {
 
 // TODO Add tests
 func (b *Bot) saveFromForward(u UpdInterface) error {
-	content := extractPlainText(u)
+	content := extractMarkdown(u)
 	sanitizedTitle, err := b.extractTitle(content)
 	if err != nil {
 		return fmt.Errorf("save forward: %w", err)
@@ -2084,14 +2083,12 @@ func (b *Bot) addToFile(dir, filename, content string) error {
 
 // TODO release add help
 func (b *Bot) showHelp(_ []string) error {
-	msg := strings.Repeat("a", 4090)
-	msg = msg + "<b>aaaaaa</b>"
-	_, err := b.tg.Send(b.userID, msg, nil, tg.MarkupHTML)
+	_, err := b.tg.Send(b.userID, "Under construction", nil, tg.MarkupHTML)
 
 	return err
 }
 
-func extractPlainText(u UpdInterface) string {
+func extractMarkdown(u UpdInterface) string {
 	content := txt.TelegramEntitiesToMarkdown(u.MsgText(), u.MsgEntities())
 	content = strings.TrimSpace(txt.NormNewLines(content))
 
