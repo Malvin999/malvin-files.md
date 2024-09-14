@@ -299,25 +299,6 @@ func (b *Bot) extractCmd(u UpdInterface) (*tg.Cmd, error) {
 	return nil, nil
 }
 
-func (b *Bot) allowedTextCmds() []string {
-	return []string{
-		consts.CmdShowStart,
-		consts.CmdShowToday,
-		consts.CmdShowLater,
-		consts.CmdShowPostpone,
-		consts.CmdShowFiles,
-		consts.CmdShowRename,
-		consts.CmdShowChecklists,
-		consts.CmdShowStats,
-		consts.CmdShowSchedule,
-		consts.CmdShowMoveFromToday,
-		consts.CmdAddToJournalShortcut,
-		consts.CmdAddToRecentFileShortcut,
-		consts.CmdShowHelp,
-		//"err" TODO,
-	}
-}
-
 func (b *Bot) saveFromRegularMsg(u UpdInterface) error {
 	content := extractMarkdown(u)
 	title, err := b.extractTitle(content)
