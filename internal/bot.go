@@ -1310,7 +1310,15 @@ func (b *Bot) moveToNewDir(params []string) error {
 	filenameHash := params[0]
 	dir := strings.ToLower(params[1])
 
-	err := b.fs.MakeDir(dir)
+	exists, err := b.fs.Exists(fs.DirRoot, dir)
+	if err != nil {
+		return fmt.Errorf("move to new dir: %w", err)
+	}
+	if exists {
+		return b.moveToDir([]string{dir, fs.DirRoot, filenameHash})
+	}
+
+	err = b.fs.MakeDir(dir)
 	if err != nil {
 		return fmt.Errorf("move to new dir: %w", err)
 	}
