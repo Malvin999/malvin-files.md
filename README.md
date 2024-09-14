@@ -12,7 +12,7 @@ An application for your personal stuff:
 
 **Everything is stored as plain local `*.md` files.**  
 
-It works like a regular chat, so it's easier to use because there's less resistance. We're used to sending messages to friends, now we're going to send stuff to the bot.  
+It works like a regular chat, so it's easier to use because there's less resistance. We're used to sending messages to friends, now we can send stuff to the bot.  
 
 When we are focused and distracting information comes in, we want to get rid of it as quickly as possible. To do that, just send whatever is distracting you to the bot. Then choose how you want to save it - as a task, a note, or a journal entry. By default, it will be saved as today's task.  
 
