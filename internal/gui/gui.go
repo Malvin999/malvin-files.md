@@ -83,6 +83,9 @@ func (c *ChatGUI) Send(_ int64, text string, kb *tg.Keyboard, markup string) (in
 		text = txt.SplitLongLines(text, maxCharsPerLine)
 		multilineEntry := widget.NewMultiLineEntry()
 		multilineEntry.Text = text
+		multilineEntry.ScrolledCallback = func(ev *fyne.ScrollEvent) {
+			c.scroll.Scrolled(ev)
+		}
 		multilineEntry.SetMinRowsVisible(strings.Count(text, "\n") + 1)
 		msgContainer = container.New(layout.NewBorderLayout(multilineEntry, btnsContainer, nil, nil))
 		msgContainer.Add(multilineEntry)
