@@ -7,7 +7,7 @@ import (
 )
 
 type BotConfig struct {
-	StorageDir     string `default:"."  envconfig:"STORAGE_DIR"`
+	StorageDir     string `default:"./storage"  envconfig:"STORAGE_DIR"`
 	BotAPIToken    string `required:"true" envconfig:"BOT_API_TOKEN"`
 	ConfigFilename string `default:"config.json"`
 	HabitsHost     string `default:"" envconfig:"HABITS_HOST"`

@@ -1,4 +1,4 @@
-run:
+bot:
 	go run ./cmd/bot
 
 gui:

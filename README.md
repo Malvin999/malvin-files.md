@@ -25,16 +25,16 @@ It works like a regular chat, so it's easier to use because there's less resista
 3) Copy your bot token to `.env` file (see `.env.example`)
 4) Run the bot:
 ```bash
-$ go mod tidy && go run ./cmd/bot
+$ go run ./cmd/bot
 ```
 
-Bot's artifacts can be seen in `storage/<USER_ID>` folder
+Bot's artifacts can be seen in `./storage/<USER_ID>` folder
 
 ## Spin the app up 🚀
 1) Install [Go](https://go.dev/doc/install)
 2) Run the app:
 ```bash
-$ go mod tidy && go run ./cmd/gui
+$ go run ./cmd/gui
 ```
 
 ## File structure
