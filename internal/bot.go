@@ -44,11 +44,11 @@ const (
 	maxBtnsInChecklist     = 5 // For -read- and -watch- checklists, so we're less likely to be overwhelmed :)
 	maxBtnsInMoveTo        = 6
 	maxInlineResults       = 50
-	maxMsgLength           = 4096 // In UTF-8 characters, skin-tone emojis count as 2
+	maxMsgLength           = 4096 // In UTF-8 characters (runes), skin-tone emojis count as 2
 	maxMsgsToSendAtOnce    = 5    // For lengthy messages
-	imgWidth               = 400  // We insert images into *.md files with this width
+	imgWidth               = 400  // We insert images into *.md files with the specified width
 
-	// On mobile buttons shrink to the message width, and sometimes it's too narrow, so we make the message wider
+	// On mobile phones buttons shrink to the message width, and sometimes it's too narrow, so we make the message wider
 	wideSpacer = "<code>            ⁠</code>"
 )
 
