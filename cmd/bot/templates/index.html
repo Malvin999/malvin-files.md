@@ -16,7 +16,7 @@
             margin: 0;
             background-color: #FFFEF0;
             color: #100F0F;
-            font-size: calc(1.5rem + 0.25vw);
+            font-size: calc(1.4rem + 0.25vw);
             font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'IBM Plex Sans', 'Segoe UI', Helvetica, Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
             text-rendering: optimizeLegibility;
@@ -33,9 +33,9 @@
             :root {
                 --wrap-normal: 88vw;
                 --wrap-wide: 100vw;
-                --input-width: 100%
             }
         }
+
 
         heading, content {
             display: block;
@@ -60,12 +60,26 @@
             line-height: var(--line-height);
         }
 
-        @media (max-width: 860px) {
-            :root {
-                --wrap-normal: 88vw;
-            }
+        ul {
+            padding: 0.5rem 0 1rem 1em;
+            margin: 0 0 0 0.5em
         }
 
+        ul>li {
+            padding: 0.15rem 0
+        }
+
+        ul>li::marker {
+            color: #B7B5AC;
+        }
+
+        ul>li::marker {
+            font-size: 85%
+        }
+
+        .muted {
+            color: #6F6E69;
+        }
     </style>
 </head>
 <body>
@@ -79,27 +93,15 @@
             <p>The only thing that matters is your calmness.</p>
             <p>Let's save your mental energy.</p>
             <p>It drains if you keep stuff in your head.</p>
-<!--            <p><strong>What stuff?</strong></p>-->
-
-<!--            <details>-->
-<!--                <summary>Notes, when you have thoughts and ideas</summary>-->
-<!--                <p>Jot down ideas to clear your mind and free up mental space.</p>-->
-<!--            </details>-->
-
-<!--            <details>-->
-<!--                <summary>Tasks, when there's something we have to do</summary>-->
-<!--                <p>Keep track of your to-dos without cluttering your mind.</p>-->
-<!--            </details>-->
-
-<!--            <details>-->
-<!--                <summary>Checklist items, when there's something to buy or read</summary>-->
-<!--                <p>A simple list for what you need to get done, bought, or read.</p>-->
-<!--            </details>-->
-
-<!--            <details>-->
-<!--                <summary>Emotions, when we are stressed or acting out our patterns</summary>-->
-<!--                <p>Capture your feelings to understand them and stay calm.</p>-->
-<!--            </details>-->
+            <p>
+                <span class="muted">What stuff?</span>
+                <ul>
+                    <li>Notes, when you have thoughts and ideas</li>
+                    <li>Tasks you need to do</li>
+                    <li>Items to buy</li>
+                    <li>Emotions, when you are stressed</li>
+                </ul>
+            </p>
         </content>
     </article>
 </main>
