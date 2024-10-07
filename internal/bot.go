@@ -1719,8 +1719,6 @@ func (b *Bot) complete(params []string) error {
 		return fmt.Errorf("complete: can't complete %s: %w", filename, err)
 	}
 
-	b.cfg.DelFromSchedule(filename)
-
 	if dir == fs.DirToday && filename == fs.FilePomodoro {
 		err = b.cfg.AddToSchedule(filename, time.Now().Unix()+int64(b.cfg.PomodoroDuration().Seconds()), "")
 		if err != nil {
