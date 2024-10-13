@@ -8,18 +8,15 @@ test:
 	go test ./...
 
 install:
-	go mod vendor
+	go mod tidy
 
 check:
 	go fmt ./... && go vet ./... && go test ./...
 
 init_server:
 	ssh $(host) "\
-		# Path for user files storage \
 		mkdir -p /app/storage && \
-		# Path for server logs \
 		mkdir -p /var/log/files.md && \
-		# Path for server certificates \
 		mkdir -p /opt/files.md && \
 		chown -R www-data:www-data /app && \
 		chown -R www-data:www-data /var/log/files.md && \

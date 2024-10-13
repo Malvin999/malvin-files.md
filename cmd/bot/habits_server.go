@@ -28,9 +28,6 @@ import (
 //go:embed templates/index.html
 var html string
 
-//go:embed templates/article.html
-var htmlArticle string
-
 //go:embed templates/favicon.ico
 var favicon string
 
@@ -105,11 +102,7 @@ func setupRouter(router *http.ServeMux, logger *log.Logger) {
 	})
 
 	router.HandleFunc("/article", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		_, err := w.Write([]byte(htmlArticle))
-		if err != nil {
-			logger.Printf("failed to write site response: %v", err)
-		}
+		http.Redirect(w, r, "https://minds.md/zakirullin/cognitive", http.StatusFound)
 	})
 
 	router.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
