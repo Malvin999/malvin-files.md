@@ -12,6 +12,8 @@ type Upd struct {
 	IsSentViaBotVal  bool
 	InlineQueryVal   string
 	IsInlineQueryVal bool
+	TimeVal          int
+	HasTimeVal       bool
 }
 
 func NewUpd(userID int64, msg string) *Upd {
@@ -98,5 +100,5 @@ func (u *Upd) MsgID() (int, bool) {
 }
 
 func (u *Upd) Time() (int, bool) {
-	return 0, false
+	return u.TimeVal, u.HasTimeVal
 }

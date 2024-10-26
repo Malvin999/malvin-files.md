@@ -25,14 +25,13 @@ import (
 )
 
 func processUserUpdates(updates <-chan tgbotapi.Update, telegram *tg.TG, infolog *slog.Logger) {
-	for upd := range updates {
-		fmt.Println(upd.UpdateID)
-		u := tg.NewTGUpd(upd)
-		userID := u.UserID()
+	for update := range updates {
+		upd := tg.NewTGUpd(update)
+		userID := upd.UserID()
 
 		var updJSON []byte
-		updJSON, _ = json.Marshal(upd)
-		infolog.Info("Bot update: ", "upd", string(updJSON))
+		updJSON, _ = json.Marshal(update)
+		infolog.Info("Bot update: ", "update", string(updJSON))
 
 		storagePath := config.BotCfg.StorageDir
 		storagePath, err := filepath.Abs(storagePath)
@@ -57,7 +56,7 @@ func processUserUpdates(updates <-chan tgbotapi.Update, telegram *tg.TG, infolog
 		}
 
 		bot := internal.NewBot(userID, telegram, userFS, db.NewDB(), userconf)
-		if err := bot.Answer(u); err != nil {
+		if err := bot.Answer(upd); err != nil {
 			slog.Error("Bot error", "err", err)
 		}
 	}

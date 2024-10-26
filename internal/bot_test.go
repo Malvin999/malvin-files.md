@@ -2860,3 +2860,59 @@ func TestCollapseToMsg(t *testing.T) {
 	}
 	clean()
 }
+
+func TestCollapseForwardedMessages(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+
+	tgram := tg.NewFakeTG()
+
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
+	upd := tg.NewUpd(-1, "First msg")
+	upd.TimeVal = 0
+	upd.HasTimeVal = true
+	err = bot.Answer(upd)
+	r.NoError(err)
+
+	upd = tg.NewUpd(-1, "Second msg")
+	upd.TimeVal = 0
+	upd.HasTimeVal = true
+	err = bot.Answer(upd)
+	r.NoError(err)
+
+	upd = tg.NewUpd(-1, "Third msg")
+	upd.TimeVal = 1
+	upd.HasTimeVal = true
+	err = bot.Answer(upd)
+	r.NoError(err)
+
+	upd = tg.NewUpd(-1, "Fourth msg")
+	upd.TimeVal = 3
+	upd.HasTimeVal = true
+	err = bot.Answer(upd)
+	r.NoError(err)
+
+	files, err := bot.fs.FilesAndDirs("today")
+	r.NoError(err)
+	r.Len(files, 2)
+
+	content, err := bot.fs.Read("today", "First msg.md")
+	r.NoError(err)
+	r.Equal("Second msg\nThird msg", content)
+
+	content, err = bot.fs.Read("today", "Fourth msg.md")
+	r.NoError(err)
+	r.Empty(content)
+
+	// Clean
+	firstMsgFilenames.Range(func(key, value interface{}) bool {
+		firstMsgTimes.Delete(key)
+		return true
+	})
+	firstMsgTimes.Range(func(key, value interface{}) bool {
+		firstMsgTimes.Delete(key)
+		return true
+	})
+}
