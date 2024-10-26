@@ -1149,21 +1149,26 @@ func (b *Bot) showMultilineTask(params []string) error {
 	if err != nil {
 		return fmt.Errorf("show task: %w", err)
 	}
-	// Show MD?
+	// TODO Show MD?
 	content = fmt.Sprintf("**%s**\n%s", fs.Title(filename), content)
 	content = txt.MarkdownToHTML(content)
 
-	var moveToBtn tg.Btn
+	var moveToLaterBtn tg.Btn
 	btnLabel := i18n.StrMoveToLaterLong
 	toDir := fs.DirLater
 	if dir == fs.DirLater {
 		btnLabel = i18n.StrToToday
 		toDir = fs.DirToday
 	}
-	moveToBtn = tg.NewBtn(btnLabel, tg.NewCmd(consts.CmdMoveToExistingDir, []string{toDir, dir, filenameHash}))
+	moveToLaterBtn = tg.NewBtn(btnLabel, tg.NewCmd(consts.CmdMoveToExistingDir, []string{toDir, dir, filenameHash}))
+
+	moveBtn := tg.NewBtn(
+		txt.Emoji(i18n.Emoji("right arrow"), b.tr("Move")),
+		tg.NewCmd(consts.CmdShowMoveTo, []string{filenameHash}),
+	)
 
 	kb := tg.NewKeyboard([]tg.Row{
-		tg.NewRow(moveToBtn),
+		tg.NewRow(moveToLaterBtn, moveBtn),
 		tg.NewRow(
 			tg.NewBtn(i18n.StrBack, tg.NewCmd(dir, []string{dir})),
 			tg.NewBtn(i18n.StrComplete, tg.NewCmd(consts.CmdComplete, []string{dir, filenameHash})),
