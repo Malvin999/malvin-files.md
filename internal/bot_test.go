@@ -677,9 +677,9 @@ func TestChecklists(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	err = userFS.MakeDir("-checklist1-")
+	err = userFS.MakeDir("_checklist1_")
 	r.NoError(err)
-	err = userFS.MakeDir("-checklist2-")
+	err = userFS.MakeDir("_checklist2_")
 	r.NoError(err)
 
 	tgram := tg.NewFakeTG()
@@ -690,8 +690,8 @@ func TestChecklists(t *testing.T) {
 
 	r.Equal("☑️ Checklists", tgram.LastSentText)
 	r.Equal(tg.NewKeyboard([]tg.Row{
-		tg.NewBtn("Checklist1", tg.NewCmd("checklist", []string{"8d2335b5ff3"})),
-		tg.NewBtn("Checklist2", tg.NewCmd("checklist", []string{"8d3625e2e84"})),
+		tg.NewBtn("Checklist1", tg.NewCmd("checklist", []string{"49d872c025c"})),
+		tg.NewBtn("Checklist2", tg.NewCmd("checklist", []string{"8ee0681b01b"})),
 		tg.NewBtn("🏠 Today", tg.NewCmd("today", nil)),
 	},
 	), tgram.LastSentKeyboard)
@@ -748,19 +748,19 @@ func TestShowChecklist(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	err = userFS.MakeDir("-checklist1-")
+	err = userFS.MakeDir("_checklist1_")
 	r.NoError(err)
-	err = userFS.Write("-checklist1-", "Item.md", "")
+	err = userFS.Write("_checklist1_", "Item.md", "")
 	r.NoError(err)
 
 	tgram := tg.NewFakeTG()
 	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
-	err = bot.Answer(tg.NewUpdCmd(-1, tg.NewCmd("checklist", []string{"8d2335b5ff3"})))
+	err = bot.Answer(tg.NewUpdCmd(-1, tg.NewCmd("checklist", []string{"49d872c025c"})))
 	r.NoError(err)
 
 	r.Equal("Checklist1"+wideSpacer, tgram.LastSentText)
 	r.Equal(tg.NewKeyboard([]tg.Row{
-		tg.NewBtn("Item", tg.NewCmd("check_comp", []string{"8d2335b5ff3", "7b72407ca70"})),
+		tg.NewBtn("Item", tg.NewCmd("check_comp", []string{"49d872c025c", "7b72407ca70"})),
 		tg.NewBtn("🏠 Today", tg.NewCmd("today", nil)),
 	},
 	), tgram.LastSentKeyboard)
@@ -771,14 +771,14 @@ func TestCompleteItemInChecklist(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	err = userFS.MakeDir("-checklist1-")
+	err = userFS.MakeDir("_checklist1_")
 	r.NoError(err)
-	err = userFS.Write("-checklist1-", "Item.md", "")
+	err = userFS.Write("_checklist1_", "Item.md", "")
 	r.NoError(err)
 
 	tgram := tg.NewFakeTG()
 	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
-	err = bot.Answer(tg.NewUpdCmd(-1, tg.NewCmd("check_comp", []string{"8d2335b5ff3", "7b72407ca70"})))
+	err = bot.Answer(tg.NewUpdCmd(-1, tg.NewCmd("check_comp", []string{"49d872c025c", "7b72407ca70"})))
 	r.NoError(err)
 
 	r.Equal("Checklist1"+wideSpacer, tgram.LastSentText)
@@ -787,7 +787,7 @@ func TestCompleteItemInChecklist(t *testing.T) {
 	},
 	), tgram.LastSentKeyboard)
 
-	items, err := bot.fs.FilesAndDirs("-checklist1-")
+	items, err := bot.fs.FilesAndDirs("_checklist1_")
 	r.NoError(err)
 	r.Empty(items)
 

@@ -38,14 +38,14 @@ func TestTitleWithSpace(t *testing.T) {
 func TestTitleChecklist(t *testing.T) {
 	r := require.New(t)
 
-	title := Title("-checklist-")
+	title := Title("_checklist_")
 	r.Equal("Checklist", title)
 }
 
 func TestTitleChecklistItem(t *testing.T) {
 	r := require.New(t)
 
-	title := Title("-checklist-item")
+	title := Title("_checklist_item")
 	r.Equal("Item", title)
 }
 
@@ -210,7 +210,7 @@ func TestOnlyChecklists(t *testing.T) {
 	err := fs.Write("today", "a.md", "")
 	r.NoError(err)
 
-	err = fs.MakeDir("-list-")
+	err = fs.MakeDir("_list_")
 	r.NoError(err)
 
 	entries, err := fs.FilesAndDirs("")
@@ -218,7 +218,7 @@ func TestOnlyChecklists(t *testing.T) {
 
 	dirs := OnlyChecklists(entries)
 	r.Len(dirs, 1)
-	r.Equal("-list-", dirs[0].Name)
+	r.Equal("_list_", dirs[0].Name)
 }
 
 func TestFSTouchNew(t *testing.T) {
