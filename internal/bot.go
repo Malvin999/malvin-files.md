@@ -934,7 +934,7 @@ func (b *Bot) showChecklists(_ []string) error {
 	var kb tg.Keyboard
 	for _, checklist := range checklists {
 		cmd := tg.NewCmd(consts.CmdShowChecklist, []string{fs.Hash(checklist.Name)})
-		btn := tg.NewBtn(checklist.Title, cmd)
+		btn := tg.NewBtn(i18n.Emojify(checklist.Title), cmd)
 
 		kb.AddRow(btn)
 	}
