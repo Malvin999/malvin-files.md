@@ -1374,6 +1374,8 @@ func (b *Bot) moveToNewDir(params []string) error {
 	if err != nil {
 		return fmt.Errorf("move to new dir: %w", err)
 	}
+	// Just an informative message
+	_, _ = b.tg.Send(b.userID, fmt.Sprintf(i18n.Tr("Saved to <b>%s</b>"), fs.Title(dir)), nil, tg.MarkupHTML)
 
 	return b.moveToDir([]string{dir, fs.DirRoot, filenameHash})
 }
@@ -1587,15 +1589,28 @@ func (b *Bot) moveToNewFile(params []string) error {
 
 func (b *Bot) moveToNewChecklist(params []string) error {
 	filenameHash := params[0]
-	checklist := params[1]
-	checklist = fs.SanitizeFilename(checklist)
+	supposedName := params[1]
+	supposedName = fs.SanitizeFilename(supposedName)
 
-	//err := b.fs.Write(fs.DirRoot, txt.Ucfirst(checklist), "")
-	//if err != nil {
-	//	return fmt.Errorf("move to new checklist: can't create empty doc: %w", err)
-	//}
+	dir := strings.ToLower(supposedName)
+	dir = fmt.Sprintf("_%s_", dir)
 
-	return b.moveToExistingFile([]string{fs.Hash(checklist), fs.DirRoot, filenameHash})
+	exists, err := b.fs.Exists(fs.DirRoot, dir)
+	if err != nil {
+		return fmt.Errorf("move to new checklist: %w", err)
+	}
+	if exists {
+		return b.moveToDir([]string{dir, fs.DirRoot, filenameHash})
+	}
+
+	err = b.fs.MakeDir(dir)
+	if err != nil {
+		return fmt.Errorf("move to new checklist: %w", err)
+	}
+	// Just an informative message
+	_, _ = b.tg.Send(b.userID, fmt.Sprintf(i18n.Tr("Saved to <b>%s</b>"), fs.Title(supposedName)), nil, tg.MarkupHTML)
+
+	return b.moveToDir([]string{dir, fs.DirRoot, filenameHash})
 }
 
 func (b *Bot) moveToJournal(params []string) error {
