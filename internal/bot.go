@@ -305,8 +305,9 @@ func (b *Bot) extractCmd(u Update) (*tg.Cmd, error) {
 			re := regexp.MustCompile(fmt.Sprintf(`(?i)^%s\s+|\s+%s$`, escapedShortcut, escapedShortcut))
 
 			doesntMatchText := !re.MatchString(u.MsgText())
-			doesntMatchCaption := !re.MatchString(u.Caption())
-			if doesntMatchText && doesntMatchCaption {
+			// TODO handle images
+			//doesntMatchCaption := !re.MatchString(u.Caption())
+			if doesntMatchText {
 				continue
 			}
 
