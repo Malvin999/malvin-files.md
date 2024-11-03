@@ -97,9 +97,9 @@ type Database interface {
 	SetRecentCommand(userID int64, cmd string)
 	RecentCommandParams(userID int64) ([]string, bool)
 	SetRecentCommandParams(userID int64, params []string)
-	AddImageMsgID(userID int64, msgID int)
-	ImageMsgIDs(userID int64) ([]int, bool)
-	DelImageMsgIDs(userID int64)
+	AddPhotoMsgID(userID int64, msgID int)
+	PhotoMsgIDs(userID int64) ([]int, bool)
+	DelPhotoMsgIDs(userID int64)
 }
 
 // Bot provides commands that can be invoked by a user so to query
@@ -708,7 +708,7 @@ func (b *Bot) showMD(probablyInvalidMD string, kb *tg.Keyboard) error {
 			mids, imgErr := b.tg.SendPhotos(b.userID, images)
 			if imgErr == nil {
 				for _, imgMid := range mids {
-					b.db.AddImageMsgID(b.userID, imgMid)
+					b.db.AddPhotoMsgID(b.userID, imgMid)
 				}
 			}
 		}
@@ -1907,12 +1907,12 @@ func (b *Bot) delAllKeyboards() {
 }
 
 func (b *Bot) delAllImages() {
-	mids, hasImageSent := b.db.ImageMsgIDs(b.userID)
+	mids, hasImageSent := b.db.PhotoMsgIDs(b.userID)
 	if !hasImageSent {
 		return
 	}
 
-	b.db.DelImageMsgIDs(b.userID)
+	b.db.DelPhotoMsgIDs(b.userID)
 	for _, mid := range mids {
 		// If we fail to del - user would get a bunch
 		// of keyboards in one chat, which is messy but not critical

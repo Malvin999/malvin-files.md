@@ -17,7 +17,7 @@ var (
 	inputExpectations     sync.Map
 	recentCommands        sync.Map
 	recentCommandsTargets sync.Map
-	sentImageMsgIDs       sync.Map
+	sentPhotoMsgIDs       sync.Map
 )
 
 // DB Do we need a type at all?
@@ -136,19 +136,19 @@ func tmpFilePath(userID int64, name string) string {
 	return fmt.Sprintf("%s/%d.%s", os.TempDir(), userID, name)
 }
 
-func (db *DB) AddImageMsgID(userID int64, msgID int) {
-	key := imageMsgIDKey(userID)
-	if val, ok := sentImageMsgIDs.Load(key); ok {
+func (db *DB) AddPhotoMsgID(userID int64, msgID int) {
+	key := photoMsgIDKey(userID)
+	if val, ok := sentPhotoMsgIDs.Load(key); ok {
 		ids := val.([]int)
-		sentImageMsgIDs.Store(key, append(ids, msgID))
+		sentPhotoMsgIDs.Store(key, append(ids, msgID))
 	} else {
-		sentImageMsgIDs.Store(key, []int{msgID})
+		sentPhotoMsgIDs.Store(key, []int{msgID})
 	}
 }
 
-func (db *DB) ImageMsgIDs(userID int64) ([]int, bool) {
-	key := imageMsgIDKey(userID)
-	val, ok := sentImageMsgIDs.Load(key)
+func (db *DB) PhotoMsgIDs(userID int64) ([]int, bool) {
+	key := photoMsgIDKey(userID)
+	val, ok := sentPhotoMsgIDs.Load(key)
 	if !ok {
 		return nil, false
 	}
@@ -157,11 +157,11 @@ func (db *DB) ImageMsgIDs(userID int64) ([]int, bool) {
 	return ids, true
 }
 
-func (db *DB) DelImageMsgIDs(userID int64) {
-	key := imageMsgIDKey(userID)
-	sentImageMsgIDs.Delete(key)
+func (db *DB) DelPhotoMsgIDs(userID int64) {
+	key := photoMsgIDKey(userID)
+	sentPhotoMsgIDs.Delete(key)
 }
 
-func imageMsgIDKey(userID int64) string {
-	return fmt.Sprintf("%d:sentImageMsgIDs", userID)
+func photoMsgIDKey(userID int64) string {
+	return fmt.Sprintf("%d:sentPhotoMsgIDs", userID)
 }
