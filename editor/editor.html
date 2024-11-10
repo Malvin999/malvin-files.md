@@ -67,6 +67,7 @@
     editor.hmdReadLink = function(path, t) {
         path = path.replace('[', '').replace(']', '');
         let parts = path.split('/');
+        // TODO set current file here as well
         editor.getDoc().setValue(zettel[parts[0]][parts[1] + '.md']);
         setTimeout(function () {
             editor.focus();
@@ -81,7 +82,9 @@
             for (file in zettel[dir]) {
                 fileNode = new TreeNode(file, {expanded: false});
                 fileNode.on('click', function (n, node) {
-                    editor.getDoc().setValue(zettel[node.parent.toString()][node.toString()]);
+                    editor.getDoc().setValue(zettel[node.parent.toString()][node.toString()].content);
+                    editor.currentFolder = node.parent.toString();
+                    editor.currentFile = node.toString();
                     editor.focus();
                     editor.setCursor(editor.lineCount(), 0);
                 });
@@ -175,8 +178,20 @@
                 fileContent = fileContent.replace(/\[\[(.+?)\|.*?\]\]/g, '[[$1]]');
                 const folder = path.split('/').filter(Boolean).join('/');
                 if (!zettel[folder]) zettel[folder] = {};
-                zettel[folder][entry.name] = fileContent;
+                zettel[folder][entry.name] = { content: fileContent, handle: entry };
             }
+        }
+    }
+
+    async function saveFile(folder, filename) {
+        console.log(zettel);
+        const fileData = zettel[folder][filename];
+        if (fileData && fileData.handle) {
+            const writable = await fileData.handle.createWritable();
+            await writable.write(editor.getValue());
+            await writable.close();
+        } else {
+            alert(`Cannot save ${filename}. No file handle found.`);
         }
     }
 
@@ -185,7 +200,17 @@
         const file = await fileHandle.getFile();
         return await file.text();
     }
+
+    document.addEventListener("keydown", function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+            event.preventDefault();
+            const folder = editor.currentFolder;
+            const filename = editor.currentFile;
+            if (folder && filename) saveFile(folder, filename);
+        }
+    });
 </script>
 <button onclick="openDirectory()">Open Zettel Directory</button>
+<button onclick="saveFile(editor.currentFolder, editor.currentFile)">Save Current File</button>
 </body>
 </html>

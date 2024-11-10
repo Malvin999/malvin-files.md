@@ -1,6 +1,6 @@
 zettel = {
     "arch": {
-        "0 Agile architect.md": "# Some really smart words\n![Yes](https://i.imgur.com/sZlktY7.png)\nShould apply rational thinking at all times [[brain/Brain is the most complex object in known universe]]\n\n[[arch/0 Architecture]]",
+        "0 Agile architect.md":"# Some really smart words\n![Yes](https://i.imgur.com/sZlktY7.png)\nShould apply rational thinking at all times [[brain/Brain is the most complex object in known universe]]\n\n[[arch/0 Architecture]]",
         "0 Architecture.md": "\"Significant decisions are architecture, and everything else is design\"\n\nComputer architecture, like other architecture, is the art of determining the needs of the business of a structure and then designing to meet those needs as effectively as possible within economic and technological constraints\n\nПо поводу архитектуры - архитектура это всегда наличие ограничений, которые призваны дать какую-то характеристику.\n\n[[arch/0 Agile architect]]",
     },
     "brain": {
