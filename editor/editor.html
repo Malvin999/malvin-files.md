@@ -169,10 +169,12 @@
                 zettel[entry.name] = {};
                 await loadDirectory(entry, `${path}${entry.name}/`);
             } else if (entry.kind === 'file' && entry.name.endsWith('.md')) {
+                const header = entry.name.replace('.md', '').replace(/^\w/, (c) => c.toUpperCase());
                 const fileContent = await readFile(entry);
+                const fileContentWithHeader = `# ${header}\n\n${fileContent}`;
                 const folder = path.split('/').filter(Boolean).join('/');
                 if (!zettel[folder]) zettel[folder] = {};
-                zettel[folder][entry.name] = fileContent;
+                zettel[folder][entry.name] = fileContentWithHeader;
             }
         }
     }
