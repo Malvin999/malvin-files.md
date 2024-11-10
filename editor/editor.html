@@ -215,8 +215,10 @@
         if (fileData && fileData.handle) {
             let content = editor.getValue();
             const header = filename.replace('.md', '').replace(/^\w/, (c) => c.toUpperCase());
-            const headerRegex = new RegExp(`^\\s*# ${header}`);
-            content = content.replace(headerRegex, "").trimStart();
+            content = content.trimStart();
+            if (content.startsWith(`# ${header}`)) {
+                content = content.slice(`# ${header}`.length).trimStart();
+            }
 
             const writable = await fileData.handle.createWritable();
             await writable.write(content);
