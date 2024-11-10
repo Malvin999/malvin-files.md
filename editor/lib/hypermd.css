@@ -529,6 +529,8 @@
   width: auto;
   max-width: 100%;
   height: auto;
+  display: block;
+  margin: 0 auto;
 }
 .cm-s-hypermd-light img.hmd-image.hmd-image-loading, .cm-s-hypermd-light img.hmd-image.hmd-image-error {
   min-width: 24px;
