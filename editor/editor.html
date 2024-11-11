@@ -329,11 +329,25 @@
 
     function openSearchModal() {
         document.getElementById('goToFile').style.display = 'block';
-        document.getElementById('goToFileInput').focus();
+        const inputField = document.getElementById('goToFileInput');
+        inputField.focus();
 
         searchList = Object.keys(zettel).flatMap(folder =>
             Object.keys(zettel[folder]).map(filename => ({ folder, filename }))
         );
+
+        // Add Enter key listener to open the first result
+        inputField.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                const firstResult = document.getElementById('goToFileResults').querySelector('li');
+                if (firstResult) {
+                    const [folder, filename] = firstResult.getAttribute('data-path').split('/');
+                    showFile(folder, filename);
+                    closeSearchModal();
+                }
+            }
+        });
     }
 
     document.addEventListener('keydown', (event) => {
@@ -423,6 +437,7 @@
         sortedResults.forEach(({ folder, filename }) => {
             const listItem = document.createElement('li');
             listItem.textContent = `${folder}/${filename}`;
+            listItem.setAttribute('data-path', `${folder}/${filename}`);
             listItem.onclick = () => {
                 showFile(folder, filename);
                 closeSearchModal();
