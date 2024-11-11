@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="lib/hypermd.css">
     <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=swap" rel="stylesheet"/>
     <script src="lib/codemirror-go.js"></script>
+    <script src="lib/codemirror-php.js"></script>
 </head>
 <body>
 <div id="editor">
@@ -104,6 +105,7 @@
             console.log(`Auto-saved ${editor.currentFile}`);
         }
     });
+    editor.setOption("viewportMargin", Infinity);
 
     async function getImageUrl(fileHandle) {
         const file = await fileHandle.getFile();

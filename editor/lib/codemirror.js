@@ -8662,7 +8662,7 @@
         signal(this, "refresh", this);
       }),
 
-      refreshCursor: methodOp(function() { // CUSTOMIZED
+      refreshCursor: methodOp(function() { // CUSTOMIZED. We do this partial refresh to avoid flickering when showing tokens via hide-token.js.
         regChange(this);
       }),
 

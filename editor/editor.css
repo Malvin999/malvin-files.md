@@ -175,3 +175,7 @@ a:hover {
 .CodeMirror-foldgutter-folded:after {
     content: "\25B8";
 }
+
+.HyperMD-codeblock-bg {
+    background: var(--color-bg-alt) !important;
+}
