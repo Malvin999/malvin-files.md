@@ -71,11 +71,7 @@ body {
 #editor-content {
     box-sizing: border-box;
     overflow: auto;
-    max-width: var(--wide-width);
-    width: var(--normal-width);
-    margin: 0 auto;
-    flex-grow: 1;
-    padding: 2em 0;
+    width: 100%;
 }
 
 
@@ -147,4 +143,8 @@ a:hover {
 
 #fileList li:hover {
     background-color: #f0f0f0;
+}
+
+.CodeMirror-scroll {
+    padding: 2em calc((100% - var(--normal-width)) / 2);
 }
