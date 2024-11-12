@@ -315,24 +315,22 @@
         editor.getDoc().setValue(content);
         editor.clearHistory();
 
-        const MAX_CHARS_TO_SET_CURSOR = 2000;
-        if (content.length > MAX_CHARS_TO_SET_CURSOR) {
-            return
-        }
-        const lastLine = editor.lastLine();
-        let targetLine = lastLine;
-        for (let i = lastLine; i >= 0; i--) {
-            const lineContent = editor.getLine(i).trim();
-            if (!lineContent.startsWith("[") && (!lineContent.endsWith("]") || !lineContent.endsWith(")"))) {
-                targetLine = i;
-                break;
+        // We need to execute this code after some rendering loop
+        setTimeout(() => {
+            const lastLine = editor.lastLine();
+            let targetLine = lastLine;
+            for (let i = lastLine; i >= 0; i--) {
+                const lineContent = editor.getLine(i).trim();
+                if (!lineContent.startsWith("[") && (!lineContent.endsWith("]") || !lineContent.endsWith(")"))) {
+                    targetLine = i;
+                    break;
+                }
             }
-        }
-        const targetChar = editor.getLine(targetLine).length;
-        editor.setCursor({ line: targetLine, ch: targetChar });
-        editor.setCursor({ line: targetLine, ch: targetChar });
-        editor.scrollTo(null, 0);
-        editor.focus();
+            const targetChar = editor.getLine(targetLine).length;
+            editor.setCursor({ line: targetLine, ch: targetChar });
+            editor.scrollTo(null, 0);
+            editor.focus();
+        }, 100);
     }
 
     async function saveFile() {
