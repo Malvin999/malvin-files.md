@@ -52,19 +52,11 @@
 </div>
 
 <script>
-
-    // var editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
-    //     extraKeys: {"Ctrl-b": "autocomplete"},
-    //     hintOptions: {hint: synonyms},
-    //     mode: "markdown",
-    //     lineNumbers: false,
-    // });
-    // HyperMD.switchToNormal(editor);
     var editor = HyperMD.fromTextArea(document.getElementById("editor-textarea"), {
         mode: "hypermd",
         lineNumbers: false,
         extraKeys: {
-            "Ctrl-Space": "autocomplete",   // Use Ctrl+Space to
+            "Ctrl-Space": "autocomplete",
         },
         hintOptions: {
             hint: CompleteEmoji.createHintFunc()
@@ -80,6 +72,10 @@
 
         if (/^(?!http|https|\[).+\.md$/.test(path)) {
             let parts = path.split('/');
+            if (parts.length === 1) {
+                showFile("", path);
+                return;
+            }
             showFile(parts[0], parts[1]);
             return path;
         }
@@ -95,6 +91,10 @@
     editor.hmdReadLink = async function (path) {
         path = path.replace('[', '').replace(']', '');
         let parts = path.split('/');
+        if (parts.length === 1) {
+            await showFile("", path + '.md');
+            return;
+        }
 
         await showFile(parts[0], parts[1] + '.md');
     };
