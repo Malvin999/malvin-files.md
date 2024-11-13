@@ -339,6 +339,7 @@
             const targetChar = editor.getLine(targetLine).length;
             editor.setCursor({ line: targetLine, ch: targetChar });
             editor.scrollTo(null, 0);
+            // TODO only focus if there's no quick dialogue
             editor.focus();
         }, 100);
     }
