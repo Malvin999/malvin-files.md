@@ -588,8 +588,8 @@ function TreePath(root, node){
 const TreeUtil = {
 	default_leaf_icon: "<span>&#128441;</span>",
 	default_parent_icon: "<span>&#128449;</span>",
-	default_open_icon: "<span>&#9660;</span>",
-	default_close_icon: "<span>&#9654;</span>",
+	default_open_icon: "<svg class=\"tree-icon\"  width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:bx=\"https://boxy-svg.com\"><defs><bx:export><bx:file format=\"svg\"/></bx:export></defs><path d=\"M 2.553 8 L 11.808 17.865 L 21.062 8\" style=\"\"/></svg>",
+	default_close_icon: "<svg class=\"tree-icon\"  width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:bx=\"https://boxy-svg.com\"><defs><bx:export><bx:file format=\"svg\"/></bx:export></defs><path d=\"M 2.553 8 L 11.808 17.865 L 21.062 8\" transform=\"rotate(-90 12 12)\" style=\"\"/></svg>",
 
 	isDOM: function(obj){
 		try {
