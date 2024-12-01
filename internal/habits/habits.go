@@ -152,14 +152,19 @@ func LastWeekHabits(userFS *fs.FS) (map[string]Year, error) {
 		currentDay = currentDay.Add(-24 * time.Hour)
 	}
 
+	existingHabits, err := userFS.FilesAndDirs(fs.DirHabits)
+	if err != nil {
+		return nil, fmt.Errorf("last week habits: can't read existing habits: %w", err)
+	}
+
 	habits := make(map[string]Year)
-	for habit, statuses := range habitsForYear {
-		habits[habit] = make(Year)
+	for _, habit := range existingHabits {
+		habits[habit.Name] = make(Year)
 		for offset := range 7 {
 			yearDay := currentDay.Add(time.Duration(offset) * 24 * time.Hour).YearDay()
-			habits[habit][yearDay] = 0
-			if status, ok := statuses[yearDay]; ok {
-				habits[habit][yearDay] = status
+			habits[habit.Name][yearDay] = 0
+			if status, ok := habitsForYear[habit.Name][yearDay]; ok {
+				habits[habit.Name][yearDay] = status
 			}
 		}
 	}
