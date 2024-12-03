@@ -38,7 +38,7 @@ init_server: # create directories and configuration files on the service
 			echo 'Restart=always' >> /etc/systemd/system/bot.service && \
 			echo 'RestartSec=5' >> /etc/systemd/system/bot.service && \
 			echo 'StandardOutput=append:/app/log' >> /etc/systemd/system/bot.service && \
-			echo 'StandardError=append:/app/log' >> /etc/systemd/system/bot.service && \
+			echo 'StandardError=append:/app/err' >> /etc/systemd/system/bot.service && \
 			echo 'AmbientCapabilities=CAP_NET_BIND_SERVICE' >> /etc/systemd/system/bot.service && \
 			echo '' >> /etc/systemd/system/bot.service && \
 			echo '[Install]' >> /etc/systemd/system/bot.service && \
