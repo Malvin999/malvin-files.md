@@ -51,6 +51,13 @@
                 wrapper.style.width = "100%";
                 wrapper.style.textAlign = "center";
                 wrapper.appendChild(img);
+                wrapper.addEventListener('click', function () {
+                    cm.focus();
+                    const lineNo = from.line;
+                    const lineLength = cm.getLine(lineNo).length;
+                    cm.setCursor({ line: lineNo, ch: lineLength });
+                });
+
                 var marker = cm.markText(from, to, {
                     clearOnEnter: true,
                     collapsed: true,
