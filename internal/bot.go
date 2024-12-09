@@ -2153,7 +2153,7 @@ func (b *Bot) toChecklistKeyboard(filenameHash string) (*tg.Keyboard, error) {
 	if err != nil {
 		return nil, fmt.Errorf("to checklist keyboard: %w", err)
 	}
-	// TODO handle case with zero folders (inline_keyboard is null), for all similar cases
+	// TODO handle case with zero dirs (inline_keyboard is null), for all similar cases
 	dirs = fs.OnlyChecklists(fs.OnlyDirs(dirs))
 
 	kb := tg.NewKeyboard(nil)

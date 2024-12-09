@@ -16,15 +16,9 @@
 //   ]
 // }
 let files = [];
-const allowedFileTypes = [
-    'md',
-    'txt',
-    'png',
-    'jpg',
-    'jpeg',
-    'webp',
-    'gif',
-];
+const allowedFileTypes = ['md', 'txt', 'png', 'jpg', 'jpeg', 'webp', 'gif',];
+const nonTextFolders = ['img'];
+const systemFolders = ["img", "archive", "_read_", "_watch_", "_shop_", "today", "later", "journal", "habits", "triggers", "places", ""];
 
 // HyperMD/Codemirror editor
 let editor = null;
@@ -33,21 +27,16 @@ let focusedItemIndex = -1;
 
 function initEditor(el) {
     editor = HyperMD.fromTextArea(el, {
-        mode: "hypermd",
-        lineNumbers: false,
-        extraKeys: {
+        mode: "hypermd", lineNumbers: false, extraKeys: {
             // "Shift-Space": "autocomplete",
-            'Cmd-[': false,
-            'Cmd-]': false,
-        },
-        hintOptions: {
+            'Cmd-[': false, 'Cmd-]': false,
+        }, hintOptions: {
             hint: CompleteEmoji.createHintFunc(),
             closeCharacters: /$^/,
             closeOnUnfocus: false,
             completeSingle: false,
             alignWithWord: false
-        },
-        hmdFoldEmoji: {
+        }, hmdFoldEmoji: {
             myEmoji: createAutocompleteDict
         }
     });
@@ -93,8 +82,7 @@ function initEditor(el) {
     editor.on("inputRead", async function (cm, change) {
         if (change.text.length === 1 && change.text[0] === '[') {
             editor.showHint({
-                completeSingle: false,
-                updateOnCursorActivity: true,
+                completeSingle: false, updateOnCursorActivity: true,
             })
         }
     })
@@ -135,8 +123,7 @@ function initEditor(el) {
         'Cmd-Y': function (cm) {
             cm.replaceSelection('✅ ');
             cm.focus();
-        },
-        'Cmd-B': function (cm) {
+        }, 'Cmd-B': function (cm) {
             const selectedText = cm.getSelection();
             const isBold = selectedText.startsWith("**") && selectedText.endsWith("**");
 
@@ -150,8 +137,7 @@ function initEditor(el) {
                 cm.setSelection({line: start.line, ch: start.ch}, {line: end.line, ch: end.ch + 4});
             }
             cm.focus();
-        },
-        'Cmd-I': function (cm) {
+        }, 'Cmd-I': function (cm) {
             const selectedText = cm.getSelection();
             const isItalic = selectedText.startsWith("*") && selectedText.endsWith("*");
 
@@ -171,11 +157,8 @@ function initEditor(el) {
 
 function createAutocompleteDict() {
     const dict = {};
-    const ignoredFolders = ["img", "archive", "_read_", "_watch_", "_shop_", "today", "later", "journal", "journal/past", "habits", "triggers", "places", ""];
 
-    Object.keys(files).forEach(folder => {
-        if (ignoredFolders.includes(folder)) return;
-
+    Object.keys(excludeFolders(nonTextFolders)).forEach(folder => {
         Object.keys(files[folder]).forEach(filename => {
             const key = `${filename.replace(/\.md$/, "")}`;
             const filePath = `${filename.replace(/\.md$/, "")}](${folder}/${filename})`;
@@ -269,8 +252,7 @@ async function loadDirectory(dirHandle, path = "", depth = 1) {
                 files[filename] = {};
                 await loadDirectory(entry, folder, depth + 1);
             }
-        } else if (entry.kind === 'file' &&  allowedFileTypes.includes(filename.split('.').pop())
-        ) {
+        } else if (entry.kind === 'file' && allowedFileTypes.includes(filename.split('.').pop())) {
             const folder = path.split('/').filter(Boolean).join('/');
             if (!files[folder]) files[folder] = {};
             let file = await entry.getFile();
@@ -292,12 +274,8 @@ async function loadDirectory(dirHandle, path = "", depth = 1) {
 }
 
 async function showRandomFile() {
-    const ignoredFolders = ["img", "archive", "_read_", "_watch_", "_shop_", "today", "later", "journal", "habits", "triggers", "places", ""];
-
     const allFiles = [];
-    for (let folder in files) {
-        if (ignoredFolders.includes(folder)) continue;
-
+    for (let folder in excludeFolders(systemFolders)) {
         for (let file in files[folder]) {
             allFiles.push({folder, file});
         }
@@ -476,9 +454,7 @@ function loadRecentFiles() {
 
         for (const filename of Object.keys(files[folder])) {
             results.push({
-                folder,
-                filename,
-                lastModified: files[folder][filename].lastModified,
+                folder, filename, lastModified: files[folder][filename].lastModified,
             });
         }
     }
@@ -501,16 +477,11 @@ function filterFiles() {
     list.innerHTML = '';
 
 
-    // TODO get files with ignored img dir
-
-    let ignoredDirs = ['img'];
     let results = [];
     const lowPriorityFolders = ["archive", "_read_", "_watch_", "_shop_", "habits", "triggers", "today", "later"];
 
     // Levenshtein distance
-    for (const folder in files) {
-        if (ignoredDirs.includes(folder)) continue;
-
+    for (const folder in excludeFolders(nonTextFolders)) {
         for (const filename in files[folder]) {
             const potentialMatch = filename.replace(/\.md$/, "");
             let similarityScore = similarity(search, potentialMatch);
@@ -520,9 +491,7 @@ function filterFiles() {
                     similarityScore -= 30;
                 }
                 results.push({
-                    filename: filename,
-                    folder: folder,
-                    score: similarityScore
+                    filename: filename, folder: folder, score: similarityScore
                 });
             }
         }
@@ -541,9 +510,7 @@ function filterFiles() {
             let matchedPercent = (search.length / potentialMatch.length) * 100;
 
             results.push({
-                filename: filename,
-                folder: folder,
-                score: Math.round(matchedPercent)
+                filename: filename, folder: folder, score: Math.round(matchedPercent)
             });
         }
     }
@@ -642,3 +609,15 @@ document.getElementById('goToFile').addEventListener('keydown', (event) => {
         updateFocusedItem(resultsList);
     }
 });
+
+function excludeFolders(excludedFolders) {
+    const filteredFiles = {};
+
+    for (const folder in files) {
+        if (!excludedFolders.includes(folder)) {
+            filteredFiles[folder] = files[folder];
+        }
+    }
+
+    return filteredFiles;
+}

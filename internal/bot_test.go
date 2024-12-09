@@ -2126,7 +2126,7 @@ func TestAnswerSearchShowAllRoot(t *testing.T) {
 	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
 
 	u := tg.NewUpd(-1, "")
-	u.InlineQueryVal = " "
+	u.InlineQueryVal = "File"
 	u.IsInlineQueryVal = true
 
 	err = bot.answerSearch(u)
