@@ -1,8 +1,8 @@
 // Files structure:
 // {
-//   dir: [
+//   "dir": [
 //     {
-//       filename: [
+//       "filename": [
 //         {
 //           content: "File content here...",
 //           lastModified: <timestamp>,
@@ -22,8 +22,23 @@ const systemDirs = ["img", "archive", "_read_", "_watch_", "_shop_", "today", "l
 
 // HyperMD/Codemirror editor
 let editor = null;
-
 let focusedItemIndex = -1;
+
+async function init(el) {
+    initEditor(el);
+    buildSidebar();
+    const savedDirectoryHandle = await getSavedDirectoryHandle();
+    if (savedDirectoryHandle instanceof FileSystemDirectoryHandle) {
+        const permission = await savedDirectoryHandle.queryPermission({mode: 'read'});
+        if (permission !== 'granted') {
+            document.getElementById('welcome').style.display = 'flex';
+        }
+        await loadDirectory(savedDirectoryHandle);
+        await showRandomFile();
+    } else {
+        document.getElementById('welcome').style.display = 'flex';
+    }
+}
 
 function initEditor(el) {
     editor = HyperMD.fromTextArea(el, {
@@ -169,33 +184,9 @@ function createAutocompleteDict() {
     return dict;
 }
 
-async function saveImageToDirectory(file, fileName) {
-    try {
-        let imgDirHandle = await getSavedDirectoryHandle();
-        if (!imgDirHandle) return null;
-
-        // Create a file handle for the image file
-        const fileHandle = await imgDirHandle.getFileHandle(fileName, {create: true});
-        const writable = await fileHandle.createWritable();
-        await writable.write(file);
-        await writable.close();
-
-        console.log("Image saved");
-        return fileHandle;
-    } catch (error) {
-        console.error("Error saving image:", error);
-        return null;
-    }
-}
-
-async function getImageUrl(fileHandle) {
-    const file = await fileHandle.getFile();
-    return URL.createObjectURL(file);
-}
-
 function buildSidebar() {
     let root = new TreeNode("files");
-    for (dir in files) {
+    for (const dir in files) {
         if (dir === '' || dir === 'img') {
             continue;
         }
@@ -288,22 +279,6 @@ async function showFile(dir, filename, saveToHistory = true) {
         // TODO only focus if there's no quick dialogue
         editor.focus();
     }, 100);
-}
-
-async function init(el) {
-    initEditor(el);
-    buildSidebar();
-    const savedDirectoryHandle = await getSavedDirectoryHandle();
-    if (savedDirectoryHandle instanceof FileSystemDirectoryHandle) {
-        const permission = await savedDirectoryHandle.queryPermission({mode: 'read'});
-        if (permission !== 'granted') {
-            document.getElementById('welcome').style.display = 'flex';
-        }
-        await loadDirectory(savedDirectoryHandle);
-        await showRandomFile();
-    } else {
-        document.getElementById('welcome').style.display = 'flex';
-    }
 }
 
 function updateFocusedItem(resultsList) {
@@ -478,8 +453,7 @@ document.addEventListener('keydown', function (event) {
 });
 
 window.addEventListener('popstate', (event) => {
-    // event.preventDefault();
-    const state = event.state; // Get the state object
+    const state = event.state;
     if (state) {
         showFile(state['dir'], state['file'], false);
     }

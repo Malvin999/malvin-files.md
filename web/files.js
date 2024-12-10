@@ -79,3 +79,9 @@ async function saveFile() {
         alert(`Cannot save ${filename}. No file handle found.`);
     }
 }
+
+async function getImageUrl(fileHandle) {
+    const file = await fileHandle.getFile();
+    return URL.createObjectURL(file);
+}
+

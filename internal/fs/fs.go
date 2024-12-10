@@ -533,7 +533,7 @@ func ShortHash(filename string) string {
 func ExcludeChecklists(dirs []File) []File {
 	var newDirs []File
 	for _, dir := range dirs {
-		isChecklist := strings.HasPrefix(dir.Name, "_") && strings.HasSuffix(dir.Name, "_")
+		isChecklist := strings.HasPrefix(dir.Name, "-") && strings.HasSuffix(dir.Name, "-")
 		if isChecklist {
 			continue
 		}
