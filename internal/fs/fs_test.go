@@ -653,6 +653,12 @@ func FuzzWrite(f *testing.F) {
 	f.Add("valid_dir/subdir", "valid_file.md", "Nested content")
 	f.Add("invalid<>|*?dir", "invalid_file.txt", "Invalid dir")
 	f.Add("valid_dir", "file_with_emoji_🀀.txt", "Unicode content")
+	f.Add("../", "file.md", "content")
+	f.Add("../../", "file.md", "content")
+	f.Add("../../../", "file.md", "content")
+	f.Add("dir", "../file.md", "content")
+	f.Add("dir", "../../file.md", "content")
+	f.Add("dir", "../../../file.md", "content")
 
 	f.Fuzz(func(t *testing.T, dir, filename, content string) {
 		filename = filename + ".md"

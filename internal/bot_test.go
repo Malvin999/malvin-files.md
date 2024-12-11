@@ -3422,10 +3422,10 @@ func TestMoveToExistingNote_InvalidHash(t *testing.T) {
 
 func FuzzSaveFromTextMsg(f *testing.F) {
 	seedInputs := []string{
-		"Normal task",             // Typical input
-		"Special char /\\:*?|<>",  // Special characters in filename
-		"Emoji 😃🚀",                // Unicode input
-		strings.Repeat("a", 5000), // Very long input
+		"Normal task",
+		"Special char /\\:*?|<>",
+		"Emoji 😃🚀",
+		strings.Repeat("a", 5000),
 	}
 	for _, input := range seedInputs {
 		f.Add(input)
@@ -3434,6 +3434,9 @@ func FuzzSaveFromTextMsg(f *testing.F) {
 	f.Add("..")
 	f.Add("/today/..md")
 	f.Add("/valid/path")
+	f.Add("../file")
+	f.Add("../../file")
+	f.Add("../../../file")
 
 	f.Fuzz(func(t *testing.T, input string) {
 		if len(strings.TrimSpace(input)) == 0 {
