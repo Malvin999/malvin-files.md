@@ -2,4 +2,4 @@
 .vscode/**
 .idea/**
 **/.DS_Store
-testdata/fuzz/
+/internal/testdata/fuzz
