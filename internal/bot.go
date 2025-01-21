@@ -886,10 +886,8 @@ func (b *Bot) ShowToday(_ []string) error {
 
 	// Adding habits
 	habitsRow := tg.NewRow()
-	userHabits, err := habits.LastWeekHabits(b.fs)
-	if err != nil {
-		return fmt.Errorf("can't show today: %w", err)
-	}
+	// We can tolerate missing habits
+	userHabits, _ := habits.LastWeekHabits(b.fs)
 	_, ok := userHabits[habits.MoodHabit]
 	if ok {
 		delete(userHabits, habits.MoodHabit)
@@ -902,7 +900,9 @@ func (b *Bot) ShowToday(_ []string) error {
 		cmd := tg.NewCmd(consts.CmdCompleteHabit, []string{habit})
 		habitsRow = append(habitsRow, tg.NewBtn(habits.Emoji(b.fs, habit), cmd))
 	}
-	kb.AddRow(habitsRow)
+	if len(habitsRow) > 0 {
+		kb.AddRow(habitsRow)
+	}
 
 	// Adding quick buttons
 	quickBtns := b.quickBtns()
