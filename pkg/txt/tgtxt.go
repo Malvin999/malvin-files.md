@@ -128,7 +128,7 @@ func ExtractTextImgsLinks(text string) (txt string, images []string, links map[s
 			if len(matches) == 2 {
 				content := matches[1]
 				parts := strings.SplitN(content, "|", 2)
-				linkPath := parts[0]
+				linkPath := parts[0] + ".md"
 				linkLabel := strings.TrimSuffix(filepath.Base(linkPath), ".md")
 				links[linkLabel] = linkPath
 			}
@@ -167,7 +167,7 @@ func ExtractTextImgsLinks(text string) (txt string, images []string, links map[s
 		if len(matches) == 2 {
 			content := matches[1]
 			parts := strings.SplitN(content, "|", 2)
-			linkPath := parts[0]
+			linkPath := parts[0] + ".md"
 			linkLabel := strings.TrimSuffix(filepath.Base(linkPath), ".md")
 			links[linkLabel] = linkPath
 

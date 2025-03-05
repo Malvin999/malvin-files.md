@@ -2080,7 +2080,7 @@ func TestInlineRequestFileListRootDirsWithoutSlash(t *testing.T) {
 
 	err = bot.Answer(upd)
 	r.Error(err)
-	r.EqualError(err, "show file: can't unhash '..' in '': cannot unhash, maybe the file is missing")
+	r.EqualError(err, "show file: can't find file: can't unhash '..' in '': cannot unhash, maybe the file is missing")
 }
 
 func TestAnswerSearch(t *testing.T) {

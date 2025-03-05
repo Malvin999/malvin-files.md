@@ -219,7 +219,7 @@ func TestExtractTextImgsLinks_WithMultipleLinks(t *testing.T) {
 }
 
 func TestExtractTextImgsLinks_WithMultipleWikiLinks(t *testing.T) {
-	text := "Multiple links: [[/path/to/doc1.md|Doc1]], [[/path/to/doc2.md|Doc2]]."
+	text := "Multiple links: [[/path/to/doc1|Doc1]], [[/path/to/doc2|Doc2]]."
 
 	resultText, images, links := ExtractTextImgsLinks(text)
 

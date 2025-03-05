@@ -721,7 +721,6 @@ func (b *Bot) showMD(probablyInvalidMD string, kb *tg.Keyboard) error {
 			dir = parts[0]
 			link = parts[1]
 		}
-		link += fs.FileExt
 
 		cmd := tg.NewCmd(consts.CmdShowFile, []string{fs.Hash(dir), fs.Hash(link)})
 		kb.PrependRow(tg.NewRow(tg.NewBtn(txt.Ucfirst(label), cmd)))
@@ -1322,17 +1321,17 @@ func (b *Bot) showFile(params []string) error {
 
 	dir, err := b.fs.Unhash(fs.DirRoot, dirHash)
 	if err != nil {
-		return fmt.Errorf("show file: %w", err)
+		return fmt.Errorf("show file: can't find dir: %w", err)
 	}
 
 	filename, err := b.fs.Unhash(dir, filenameHash)
 	if err != nil {
-		return fmt.Errorf("show file: %w", err)
+		return fmt.Errorf("show file: can't find file: %w", err)
 	}
 
 	content, err := b.fs.Read(dir, filename)
 	if err != nil {
-		return fmt.Errorf("show file: : %w", err)
+		return fmt.Errorf("show file: %w", err)
 	}
 
 	kb := tg.NewKeyboard([]tg.Row{tg.NewBtn(i18n.StrToday, tg.NewCmd(consts.CmdShowToday, nil))})
