@@ -1339,14 +1339,14 @@ func (b *Bot) showFile(params []string) error {
 		return fmt.Errorf("show file: %w", err)
 	}
 
-	kb := tg.NewKeyboard(nil)
-
 	isNotesDir := len(fs.OnlyNoteDirs([]fs.File{{Name: dir}})) > 0
 	hasChannelsToPrint := len(b.cfg.Channels()) > 0
+	var btns []tg.Btn
 	if isNotesDir && hasChannelsToPrint {
-		kb.AddRow(tg.NewBtn(i18n.Tr("🖨 Share"), tg.NewCmd(consts.CmdShare, []string{dirHash, filenameHash})))
+		btns = append(btns, tg.NewBtn(i18n.Tr("🖨 Share"), tg.NewCmd(consts.CmdShare, []string{dirHash, filenameHash})))
 	}
-	kb.AddRow(tg.NewBtn(i18n.StrToday, tg.NewCmd(consts.CmdShowToday, nil)))
+	btns = append(btns, tg.NewBtn(i18n.StrToday, tg.NewCmd(consts.CmdShowToday, nil)))
+	kb := tg.NewKeyboard([]tg.Row{btns})
 
 	md := fmt.Sprintf("**%s**\n\n%s", fs.Title(filename), content)
 	err = b.showMD(md, kb)
@@ -2494,7 +2494,7 @@ func (b *Bot) shareNote(params []string) error {
 		// Sending a gallery of images if there are any
 		if len(images) > 0 {
 			// We tolerate errors with the image gallery for now, text is more important
-			mids, imgErr := b.tg.SendImages(b.userID, images)
+			mids, imgErr := b.tg.SendImages(channel, images)
 			if imgErr == nil {
 				for _, imgMid := range mids {
 					b.db.AddImgMsgID(imgMid)
