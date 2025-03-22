@@ -59,15 +59,24 @@ func getDirectoryTimestamps(rootPath string) (map[string]int64, error) {
 			return nil // Skip files with errors
 		}
 
+		// Skip hidden directories and files (starting with .)
+		base := filepath.Base(path)
+		if strings.HasPrefix(base, ".") && path != realPath {
+			if info.IsDir() {
+				return filepath.SkipDir // Skip the entire directory
+			}
+			return nil // Skip the file
+		}
+
 		// Get the relative path
 		relPath, err := filepath.Rel(realPath, path)
 		if err != nil {
 			return nil
 		}
 
-		// Use empty string for the root directory
-		if relPath == "." {
-			relPath = ""
+		// Use "." for the root directory
+		if relPath == "." || relPath == "" {
+			relPath = "."
 		}
 
 		// For directories, track their timestamp
@@ -85,8 +94,8 @@ func getDirectoryTimestamps(rootPath string) (map[string]int64, error) {
 
 		// For files, only update the parent directory's timestamp if needed
 		dirPath := filepath.Dir(relPath)
-		if dirPath == "." {
-			dirPath = ""
+		if dirPath == "." || dirPath == "" {
+			dirPath = "."
 		}
 
 		modTime := info.ModTime()
@@ -217,7 +226,20 @@ func Sync(w http.ResponseWriter, r *http.Request) {
 	// Now scan for individual files to get their timestamps
 	realStorageDir, _ := filepath.EvalSymlinks(StorageDir)
 	filepath.Walk(realStorageDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
+		if err != nil {
+			return nil
+		}
+
+		// Skip hidden directories and files
+		base := filepath.Base(path)
+		if strings.HasPrefix(base, ".") && path != realStorageDir {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if info.IsDir() {
 			return nil
 		}
 
@@ -323,8 +345,8 @@ func Sync(w http.ResponseWriter, r *http.Request) {
 
 			// Only update the directory timestamp in the response map
 			dirPath := filepath.Dir(fileName)
-			if dirPath == "." {
-				dirPath = ""
+			if dirPath == "." || dirPath == "" {
+				dirPath = "."
 			}
 			serverTimestampsTime[dirPath] = now
 			serverTimestampsUnix[dirPath] = now.Unix()
@@ -345,6 +367,15 @@ func Sync(w http.ResponseWriter, r *http.Request) {
 	err = filepath.Walk(realStorageDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil // Skip files with errors
+		}
+
+		// Skip hidden directories and files
+		base := filepath.Base(path)
+		if strings.HasPrefix(base, ".") && path != realStorageDir {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 
 		// Skip directories and non-markdown files
