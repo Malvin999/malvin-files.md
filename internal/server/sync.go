@@ -100,7 +100,9 @@ func Sync(w http.ResponseWriter, r *http.Request) {
 
 	missingFiles := make([]File, 0)
 	for path, serverTime := range serverTimestamps {
-		requestTime, exists := request.Timestamps[filepath.Base(path)]
+		parts := strings.Split(path, string(os.PathSeparator))
+		dir := parts[0]
+		requestTime, exists := request.Timestamps[dir]
 		if !exists || serverTime > requestTime {
 			missingFiles = append(missingFiles, File{path, 0, false, "content"})
 		}
@@ -145,6 +147,11 @@ func timestamps(rootPath string) (map[string]int64, error) {
 
 		relPath, err := filepath.Rel(realPath, path)
 		if err != nil {
+			return nil
+		}
+
+		// Skip non-markdown files for file processing
+		if !strings.HasSuffix(strings.ToLower(path), ".md") {
 			return nil
 		}
 
