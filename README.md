@@ -23,7 +23,7 @@ It works like a regular chat, so it's easier to use because there's less resista
 `/cmd/bot` - entrypoint for local standalone bot (beta version)  
 `/internal` - bot's code (reused for both telegram/local bots)  
 `/pkg` - various packages   
-`/web` - standalone PWA application for viewing/editing files (alpha version)   
+`/web` - standalone web application for viewing/editing files (alpha version, Chrome only)   
 
 ## Telegram Bot 🤖
 1) Install [Go](https://go.dev/doc/install)
@@ -44,8 +44,7 @@ $ make bot
 ```
 
 ## App 📝
-[app.files.md](https://app.files.md), a standalone application for viewing/editing files, alpha version. Works offline.
-1) Open `/web/app.html`
+[app.files.md](https://app.files.md), is a standalone application for viewing/editing files, alpha version. Works offline. See `/web/app.html` for more details.
 
 `cmd + k` for command palette.  
 `cmd + [` to move back in history, `cmd + ]` to move forward.  

@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -26,7 +25,6 @@ type FileInfo struct {
 	Content      string `json:"content,omitempty"` // Only filled for sync requests
 }
 
-// SyncRequest represents the client's current state with Unix timestamps
 type SyncRequest struct {
 	Timestamps map[string]int64 `json:"timestamps"` // Map of paths to last modified times in Unix format
 }
@@ -163,45 +161,19 @@ func Timestamps(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Sync processes a bulk sync request
 func Sync(w http.ResponseWriter, r *http.Request) {
-	// Auth check is now handled by middleware
-
-	// Only allow POST method
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Parse the multipart form with max 32MB memory
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		if err != http.ErrNotMultipart {
-			log.Printf("Error parsing multipart form: %v", err)
-			http.Error(w, "Error parsing form", http.StatusBadRequest)
-			return
-		}
-	}
-
-	// Parse the timestamps from the form
 	var request SyncRequest
-	timestampsJSON := r.FormValue("timestamps")
-	if timestampsJSON == "" {
-		// If there's no timestamps field, try to parse the whole body as JSON
-		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-			log.Printf("Error decoding request body: %v", err)
-			http.Error(w, "Invalid request format", http.StatusBadRequest)
-			return
-		}
-	} else {
-		// Parse the timestamps JSON
-		if err := json.Unmarshal([]byte(timestampsJSON), &request); err != nil {
-			log.Printf("Error parsing timestamps JSON: %v", err)
-			http.Error(w, "Invalid timestamps JSON", http.StatusBadRequest)
-			return
-		}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		log.Printf("Error parsing request JSON: %v", err)
+		http.Error(w, "Invalid request JSON", http.StatusBadRequest)
+		return
 	}
 
-	// Get current server timestamps
 	serverTimestampsUnix, err := getDirectoryTimestamps(StorageDir)
 	if err != nil {
 		log.Printf("Error getting server timestamps: %v", err)
@@ -209,28 +181,21 @@ func Sync(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert Unix timestamps back to time.Time for internal processing
-	serverTimestampsTime := make(map[string]time.Time)
+	serverTimestamps := make(map[string]time.Time)
 
-	// Only directory timestamps are in the map, but we need to check file timestamps
-	// when processing uploads, so we'll build a more complete map by scanning
-	dirTimestamps := make(map[string]time.Time)
-
-	// First convert the directory timestamps we have
+	serverFileTimestamps := make(map[string]time.Time)
 	for path, unixTime := range serverTimestampsUnix {
 		timeObj := time.Unix(unixTime, 0)
-		serverTimestampsTime[path] = timeObj
-		dirTimestamps[path] = timeObj
+		serverTimestamps[path] = timeObj
+		serverFileTimestamps[path] = timeObj
 	}
 
-	// Now scan for individual files to get their timestamps
 	realStorageDir, _ := filepath.EvalSymlinks(StorageDir)
 	filepath.Walk(realStorageDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
 
-		// Skip hidden directories and files
 		base := filepath.Base(path)
 		if strings.HasPrefix(base, ".") && path != realStorageDir {
 			if info.IsDir() {
@@ -243,7 +208,7 @@ func Sync(w http.ResponseWriter, r *http.Request) {
 			return nil
 		}
 
-		// Only process markdown files
+		// TODO add config
 		if !strings.HasSuffix(strings.ToLower(path), ".md") {
 			return nil
 		}
@@ -253,120 +218,22 @@ func Sync(w http.ResponseWriter, r *http.Request) {
 			return nil
 		}
 
-		// Store the file's timestamp for conflict detection
-		serverTimestampsTime[relPath] = info.ModTime()
+		serverTimestamps[relPath] = info.ModTime()
 
 		return nil
 	})
 
-	// Process any uploaded files if this is a multipart form
-	if r.MultipartForm != nil {
-		for fileName, fileHeaders := range r.MultipartForm.File {
-			// Skip the timestamps field
-			if fileName == "timestamps" {
-				continue
-			}
-
-			if len(fileHeaders) == 0 {
-				continue
-			}
-
-			// Process the first file (ignore any duplicates)
-			file, err := fileHeaders[0].Open()
-			if err != nil {
-				log.Printf("Error opening uploaded file %s: %v", fileName, err)
-				continue
-			}
-
-			// Read the file content
-			content, err := io.ReadAll(file)
-			file.Close()
-			if err != nil {
-				log.Printf("Error reading uploaded file %s: %v", fileName, err)
-				continue
-			}
-
-			// Get the client's base timestamp for this file
-			clientTimestamp := time.Time{}
-			if clientUnixTime, exists := request.Timestamps[fileName]; exists {
-				clientTimestamp = time.Unix(clientUnixTime, 0)
-			}
-
-			// Check if we need to handle a conflict
-			needsMerge := false
-			existingContent := ""
-
-			// Resolve the symlink path
-			realStorageDir, err := filepath.EvalSymlinks(StorageDir)
-			if err != nil {
-				realStorageDir = StorageDir
-			}
-
-			// Check if the file exists on the server and has been modified
-			localPath := filepath.Join(realStorageDir, fileName)
-			if serverTime, exists := serverTimestampsTime[fileName]; exists {
-				if !clientTimestamp.IsZero() && serverTime.After(clientTimestamp) {
-					// File exists and has been modified since the client's version
-					needsMerge = true
-
-					// Read the existing content
-					existingBytes, err := os.ReadFile(localPath)
-					if err == nil {
-						existingContent = string(existingBytes)
-					}
-				}
-			}
-
-			// Apply merge strategy if needed
-			finalContent := content
-			if needsMerge {
-				// Simple merge: append client content after server content with a conflict marker
-				mergedContent := fmt.Sprintf("%s\n\n==== CONFLICT (Server changes above, Client changes below) ====\n\n%s",
-					existingContent, string(content))
-				finalContent = []byte(mergedContent)
-			}
-
-			// Ensure the directory exists
-			dir := filepath.Dir(localPath)
-			if err := os.MkdirAll(dir, 0755); err != nil {
-				log.Printf("Error creating directory for %s: %v", fileName, err)
-				continue
-			}
-
-			// Write the file
-			if err := os.WriteFile(localPath, finalContent, 0644); err != nil {
-				log.Printf("Error writing file %s: %v", fileName, err)
-				continue
-			}
-
-			// Update the file timestamp in our internal map
-			now := time.Now()
-			serverTimestampsTime[fileName] = now
-
-			// Only update the directory timestamp in the response map
-			dirPath := filepath.Dir(fileName)
-			if dirPath == "." || dirPath == "" {
-				dirPath = "."
-			}
-			serverTimestampsTime[dirPath] = now
-			serverTimestampsUnix[dirPath] = now.Unix()
-		}
-	}
-
-	// Find files that need to be sent to the client
 	filesToSync := make([]FileInfo, 0)
 
-	// Resolve the symlink if needed
 	realStorageDir, err = filepath.EvalSymlinks(StorageDir)
 	if err != nil {
 		log.Printf("Warning: Could not resolve symlink: %v. Using original path.", err)
 		realStorageDir = StorageDir
 	}
 
-	// Walk through all server files
 	err = filepath.Walk(realStorageDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil // Skip files with errors
+			return nil
 		}
 
 		// Skip hidden directories and files
@@ -389,7 +256,6 @@ func Sync(w http.ResponseWriter, r *http.Request) {
 			return nil
 		}
 
-		// Check if the client needs this file
 		clientUnixTime, clientHasFile := request.Timestamps[relPath]
 		clientTime := time.Time{}
 		if clientHasFile {
@@ -423,7 +289,6 @@ func Sync(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build and send the response
 	response := SyncResponse{
 		Files:      filesToSync,
 		Timestamps: serverTimestampsUnix,
