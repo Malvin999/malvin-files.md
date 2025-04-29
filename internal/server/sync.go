@@ -20,8 +20,8 @@ const (
 
 type File struct {
 	Path         string `json:"path"`
-	LastModified int64  `json:"last_modified"`
-	IsDir        bool   `json:"is_directory"`
+	LastModified int64  `json:"lastModified"`
+	IsDir        bool   `json:"isDir"`
 	Content      string `json:"content,omitempty"`
 }
 
@@ -88,10 +88,8 @@ func Timestamps(w http.ResponseWriter, r *http.Request) {
 	// Return the timestamps
 	response := struct {
 		Timestamps map[string]int64 `json:"timestamps"`
-		ServerTime int64            `json:"server_time"`
 	}{
 		Timestamps: timestamps,
-		ServerTime: time.Now().Unix(),
 	}
 
 	w.Header().Set("Content-Type", "application/json")

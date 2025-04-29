@@ -63,6 +63,7 @@ async function syncWithServer() {
 
         const server = await response.json();
         for (const fileInfo of server.files) {
+            console.log(`Syncing file: ${fileInfo.path}`);
             const { path, content, last_modified } = fileInfo;
 
             let dir, filename;
@@ -95,7 +96,7 @@ async function syncWithServer() {
             if (!filesMetadata['files'][dir]) filesMetadata['files'][dir] = {};
             filesMetadata['files'][dir][filename] = {
                 hash: hash,
-                lastModified: last_modified || Date.now()
+                lastModified: lastModified
             };
         }
         filesMetadata['timestamps'] = server.timestamps;

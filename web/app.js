@@ -766,7 +766,7 @@ document.addEventListener('mousedown', (event) => {
 window.addEventListener("focus", async () => {
     const savedDirectoryHandle = await getSavedDirectoryHandle();
     files = await loadFiles(savedDirectoryHandle);
-    console.log("files loaded");
+    console.log("Files loaded");
     syncWithServer()
     console.log("Sync completed");
 });
