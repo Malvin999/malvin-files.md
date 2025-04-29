@@ -27,6 +27,9 @@ import (
 
 // TODO release graceful shutdown etc
 func Serve(habitsHost, appHost, certDir, logFilename, token string) {
+	// TODO fix
+	AuthToken = token
+
 	autocertManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(habitsHost, appHost),
