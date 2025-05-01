@@ -85,21 +85,21 @@ async function syncWithServer() {
                 filename = path;
             }
 
-            if (!files[dir]) files[dir] = {};
+            // if (!files[dir]) files[dir] = {};
 
-            if (!files[dir][filename] || !files[dir][filename].handle) {
-                files[dir][filename] = {
-                    path: path,
-                    content: content,
-                    lastModified: lastModified,
-                };
-            } else {
-                // For files with handles, we would write to the file
-                // But this is commented out in your code
-                // const writable = await files[dir][filename].handle.createWritable();
-                // await writable.write(content);
-                // await writable.close();
-            }
+            // if (!files[dir][filename] || !files[dir][filename].handle) {
+            //     files[dir][filename] = {
+            //         path: path,
+            //         content: content,
+            //         lastModified: lastModified,
+            //     };
+            // } else {
+            //     // For files with handles, we would write to the file
+            //     // But this is commented out in your code
+            //     // const writable = await files[dir][filename].handle.createWritable();
+            //     // await writable.write(content);
+            //     // await writable.close();
+            // }
 
             // TODO for first sync, when we have all the files - we should not rewrite them
             // TODO if file was modified locally, we need to re-read it before writing.
@@ -118,12 +118,12 @@ async function syncWithServer() {
             // const writable = await fileHandle.createWritable();
             // await writable.write(content);
             // await writable.close();
-            // if (!filesMetadata['files'][dir]) filesMetadata['files'][dir] = {};
-            // filesMetadata['files'][dir][filename] = {
-            //     hash: hash(content),
-            //     lastModified: lastModified,
-            //     path: path
-            // };
+            if (!filesMetadata['files'][dir]) filesMetadata['files'][dir] = {};
+            filesMetadata['files'][dir][filename] = {
+                hash: hash(content),
+                lastModified: lastModified,
+                path: path
+            };
         }
         filesMetadata['timestamps'] = server.timestamps;
 
