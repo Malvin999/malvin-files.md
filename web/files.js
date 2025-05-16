@@ -210,35 +210,36 @@ async function collectLocallyModifiedFiles() {
 }
 
 async function getFileIfChanged(dir, filename) {
+    let content;
     try {
         const fileData = files[dir][filename];
         if (!fileData?.handle) return null;
 
         const file = await fileData.handle.getFile();
-        const content = await file.text();
-
-        const path = filesMetadata?.files?.[dir]?.[filename]?.path;
-        if (!path) {
-            console.log(`File ${dir}/${filename} not found on server, skipping...`);
-            return null;
-        }
-
-        const serverHash = filesMetadata?.files?.[dir]?.[filename]?.hash;
-        const serverTime = filesMetadata?.files?.[dir]?.[filename]?.lastModified;
-
-        if (serverHash !== hash(content)) {
-            return {
-                content,
-                path,
-                lastModified: serverTime,
-            };
-        }
-
-        return null;
+        content = await file.text();
     } catch (error) {
         console.error(`Error processing ${dir}/${filename}:`, error);
         return null;
     }
+
+
+    const path = filesMetadata?.files?.[dir]?.[filename]?.path;
+    if (!path) {
+        console.log(`File ${dir}/${filename} not found on server, skipping...`);
+        return null;
+    }
+
+    const serverHash = filesMetadata?.files?.[dir]?.[filename]?.hash;
+    const serverTime = filesMetadata?.files?.[dir]?.[filename]?.lastModified;
+    if (serverHash !== hash(content)) {
+        return {
+            content,
+            path,
+            lastModified: serverTime,
+        };
+    }
+
+    return null;
 }
 
 async function getFileHandle(path) {

@@ -256,6 +256,12 @@ async function showFile(dir, filename, saveToHistory = true) {
     filename = filename.normalize("NFC");
     const fileData = files[dir][filename];
 
+    // Check if we're loading the same file and save cursor position
+    let cursorPos = null;
+    if (editor.currentDir === dir && editor.currentFile === filename) {
+        cursorPos = editor.getCursor();
+    }
+
     const header = filename.replace(/\.md$/, "").replace(/^\w/, (c) => c.toUpperCase());
     let content = "";
     if (fileData.handle !== undefined) {
@@ -280,14 +286,23 @@ async function showFile(dir, filename, saveToHistory = true) {
     editor.getDoc().setValue(content);
     editor.clearHistory();
 
-    // Set cursor at the end of the page.
-    // We need to execute this code after some rendering loop. If we don't do that,
-    // Images and other heavy stuff won't be loaded
-    // P.S. Is it try after we set infinite loading?
-    setTimeout(() => {
-        focusLastLine();
-    }, 300);
 
+    if (cursorPos !== null) {
+        setTimeout(() => {
+            editor.setCursor(cursorPos);
+            editor.scrollIntoView(cursorPos, 500);
+            // TODO only focus if there's no quick dialogue
+            editor.focus();
+        }, 300);
+    } else {
+        // Set cursor at the end of the page.
+        // We need to execute this code after some rendering loop. If we don't do that,
+        // Images and other heavy stuff won't be loaded
+        // P.S. Is it try after we set infinite loading?
+        setTimeout(() => {
+            focusLastLine();
+        }, 300);
+    }
 }
 
 function focusLastLine() {
@@ -302,6 +317,7 @@ function focusLastLine() {
     }
     const targetChar = editor.getLine(targetLine).length;
     editor.setCursor({line: targetLine, ch: targetChar});
+    // Why doing scroll to 0 line?
     editor.scrollTo(null, 0);
     // TODO only focus if there's no quick dialogue
     editor.focus();
