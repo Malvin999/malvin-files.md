@@ -181,7 +181,8 @@ async function syncFileWithServer(dir, filename) {
         }
         let json = await response.json();
         if (["not_modified", "updated_on_server"].includes(json.status)) {
-            saveLastModified(path, json.lastModified);
+            setMetadata(path, content, serverFile.lastModified);
+            saveMetadata();
             console.log(json.status);
             return;
         }
@@ -351,17 +352,6 @@ function getMetadata(path) {
     } else {
         return null;
     }
-}
-
-function saveLastModified(path, lastModified) {
-    const parts = path.split('/');
-    const filename = parts.pop();
-    const dir = parts.join('/');
-
-    // TODO what if missing?
-    console.log("Saving last modified for " + path + " to " + lastModified);
-    filesMetadata['files'][dir][filename].lastModified = lastModified;
-    saveMetadata();
 }
 
 function setMetadata(path, content, lastModified) {
