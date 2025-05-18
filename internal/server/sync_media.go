@@ -51,7 +51,7 @@ func SyncAllMedia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var mediaFiles []media
+	mediaFiles := make([]media, 0)
 	latestTimestamp := int64(0)
 
 	// Find media files newer than client's timestamp
