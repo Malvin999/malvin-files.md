@@ -241,7 +241,7 @@ func SyncFile(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fileWasModifiedOnServer = serverModTime > file.LastModified
 		if fileWasModifiedOnServer {
-			log.Printf("Server file '%s' was modified at %d, client timestamp is %d", fullPath, serverModTime, file.LastModified)
+			logSync(fmt.Sprintf("Server file '%s' was modified at %d, client timestamp is %d", fullPath, serverModTime, file.LastModified))
 			logSync(fmt.Sprintf("Merging and writing one file: '%s'", file.Path))
 			content = Merge(string(serverContent), file.Content)
 			logSync(fmt.Sprintf("Diff one file: %s", Diff(string(serverContent), file.Content)))
