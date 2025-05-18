@@ -190,6 +190,8 @@ async function syncFileWithServer(dir, filename) {
         console.error("Network error occurred:", error.message);
         return;
     }
+    setMetadata(path, serverFile.content, serverFile.lastModified);
+    saveMetadata();
     console.log(serverFile);
     await write(path, serverFile.content);
     console.log('showing file sync one');

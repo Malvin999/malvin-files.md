@@ -296,7 +296,7 @@ func SyncFile(w http.ResponseWriter, r *http.Request) {
 		Status:       StatusOK,
 		Content:      content,
 		Path:         file.Path,
-		LastModified: info.ModTime().Unix(),
+		LastModified: serverModTime,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
