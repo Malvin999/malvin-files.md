@@ -222,11 +222,12 @@ func SyncFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var content string
+	fileWasModifiedOnServer := false
 	if os.IsNotExist(err) {
 		logSync(fmt.Sprintf("Creating one file: '%s'", file.Path))
 		content = file.Content
 	} else {
-		fileWasModifiedOnServer := serverModTime > file.LastModified
+		fileWasModifiedOnServer = serverModTime > file.LastModified
 		if fileWasModifiedOnServer {
 			log.Printf("Server file '%s' was modified at %d, client timestamp is %d", fullPath, serverModTime, file.LastModified)
 			logSync(fmt.Sprintf("Merging and writing one file: '%s'", file.Path))
@@ -252,6 +253,12 @@ func SyncFile(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error writing file '%s': %v", fullPath, err)
 		logSync(fmt.Sprintf("Error writing file '%s': %v", fullPath, err))
 		http.Error(w, "Error writing file", http.StatusInternalServerError)
+		return
+	}
+
+	if !fileWasModifiedOnServer {
+		logSync(fmt.Sprintf("File '%s' was written to server, 304 to client", file.Path))
+		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 
