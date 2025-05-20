@@ -515,6 +515,11 @@ async function saveCurrentFile() {
         const fileData = files[dir][filename];
         if (fileData && fileData.handle) {
             let content = getCurrentContent();
+            // We need to atomically reset the flag once we hold a snapshot of particular version of text.
+            // If this variable is changed once we in the event loop, the unsaved changes won't be lost.
+            // They will be handled by the subsequent saveCurrentFile() call. Initially, this assignment was
+            // erroneously placed at the end of the function, that way we have a race condition.
+            hasUnsavedChanges = false
             const writable = await fileData.handle.createWritable();
             await writable.write(content);
             // Buffer is flushed on disk at this moment. It could be interrupted
@@ -528,14 +533,13 @@ async function saveCurrentFile() {
     } catch (error) {
         console.error("Error during save:", error);
         isSaving = false;
-        hasUnsavedChanges = false;
+        hasUnsavedChanges = true;
         return;
     }
 
     await syncFileWithServer(editor.currentDir, editor.currentFile);
 
     isSaving = false;
-    hasUnsavedChanges = false;
 }
 
 function hash(str) {
