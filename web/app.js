@@ -608,6 +608,8 @@ document.addEventListener('mousedown', (event) => {
 
 // Reload files once the app gains focus
 window.addEventListener("focus", async () => {
+    // So that images for current file would be loaded
+    await syncMediaFilesFromServer();
     await syncCurrentFile();
 
     const savedDirectoryHandle = await getRootDirHandle();

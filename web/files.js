@@ -118,12 +118,6 @@ async function syncAllWithServer() {
     const startTime = performance.now();
     console.log("Starting sync with server...");
 
-    try {
-        await syncMediaFilesFromServer();
-    } catch (error) {
-        console.error("Can't sync media with server: ", error.message)
-    }
-
     // Send locally modified files and timestamps of last seen dirs from the server
     let server = {};
     let filesToSend = await collectLocallyModifiedTextFiles();
@@ -274,7 +268,6 @@ async function syncMediaFilesFromServer() {
                 const blob = await response.blob();
                 console.log(path, blob);
                 await saveMediaFile(`img/${path}`, blob, lastModified);
-                // setMetadata(path, null, lastModified);
                 filesProcessed++;
             } catch (error) {
                 console.error(`Error processing media file ${path}:`, error);
@@ -561,6 +554,8 @@ async function initFiles() {
     files = await loadLocalFiles(rootDirHandle);
     console.log(`Files loaded in ${performance.now() - startTime}ms`);
     await syncAllWithServer();
+    await syncMediaFilesFromServer();
+    await syncCurrentFile();
 }
 
 window.addEventListener('beforeunload', function () {
