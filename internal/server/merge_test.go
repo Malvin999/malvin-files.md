@@ -88,3 +88,19 @@ func TestJournal(t *testing.T) {
 	merged := Merge(server, client)
 	r.Equal("1 April\nfelt good\nate good\n2 April\nslept not so good\nwent for hiking", merged)
 }
+
+func TestMergeHeaders(t *testing.T) {
+	r := require.New(t)
+
+	headers := []string{"#### 23 May, Friday 🤸‍🍽💪💧", "#### 23 May, Friday 🤸‍🍽💪", "#### 23 May, Friday 🤸‍"}
+	merged := mergeHeaders(headers)
+	r.Equal([]string{"#### 23 May, Friday 🤸‍🍽💪💧"}, merged)
+}
+
+func TestMergeHeadersWithDifferentEmojis(t *testing.T) {
+	r := require.New(t)
+
+	headers := []string{"#### 23 May, Friday 🤸‍🍽💪💧", "#### 23 May, Friday 🤸‍🍽💪📵"}
+	merged := mergeHeaders(headers)
+	r.Equal([]string{"#### 23 May, Friday 🤸‍🍽💪💧📵"}, merged)
+}

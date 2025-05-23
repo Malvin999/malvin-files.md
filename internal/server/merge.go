@@ -2,9 +2,7 @@ package server
 
 import "strings"
 
-// Merge combines two strings (s1 and s2) by identifying longest common sections
-// and unique content. This function is particularly useful for merging text that may have
-// been edited independently, such as journal entries or notes.
+// Merge combines two strings (s1 and s2) by identifying longest sequences of common lines.
 //
 // The algorithm:
 // 1) Splits both inputs into lines
@@ -40,6 +38,8 @@ func Merge(s1, s2 string) string {
 
 	// Build the merged result.
 	result := backtrack(lines1, lines2, lcsLength, len(lines1), len(lines2))
+	result = mergeHeaders(result)
+
 	return strings.Join(result, "\n")
 }
 
@@ -69,4 +69,44 @@ func backtrack(lines1, lines2 []string, lcsLength [][]int, i, j int) []string {
 	} else {
 		return append(backtrack(lines1, lines2, lcsLength, i, j-1), lines2[j-1])
 	}
+}
+
+// Headers like this should be merged:
+// #### 23 May, Friday 🤸‍🍽💪💧
+// #### 23 May, Friday 🤸‍🍽💪
+// #### 23 May, Friday 🤸‍🍽
+func mergeHeaders(lines []string) []string {
+	var result []string
+
+	for i := 0; i < len(lines); i++ {
+		if !strings.HasPrefix(lines[i], "####") {
+			result = append(result, lines[i])
+			continue
+		}
+
+		// Find where emojis start
+		split := strings.LastIndex(lines[i], " ")
+		base := lines[i][:split+1]
+		chars := lines[i][split+1:]
+
+		// Collect chars from similar headers
+		for j := i + 1; j < len(lines) && strings.HasPrefix(lines[j], base); j++ {
+			chars += lines[j][split+1:]
+			i = j
+		}
+
+		// Unique chars
+		seen := map[rune]bool{}
+		var unique strings.Builder
+		for _, r := range chars {
+			if !seen[r] {
+				seen[r] = true
+				unique.WriteRune(r)
+			}
+		}
+
+		result = append(result, base+unique.String())
+	}
+
+	return result
 }
