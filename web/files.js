@@ -1,4 +1,5 @@
-const saverInterval = 500; // ms, how often to save currently open file
+// TODO Do sync not as often
+const saverInterval = 1000; // ms, how often to save currently open file
 const loaderInterval = 3000; // ms, how often to load current file from local file system
 
 let hasUnsavedChanges = false;
