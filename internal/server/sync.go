@@ -71,7 +71,6 @@ func SyncAllTextFiles(w http.ResponseWriter, r *http.Request) {
 
 	// Save client-modified files to the server
 	for _, clientFile := range request.Files {
-		logSync(fmt.Sprintf("Got client file: '%s'", clientFile.Path))
 		fullPath := filepath.Join(StorageDir, clientFile.Path)
 
 		serverModTime := int64(0)
