@@ -311,6 +311,18 @@ async function saveMediaFile(path, blob, lastModified) {
             filesMetadata['mediaTimestamp'] = lastModified;
             saveMetadata();
         }
+
+        // Load file handle into files
+        // TODO split path by dir, filename? Not to have this logic
+        const parts = path.split('/');
+        let filename = parts.pop();
+        files['img'][filename] = {handle: fileHandle};
+        fileHandle.getFile().then(file => {
+            files['img'][filename].lastModified = file.lastModified;
+        });
+        getImageUrl(fileHandle).then(imageUrl => {
+            files['img'][filename].imageUrl = imageUrl;
+        });
     } catch (error) {
         console.error(`Error writing media file ${path}:`, error);
         throw error;
