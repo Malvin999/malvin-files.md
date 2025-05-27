@@ -113,6 +113,7 @@ async function loadLocalFiles(rootDirHandle) {
 }
 
 async function syncAllWithServer() {
+    return;
     if (isSyncing) return;
     isSyncing = true;
 
