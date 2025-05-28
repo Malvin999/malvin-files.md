@@ -3575,6 +3575,9 @@
   // it actually became visible (as line heights are accurately
   // measured, the position of something may 'drift' during drawing).
   function scrollPosIntoView(cm, pos, end, margin) {
+    // CHANGED If we are in selection mode - return, because we have autoscroll
+    if (cm.state.selectingText) { return {} }
+
     if (margin == null) { margin = 0; }
     var rect;
     if (!cm.options.lineWrapping && pos == end) {
