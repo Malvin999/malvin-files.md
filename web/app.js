@@ -1,6 +1,9 @@
 // HyperMD/Codemirror editor
 let editor;
 let focusedItemIndex = -1;
+let debug = false;
+// let debug = {dir: "", file: "Sim.md"};
+
 
 async function init(el) {
     initEditor(el);

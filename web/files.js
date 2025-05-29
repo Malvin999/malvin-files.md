@@ -6,9 +6,6 @@ let hasUnsavedChanges = false;
 let isSaving = false;
 let isSyncing = false
 
-// debug = false;
-let debug = {dir: "", file: "Sim.md"};
-
 // Files structure:
 // {
 //   "dir": [
