@@ -7107,7 +7107,6 @@
 
   // CHANGED added regexps from keymap/hypermd.js
   var LoQRE = /^(\s*)(>[> ]*|[*+-] \[[x ]\]\s|[*+-]\s|(\d+)([.)]))(\s*)/, emptyLoQRE = /^(\s*)(>[> ]*|[*+-] \[[x ]\]|[*+-]|(\d+)[.)])(\s*)$/, unorderedListRE = /[*+-]\s/;
-  var ListRE = /^(\s*)([*+-]\s|(\d+)([.)]))(\s*)/;
   // CHANGED added this function from keymap/hypermd.js
   // Auto-updating Markdown list numbers when a new item is added to the
   // middle of a list
