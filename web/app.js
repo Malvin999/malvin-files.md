@@ -260,7 +260,7 @@ async function showFile(dir, filename, saveToHistory = true) {
     // Check if we're loading the same file and save cursor position
     let cursorPos = null;
     if (editor.currentDir === dir && editor.currentFile === filename) {
-        // cursorPos = editor.getCursor();
+        cursorPos = editor.getCursor();
     }
 
     const header = filename.replace(/\.md$/, "").replace(/^\w/, (c) => c.toUpperCase());
