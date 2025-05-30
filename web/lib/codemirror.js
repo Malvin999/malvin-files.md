@@ -3298,8 +3298,7 @@
           let firstVisualLine = getVisualLines(cm, firstLine)[0];
           let firstLineRight = wrapXObj(cm, lineObj, firstVisualLine.startChar, dir, "before");
           let firstLineLeft = wrapXObj(cm, lineObj, firstVisualLine.endChar, dir, "after");
-          console.log(fromPos.left, fromPos.right, firstLineLeft, firstLineRight);
-          drawSelectionRect(fromPos.left, fromPos.top, (firstLineRight - firstLineLeft) - topLeft, fromPos.bottom);
+          drawSelectionRect(fromPos.left, fromPos.top, (firstLineRight - fromPos.left), fromPos.bottom);
 
           // Draw in-between lines
           let areThereInBetweenLines = fromPos.bottom < toPos.top
