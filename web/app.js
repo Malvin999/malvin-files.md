@@ -368,6 +368,10 @@ window.addEventListener('keydown', (event) => {
     }
 });
 
+window.addEventListener('focus', () => {
+    console.log('got focus');
+});
+
 function closeSearchModal() {
     document.getElementById('search').style.display = 'none';
 }
