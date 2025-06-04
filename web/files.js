@@ -139,6 +139,7 @@ async function syncAllWithServer() {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token')},
             body: JSON.stringify({
+                userId: getUserId(),
                 files: filesToSend,
                 timestamps: filesMetadata['timestamps'] || [],
             })
@@ -197,6 +198,7 @@ async function syncFileWithServer(dir, filename) {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token')},
             body: JSON.stringify({
+                userId: getUserId(),
                 path: `${dir}/${filename}`,
                 lastModified: serverTimestamp,
                 content: content,
@@ -207,7 +209,7 @@ async function syncFileWithServer(dir, filename) {
             return;
         }
         let json = await response.json();
-        if (["not_modified", "updated_on_server"].includes(json.status)) {
+        if (["notModified", "udpatedOnServer"].includes(json.status)) {
             setMetadata(path, content, json.lastModified);
             console.log(`saved metadata for ${path} with timestamp ${json.lastModified}`);
             saveMetadata();
@@ -247,6 +249,7 @@ async function syncMediaFilesFromServer() {
                 'Authorization': localStorage.getItem('token')
             },
             body: JSON.stringify({
+                userId: getUserId(),
                 folder: 'img',
                 timestamp: mediaTimestamp
             })
@@ -273,6 +276,7 @@ async function syncMediaFilesFromServer() {
                         'Authorization': localStorage.getItem('token')
                     },
                     body: JSON.stringify({
+                        userId: getUserId(),
                         path: path,
                         timestamp: mediaTimestamp
                     })
@@ -520,6 +524,10 @@ function setMetadata(path, content, lastModified) {
 
 function saveMetadata() {
     localStorage.setItem(SYNC_STORAGE_KEY, JSON.stringify(filesMetadata));
+}
+
+function getUserId() {
+    return parseInt(localStorage.getItem('userId'));
 }
 
 // 0) Read content from local fs

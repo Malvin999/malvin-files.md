@@ -3287,6 +3287,7 @@
           var topLeft, topRight, botLeft, botRight;
           if (ltr) {
             topLeft = docLTR && openStart && first ? leftSide : fromPos.left;
+            // CHANGED
             // topRight = docLTR ? rightSide : wrapX(from, dir, "before");
             // botLeft = docLTR ? leftSide : wrapX(to, dir, "after");
             // botRight = docLTR && openEnd && last ? rightSide : toPos.right;
@@ -3304,6 +3305,7 @@
           let firstLineLeft = wrapXObj(cm, lineObj, firstVisualLine.endChar, dir, "after");
           drawSelectionRect(fromPos.left, fromPos.top, (firstLineRight - fromPos.left), fromPos.bottom);
 
+          // CHANGED
           // Draw in-between visual lines
           // TODO we can just get all visual lines and draw them all at once?
           let areThereInBetweenLines = fromPos.bottom < toPos.top

@@ -20,8 +20,8 @@ import (
 const (
 	StorageDir            = "/app/mystorage"
 	StatusOK              = "ok"
-	StatusNotModified     = "not_modified"
-	StatusUpdatedOnServer = "updated_on_server"
+	StatusNotModified     = "notModified"
+	StatusUpdatedOnServer = "updatedOnServer"
 )
 
 var (
@@ -34,6 +34,7 @@ var FS = func(userID int) *fs.FS {
 }
 
 type file struct {
+	UserID       int64  `json:"userId"`
 	Status       string `json:"status"`
 	Path         string `json:"path"`
 	LastModified int64  `json:"lastModified"`
@@ -41,6 +42,7 @@ type file struct {
 }
 
 type syncRequest struct {
+	UserID     int64            `json:"userId"`
 	Timestamps map[string]int64 `json:"timestamps"`
 	Files      []file           `json:"files"` // New or modified files from client
 }
