@@ -180,8 +180,10 @@ func SyncAllTextFiles(w http.ResponseWriter, r *http.Request) {
 	for clientPath := range request.Timestamps {
 		if _, existsOnServer := serverTimestamps[clientPath]; !existsOnServer {
 			deletions = append(deletions, clientPath)
-			logSync(fmt.Sprintf("Client should delete: '%s'", clientPath))
 		}
+	}
+	if len(deletions) > 0 {
+		logSync(fmt.Sprintf("Deleting files: %v", deletions))
 	}
 
 	response := syncResponse{
@@ -343,55 +345,6 @@ func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 
 		next(w, r)
 	}
-}
-
-// timestamps recursively scans a directory and returns the latest modification time
-// for directories only (including root directory) as Unix timestamps
-func timestamps(rootPath string) (map[string]int64, error) {
-	timestamps := make(map[string]int64)
-	realPath, err := filepath.EvalSymlinks(rootPath)
-	if err != nil {
-		log.Printf("Warning: Could not resolve symlink: %v. Using original path.", err)
-		realPath = rootPath
-	}
-
-	err = filepath.Walk(realPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return nil
-		}
-
-		base := filepath.Base(path)
-		if strings.HasPrefix(base, ".") && path != realPath {
-			if info.IsDir() {
-				return filepath.SkipDir
-			}
-			return nil
-		}
-
-		relPath, err := filepath.Rel(realPath, path)
-		if err != nil {
-			return nil
-		}
-
-		// Skip non-markdown files for file processing
-		if !strings.HasSuffix(strings.ToLower(path), ".md") {
-			return nil
-		}
-
-		if relPath == "" {
-			relPath = "."
-		}
-
-		timestamps[relPath] = info.ModTime().Unix()
-
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return timestamps, nil
 }
 
 func logSync(msg string) {

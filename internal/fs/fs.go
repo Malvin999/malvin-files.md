@@ -184,7 +184,7 @@ func (fs FS) Ctimes() (map[string]int64, error) {
 		}
 
 		// Only process .md files
-		if !strings.HasSuffix(strings.ToLower(path), ".md") {
+		if !strings.HasSuffix(strings.ToLower(path), FileExt) {
 			return nil
 		}
 
