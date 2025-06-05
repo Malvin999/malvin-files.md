@@ -171,13 +171,12 @@ async function syncAllWithServer() {
 
             // todo try-catch?
 
-            const shouldRename = path in server.renames;
-            // file.move is not currently working in Chrome =(
-            // if (shouldRename) {
-            //     await rename(server.renames[path], path);
-            // } else {
-                await saveTextFile(path, content)
-            // }
+            await saveTextFile(path, content)
+            // Unfortunately rename is not working, so we have to delete the old file
+            const shouldRemoveOldFile = path in server.renames;
+            if (shouldRemoveOldFile) {
+                await remove(server.renames[path]);
+            }
             setMetadata(path, content, lastModified);
             saveMetadata();
         }
@@ -503,18 +502,15 @@ async function saveTextFile(path, content) {
     }
 }
 
-async function rename(oldPath, newPath) {
-    let fileHandle = await getFileHandle(oldPath);
+async function remove(path) {
+    let fileHandle = await getFileHandle(path);
     if (fileHandle === null) {
         // TODO fix once Chromium fixes the bug
         console.log("Malformed name, skipping file...");
         return;
     }
-
-    await fileHandle.move(newPath);
-    // console.log(file);
-    // await file.move(newPath);
-    console.log(`File renamed from ${oldPath} to ${newPath}`);
+    await fileHandle.remove()
+    console.log(`File ${path} removed successfully.`);
 }
 
 function getMetadata(path) {
