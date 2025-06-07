@@ -623,6 +623,12 @@ async function syncCurrentFile() {
         return
     }
 
+    const savedDirHandle = await getRootDirHandle();
+    const hasSavedDir = savedDirHandle instanceof FileSystemDirectoryHandle;
+    if (!hasSavedDir) {
+        return;
+    }
+
     // Wait until not saving
     // TODO what if lots of saving calls are stuck?
     // I decided to go from loop to insta return
