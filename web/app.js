@@ -316,7 +316,9 @@ async function openFile(dir, filename, saveToHistory = true) {
         const hasVerticalScroll = cmScroller.scrollHeight > cmScroller.clientHeight
         if (hasVerticalScroll) {
             console.log('has vertical line');
+            setTimeout(() => {
             focusLastLine();
+            }, 300);
             return;
         }
         console.log('trying to focus last line');
