@@ -48,7 +48,7 @@
 }
 
 
-.cm-s-hypermd-light .cm-header, .cm-s-hypermd-light .cm-strong {
+.cm-s-hypermd-light .cm-header, .cm-s-hypermd-light .cm-strong, .cm-s-hypermd-light span.cm-url {
     font-family: Rubik,Cambria,"Times New Roman",Times,serif !important;
     font-weight: 400;
 }
