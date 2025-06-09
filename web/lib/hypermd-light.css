@@ -4,7 +4,8 @@
     --color-bg-alt: #F8F8F7;
     --color-inline-code: #657b83;
     --color-inline-code-bg: #d8dae0;
-    --color-tx-hover: #37618e;
+    --color-link: #37618e;
+    --color-link-hover: #2a4a6b;
     --color-tx-sel: rgba(101, 123, 131, 0.2);
 }
 

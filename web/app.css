@@ -1,4 +1,4 @@
-:root { /* Flexoki theme https://github.com/kepano/flexoki */
+:root {
     --color-tx: #100F0F;
     --color-tx-hover: #24837b;
     --color-tx-muted: #6F6E69;
@@ -238,11 +238,11 @@ a:hover {
 }
 
 .cm-s-hypermd-light span.cm-link {
-    color: var(--color-tx-hover) !important;
+    color: var(--color-link) !important;
 }
 
 .cm-s-hypermd-light span.cm-link:hover {
-    color: #4D978A !important;
+    color: var(--color-link-hover) !important;
 }
 
 #welcome {
