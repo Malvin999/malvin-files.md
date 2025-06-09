@@ -37,7 +37,7 @@
 }
 
 .tj_container li span.tj_description:hover{
-	background-color: #ccc;
+	background-color: var(--color-bg-active);
 }
 
 .tj_container li span.tj_mod_icon {
