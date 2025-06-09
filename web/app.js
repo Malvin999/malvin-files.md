@@ -231,7 +231,7 @@ function buildSidebar() {
         }
     }
 
-    new TreeView(root, "#sidebar", {
+    new TreeView(root, "#sidebar-tree", {
         show_root: false,
     });
 }

@@ -330,7 +330,37 @@ a:hover {
     display: inline;
     font-size: 1px !important;
     letter-spacing: -1ch;
-    font-family: monospace;
     color: transparent;
 }
 
+ #sidebar-toolbar {
+     z-index: 5;
+     position: fixed;
+     left: 240px;
+     top: 30px;
+     background: var(--color-bg-alt);
+     text-align: center;
+ }
+
+#sidebar-toolbar button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+}
+
+#sidebar-toolbar button:hover {
+    border-radius: 4px;
+    background: var(--color-bg-active);
+}
+
+#sidebar-toolbar {
+    position: sticky;       /* stays at the top while scrolling */
+    top: 0;
+    padding-top: 8px;
+    z-index: 10;
+}
+
+#sidebar ul {
+    margin-top: 0;
+}
