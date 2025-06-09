@@ -16,6 +16,7 @@
     //#endregion
     /********************************************************************************** */
     //#region defaultClickHandler
+    // This function doesn't seem to have any effect
     exports.defaultClickHandler = function (info, cm) {
         var text = info.text, type = info.type, url = info.url, pos = info.pos;
         if (type === 'url' || type === 'link') {
@@ -197,6 +198,10 @@
                     var mat;
                     var type = null;
                     var text, url;
+                    // PATCHED, don't follow if we click on text inside ()
+                    if (token.type === "string url") {
+                       return;
+                    }
                     if (mat = styles.match(/\s(image|link|url)\s/)) {
                         // Could be a image, link, bare-link, footref, footnote, plain url, plain url w/o angle brackets
                         type = mat[1];
@@ -222,12 +227,37 @@
                         if (text.slice(-1) === ')' &&
                             (tmp = text.lastIndexOf('](')) !== -1 // xxxx](url)     image / link without ref
                         ) {
-                            // remove title part (if exists)
+                            // PATCHED, ignore click if the link is unfolded
+                            var target = ev.target;
+                            var parent = target.parentElement;
+                            if (parent) {
+                                // Check all sibling elements for cm-string cm-url without hmd-hidden-token
+                                var siblings = parent.children;
+                                let isUnfolded = false;
+                                for (var i = 0; i < siblings.length; i++) {
+                                    var sibling = siblings[i];
+                                    if (sibling.className) {
+                                        var hasUrlClass = sibling.className.includes('cm-string') &&
+                                            sibling.className.includes('cm-url');
+                                        var hasHiddenClass = sibling.className.includes('hmd-hidden-token');
+                                        if (hasUrlClass && !hasHiddenClass) {
+                                            isUnfolded = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (isUnfolded) {
+                                    return;
+                                }
+                            }
+
+                            // PATCHED, add non-wiki links support
                             if (typeof read_link_1 === 'undefined') {
                                 url = "[" + text.match(/\(([^)]+)\)/)[1] + "]"; // CUSTOMIZED for non-wiki links
                                 url = url.replace(/\.md]$/, "]")
                                 cm.hmdReadLink(cm.hmdResolveURL(url));
                             } else {
+                                // remove title part (if exists)
                                 url = read_link_1.splitLink(text.slice(tmp + 2, -1)).url;
                             }
                         }
