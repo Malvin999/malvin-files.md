@@ -40,9 +40,11 @@
 
 <div id="sidebar">
     <div id="sidebar-toolbar">
-            <svg id="new-file" title="New file" onclick="newFile()" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 32 32">
+        <button id="new-file" title="New file" onclick="newFile()" >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 32 32">
                 <path stroke="#535358" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 25V7M7 16h18"/>
             </svg>
+        </button>
 <!--        <button id="move-file" title="Move file" onclick="openMoveModal()">-->
 <!--            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 32 32">-->
 <!--                <path stroke="#535358" stroke-linecap="round" stroke-width="2" d="M5 16h21"/>-->
@@ -62,7 +64,7 @@
 <!--                <path stroke="#535358" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-8M12 17h8"/>-->
 <!--            </svg>-->
 <!--        </button>-->
-        <button id="open-folder" title="Select local folder" onClick="openDir()">
+        <button id="open-folder" title="Select local folder" onClick="openDir()" style="padding: 5px">
             Open or create folder
         </button>
     </div>

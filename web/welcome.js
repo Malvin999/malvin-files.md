@@ -1,37 +1,37 @@
 let defaultFiles = {
     "brain": {
         "We think that we understand, but in reality we just know.md": {
-            "content": "Reading and rereading can easily fool us into believing that we understand a text. Rereading is especially dangerous because of the mere-exposure effect: The moment we become familiar with something, we start believing we also understand it. On top of that, we also tend to like it it more.\n\n[Brain is the most complex object in known universe](brain/Brain is the most complex object in known universe.md)"
+            "content": "# We think that we understand, but in reality we just know.\nReading and rereading can easily fool us into believing that we understand a text. Rereading is especially dangerous because of the mere-exposure effect: The moment we become familiar with something, we start believing we also understand it. On top of that, we also tend to like it it more.\n\n[Brain is the most complex object in known universe](brain/Brain is the most complex object in known universe.md)"
         },
         "Brain is the most complex object in known universe.md": {
-            "content": "Nothing will make you appreciate human intelligence like learning about how unbelievably challenging it is to try to create a computer as smart as we are. Building skyscrapers, putting humans in space, figuring out the details of how the Big Bang went down—all far easier than understanding our own brain or how to make something as cool as it\n\n[We think that we understand, but in reality we just know](brain/We think that we understand, but in reality we just know.md)"
+            "content": "# Brain is the most complex object in known universe.\nNothing will make you appreciate human intelligence like learning about how unbelievably challenging it is to try to create a computer as smart as we are. Building skyscrapers, putting humans in space, figuring out the details of how the Big Bang went down—all far easier than understanding our own brain or how to make something as cool as it\n\n[We think that we understand, but in reality we just know](brain/We think that we understand, but in reality we just know.md)"
         },
         "Change your environment instead of using willpower.md": {
-            "content": "When scientists analyze people who appear to have tremendous self-control, it turns out those individuals aren’t all that different from those who are struggling. Instead, “disciplined” people are better at structuring their lives in a way that does not require heroic willpower and self-control.\n"
+            "content": "# Change your environment instead of using willpower.\nWhen scientists analyze people who appear to have tremendous self-control, it turns out those individuals aren’t all that different from those who are struggling. Instead, “disciplined” people are better at structuring their lives in a way that does not require heroic willpower and self-control.\n"
         },
     },
     "happiness": {
         "Meditation.md": {
-            "content": "Once you are relaxed, picture yourself living in an abundant world. In this abundant world, there are no restraints or limitations. Good things flow past you continuously. Imagine every abundant thing you have ever desired–car, home, friends, love, joy, wealth, success, peace of mind, challenge. Visualize yourself living your life surrounded by this abundance. Repeat this visualization several times a day until it begins to feel real to you. Open your arms, your heart, and your mind. Get out of the way, and let it happen.\n\n[Boredom is just an emotion](happiness/Boredom is just an emotion.md)"
+            "content": "# Meditation\nOnce you are relaxed, picture yourself living in an abundant world. In this abundant world, there are no restraints or limitations. Good things flow past you continuously. Imagine every abundant thing you have ever desired–car, home, friends, love, joy, wealth, success, peace of mind, challenge. Visualize yourself living your life surrounded by this abundance. Repeat this visualization several times a day until it begins to feel real to you. Open your arms, your heart, and your mind. Get out of the way, and let it happen.\n\n[Boredom is just an emotion](happiness/Boredom is just an emotion.md)"
         },
         "Boredom is just an emotion.md": {
-            "content": "It's not an indicator that you're doing something wrong in your life\n\nBefore we had phones and technologies we would just sit around the fire and we would talk and we wouldn't call that boring that was just life\n\nAnd bow we have that endless need for entertainment, anything when nothing is happening we think it's wrong and we need to fix it\n\nNon eventfulness is just a part of our life and you can embrace it as\npeace or you can frantically try to create more chaos\n\n[Meditation](happiness/Meditation.md)"
+            "content": "# Boredom is just an emotion\nIt's not an indicator that you're doing something wrong in your life\n\nBefore we had phones and technologies we would just sit around the fire and we would talk and we wouldn't call that boring that was just life\n\nAnd bow we have that endless need for entertainment, anything when nothing is happening we think it's wrong and we need to fix it\n\nNon eventfulness is just a part of our life and you can embrace it as\npeace or you can frantically try to create more chaos\n\n[Meditation](happiness/Meditation.md)"
         },
     },
     "": {
         "Welcome.md": {
-            "content": "🪴 Only essential features. No distractions.\n\n" +
-            "✍️ You don't need fancy tools to take notes...\n\n"
+            "content": "# 🪴 Welcome\nOnly essential features. No distractions.\n\n" +
+            "You don't need fancy tools to take notes...\n\n"
             + "[[Links]]\n[Markdown Guide](/Markdown Guide.md)\n[Hotkeys](Hotkeys.md)\n[Why using links](Links.md)"
         },
         "Links.md": {
-            "content": "Links are important\n" +
+            "content": "# Links\nLinks are important\n" +
                 "\n" +
                 "Relations among ideas are far more important than the ideas themselves.\n" +
                 "Learning is making meaningful connections.\n\n[Markdown Guide](/Markdown Guide.md)"
         },
         "Markdown Guide.md": {
-            "content": "#### Headers\n" +
+            "content": "# Markdown guide\n#### Headers\n" +
                 "Use `#` for headers. More `#` symbols create smaller headers.\n" +
                 "\n" +
                 "#### Text Formatting\n" +
@@ -58,12 +58,12 @@ let defaultFiles = {
                 "#### Links\n" +
                 "You can insert your own links by typing `[`.\n\n" +
                 "[Why using links](/Links.md)\n" +
-                "[Welcome](/🪴 Welcome.md)\n" +
+                "[Welcome](/Welcome.md)\n" +
                 "[My thoughts](/My thoughts.md)"
         },
         "Hotkeys.md": {
             "content":
-                "#### File Navigation\n" +
+                "# Hotkeys\n#### File Navigation\n" +
                 "\n" +
                 "| Hotkey | Action |\n" +
                 "| -------- |-------- |\n" +
@@ -89,11 +89,11 @@ let defaultFiles = {
                 "| -------- | -------- |\n" +
                 "| `[` | Trigger file link autocomplete |\n" +
                 "\n" +
-                "[Welcome](/🪴 Welcome.md)\n" +
+                "[Welcome](/Welcome.md)\n" +
                 "[Markdown Guide](/Markdown Guide.md)",
         },
         "My thoughts.md": {
-            "content": "You can dump project related thoughts here"
+            "content": "# My thoughts\nYou can dump project related thoughts here"
         }
     }
 }

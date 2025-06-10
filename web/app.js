@@ -13,7 +13,6 @@ async function init(el) {
     if (!hasSavedDir) {
         document.getElementById('open-folder').style.display = 'inline';
         document.getElementById('new-file').style.display = 'none';
-        document.getElementById('new-folder').style.display = 'none';
         files = defaultFiles;
         buildSidebar();
         await openFile("", "Welcome.md");
@@ -24,7 +23,6 @@ async function init(el) {
     if (permission !== 'granted') {
         document.getElementById('open-dir').style.display = 'inline';
         document.getElementById('new-file').style.display = 'none';
-        document.getElementById('new-folder').style.display = 'none';
     }
 
     await initFiles();
@@ -285,12 +283,11 @@ async function openFile(dir, filename, saveToHistory = true) {
     if (fileData.handle !== undefined) {
         const file = await fileData.handle.getFile();
         content = await file.text();
+        content = `# ${header}\n${content}`;
     } else {
-        // When do we go here?
+        // We use welcome's files
         content = fileData.content;
     }
-
-    content = `# ${header}\n${content}`;
 
     editor.currentDir = dir;
     editor.currentFile = filename;
