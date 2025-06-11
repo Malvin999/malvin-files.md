@@ -436,5 +436,5 @@ body.dragging * {
 }
 
 .CodeMirror-gutters {
-    display: none;
+    visibility: hidden;
 }
