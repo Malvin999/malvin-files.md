@@ -41,9 +41,10 @@ body {
     font-family: var(--font);
     text-rendering: optimizeLegibility;
     display: flex;
-    height: 100vh; /* Full viewport height */
+    height: 100vh;
 }
 
+/*Add border for PWA app only*/
 @media (display-mode: standalone) {
     body {
         border-top: 1px solid var(--color-border);
@@ -432,4 +433,8 @@ body.dragging {
 
 body.dragging * {
     cursor: col-resize !important;
+}
+
+.CodeMirror-gutters {
+    display: none;
 }
