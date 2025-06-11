@@ -92,11 +92,11 @@ body {
 
 #content {
     flex: 1;
-    /*overflow: auto;*/
+    overflow: auto;
     /*flex-grow: 1;*/
     /*padding-top: 1px;*/
     /*padding-bottom: 6px;*/
-    /*width: 100%;*/
+    width: 100%;
 }
 
 #content table, th, td {
