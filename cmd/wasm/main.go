@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"runtime/debug"
 	"syscall/js"
+	_ "time/tzdata" // for was env we need timezone database
 
 	"zakirullin/stuffbot/internal"
 	"zakirullin/stuffbot/internal/db"
@@ -51,7 +52,6 @@ func main() {
 	js.Global().Set("reply", js.FuncOf(Reply))
 
 	select {}
-
 }
 
 func callAsync(funcName string, callback func(js.Value, error), args ...any) {
