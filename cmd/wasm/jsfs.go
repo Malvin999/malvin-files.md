@@ -126,13 +126,13 @@ func writeFile(_ afero.Fs, path string, data []byte, perm os.FileMode) error {
 	resultChan := make(chan struct{}, 1)
 	errorChan := make(chan error, 1)
 
-	callAsync("read", func(result js.Value, err error) {
+	callAsync("write", func(result js.Value, err error) {
 		if err != nil {
 			errorChan <- err
 			return
 		}
 		resultChan <- struct{}{}
-	}, path)
+	}, path, string(data))
 
 	select {
 	case result := <-resultChan:

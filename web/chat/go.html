@@ -44,13 +44,48 @@
         await store.put(directoryHandle, 'savedDirectoryHandle');
     }
 
+    async function getFileHandle(path) {
+        let dir, filename;
+        if (path.includes('/')) {
+            const parts = path.split('/');
+            filename = parts.pop();
+            dir = parts.join('/');
+        } else {
+            dir = '';
+            filename = path;
+        }
+
+        const dirs = dir.split('/');
+        let currentDirHandle = await getRootDirHandle();
+        if (currentDirHandle === undefined) {
+            console.error('PLS open dir')
+        }
+
+        for (const dirName of dirs) {
+            if (dirName) {
+                try {
+                    currentDirHandle = await currentDirHandle.getDirectoryHandle(dirName, {create: true});
+                } catch (error) {
+                    console.error(`Error getting directory handle for '${dirName}':`, error);
+                    return null;
+                }
+            }
+        }
+
+        let fileHandle;
+        try {
+            fileHandle = await currentDirHandle.getFileHandle(filename, {create: true});
+        } catch (error) {
+            console.error(`Error getting file handle for '${dir}/${filename}':`, error);
+            return null;
+        }
+
+        return fileHandle;
+    }
+
     async function read(args) {
         let path = args[0];
-        const root = await getRootDirHandle();
-        if (root === undefined) {
-            console.error("please open dir");
-        }
-        let fileHandle = await root.getFileHandle('path');
+        let fileHandle = await getFileHandle(path)
         let file = await fileHandle.getFile();
 
         return await file.text();
@@ -60,15 +95,7 @@
         let path = args[0];
         let content = args[1];
 
-        const root = await getRootDirHandle();
-        if (root === undefined) {
-            console.error("please open dir");
-        }
-        let fileHandle = await root.getFileHandle('path');
-        if (fileHandle === null) {
-            throw new Error("Invalid file name");
-        }
-
+        let fileHandle = await getFileHandle(path);
         const writable = await fileHandle.createWritable();
         await writable.write(content);
         await writable.close();
