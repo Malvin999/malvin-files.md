@@ -256,7 +256,7 @@ document.addEventListener('keydown', function (event) {
 
 function initDB() {
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open('files', 1);
+        const request = indexedDB.open('chat', 1);
         request.onerror = () => reject(request.error);
         request.onsuccess = () => resolve(request.result);
         request.onupgradeneeded = () => {
@@ -354,7 +354,7 @@ async function exists(args) {
         if (error.name === 'NotFoundError') {
             return false
         }
-// TODO better way to handle dirs
+        // TODO better way to handle dirs
         if (error.name === 'TypeMismatchError') {
             return true;
         }
@@ -362,6 +362,22 @@ async function exists(args) {
         throw error
     }
 }
+
+async function remove(args) {
+    let path = args[0]
+    let fileHandle = await getFileHandle(path);
+    await fileHandle.remove()
+}
+
+async function rename(args) {
+    let oldpath = args[0]
+    let newpath = args[1]
+
+    let content = await read([oldpath])
+    await write([newpath, content])
+    await remove([oldpath])
+}
+
 
 async function readDir(args) {
     let path = args[0];

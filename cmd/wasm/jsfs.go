@@ -80,7 +80,24 @@ func (fs *JSFS) RemoveAll(path string) error {
 }
 
 func (fs *JSFS) Rename(oldname, newname string) error {
-	return nil
+	resultChan := make(chan struct{}, 1)
+	errorChan := make(chan error, 1)
+
+	callAsync("rename", func(result js.Value, err error) {
+		if err != nil {
+			errorChan <- err
+			return
+		}
+		resultChan <- struct{}{}
+	}, oldname, newname)
+
+	select {
+	case result := <-resultChan:
+		fmt.Printf("%v", result)
+		return nil
+	case err := <-errorChan:
+		return err
+	}
 }
 
 func (fs *JSFS) Stat(name string) (os.FileInfo, error) {
