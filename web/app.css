@@ -372,7 +372,8 @@ a:hover {
 
 button svg {
     display: block;
-    stroke: var(--color-tx-alt) !important;
+    stroke: #3A9AE5 !important;
+    /*stroke: var(--color-tx-alt) !important;*/
 }
 
 #sidebar-toolbar button:hover {
