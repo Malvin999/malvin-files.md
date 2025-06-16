@@ -18,8 +18,8 @@ function sendMessage() {
         replyCmd(JSON.stringify(cmd));
     } else {
         reply(msg);
-            // let update = await window.newUpdate(msg, null)
-            // processResponse(await window.send(update));
+        // let update = await window.newUpdate(msg, null)
+        // processResponse(await window.send(update));
     }
 
     clearInput();
@@ -464,9 +464,11 @@ function toMarkdown() {
             const tagName = node.tagName.toLowerCase();
 
             switch (tagName) {
-                case 'strong': case 'b':
+                case 'strong':
+                case 'b':
                     return `**${text}**`;
-                case 'em': case 'i':
+                case 'em':
+                case 'i':
                     return `*${text}*`;
                 case 'br':
                     return '\n';
@@ -494,10 +496,10 @@ async function saveFile(fileName, file) {
         try {
             mediaHandle = await rootHandle.getDirectoryHandle('media');
         } catch {
-            mediaHandle = await rootHandle.getDirectoryHandle('media', { create: true });
+            mediaHandle = await rootHandle.getDirectoryHandle('media', {create: true});
         }
 
-        const fileHandle = await mediaHandle.getFileHandle(fileName, { create: true });
+        const fileHandle = await mediaHandle.getFileHandle(fileName, {create: true});
         const writable = await fileHandle.createWritable();
         await writable.write(file);
         await writable.close();
@@ -515,12 +517,14 @@ function generateSafeFileName(originalName) {
     return `${timestamp}-${originalName}`.replace(/[<>:"/\\|?*\s]/g, '-');
 }
 
+// Handle image/file pasting
 input.addEventListener('paste', async (event) => {
+    event.preventDefault();
     const items = event.clipboardData.items;
-
+    let hasFile = false;
     for (const item of items) {
         if (item.kind === 'file') {
-            event.preventDefault();
+            hasFile = true;
 
             const file = item.getAsFile();
             const fileName = generateSafeFileName(file.name);
@@ -558,6 +562,29 @@ input.addEventListener('paste', async (event) => {
             } else {
                 loadingSpan.textContent = '❌';
                 loadingSpan.style.color = 'red';
+            }
+        }
+    }
+    if (!hasFile) {
+        const plainText = event.clipboardData.getData('text/plain');
+        if (plainText) {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+
+                const lines = plainText.split('\n');
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i]) {
+                        range.insertNode(document.createTextNode(lines[i]));
+                        range.collapse(false);
+                    }
+                    if (i < lines.length - 1) {
+                        const br = document.createElement('br');
+                        range.insertNode(br);
+                        range.collapse(false);
+                    }
+                }
             }
         }
     }
