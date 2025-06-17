@@ -157,8 +157,9 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 	configCtime, err := userFS.Ctime("", config.BotCfg.ConfigFilename)
 	if err != nil {
 		log.Printf("Error getting timestamp for config file: %v", err)
+	} else {
+		serverTimestamps[config.BotCfg.ConfigFilename] = configCtime
 	}
-	serverTimestamps[config.BotCfg.ConfigFilename] = configCtime
 
 	// Prepare the list of files to send to the client
 	// TODO optimize don't send files known to client.
@@ -188,7 +189,7 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 				Status:       StatusOK,
 				Path:         path,
 				LastModified: serverFileTime,
-				Content:      string(content),
+				Content:      content,
 			})
 		}
 

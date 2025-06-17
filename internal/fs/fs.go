@@ -51,7 +51,6 @@ const (
 	DirShop     = "_shop_"
 
 	FilePomodoro = "Finished a break.md"
-	FileConfig   = "config.json"
 
 	FileExt = ".md"
 

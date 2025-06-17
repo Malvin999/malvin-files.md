@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"zakirullin/stuffbot/config"
 	"zakirullin/stuffbot/pkg/txt"
 )
 
@@ -126,7 +127,7 @@ func ExcludePomodoro(files []File) []File {
 func ExcludeConfig(files []File) []File {
 	var newFiles []File
 	for _, file := range files {
-		if file.Name == FileConfig && file.ParentDir == DirRoot {
+		if file.Name == config.BotCfg.ConfigFilename && file.ParentDir == DirRoot {
 			continue
 		}
 

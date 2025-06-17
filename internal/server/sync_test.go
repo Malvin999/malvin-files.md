@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 
+	"zakirullin/stuffbot/config"
 	"zakirullin/stuffbot/internal/fs"
 )
 
@@ -239,6 +240,12 @@ func TestSyncText_UpdateExistingFile_JournalConflict(t *testing.T) {
 func TestSyncAllTexts_EmptyRequest(t *testing.T) {
 	r := require.New(t)
 
+	origFilename := config.BotCfg.ConfigFilename
+	config.BotCfg.ConfigFilename = "config.json"
+	defer func() {
+		config.BotCfg.ConfigFilename = origFilename
+	}()
+
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 	origFS := fs.NewUserFS
@@ -276,6 +283,12 @@ func TestSyncAllTexts_EmptyRequest(t *testing.T) {
 
 func TestSyncAllTexts_CreateNewFilesOnServer(t *testing.T) {
 	r := require.New(t)
+
+	origFilename := config.BotCfg.ConfigFilename
+	config.BotCfg.ConfigFilename = "config.json"
+	defer func() {
+		config.BotCfg.ConfigFilename = origFilename
+	}()
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
@@ -388,6 +401,12 @@ func TestSyncAllTexts_UpdateExistingFilesOnServer(t *testing.T) {
 
 func TestSyncAllTexts_SendUpdatedFilesToClient(t *testing.T) {
 	r := require.New(t)
+
+	origFilename := config.BotCfg.ConfigFilename
+	config.BotCfg.ConfigFilename = "config.json"
+	defer func() {
+		config.BotCfg.ConfigFilename = origFilename
+	}()
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
