@@ -7,5 +7,9 @@ import (
 )
 
 var Ctime = func(fi os.FileInfo) int64 {
+	if fi == nil {
+		return 0
+	}
+
 	return fi.ModTime().Unix()
 }
