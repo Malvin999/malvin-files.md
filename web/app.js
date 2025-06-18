@@ -1,5 +1,6 @@
 // HyperMD/Codemirror editor
 let editor;
+let tree;
 let focusedSearchItemIndex = -1;
 let focusedMoveItemIndex = -1;
 let isChat = false;
@@ -18,6 +19,7 @@ async function init(el) {
     if (!hasSavedDir) {
         document.getElementById('open-folder').style.display = 'inline';
         document.getElementById('new-file').style.display = 'none';
+        document.getElementById('new-folder').style.display = 'none';
         document.getElementById('chat').style.display = 'none';
         files = defaultFiles;
         buildSidebar();
@@ -26,6 +28,7 @@ async function init(el) {
     } else {
         document.getElementById('open-folder').style.display = 'none';
         document.getElementById('new-file').style.display = 'inline';
+        document.getElementById('new-folder').style.display = 'inline';
         document.getElementById('chat').style.display = 'inline';
     }
 
@@ -33,6 +36,7 @@ async function init(el) {
     if (permission !== 'granted') {
         document.getElementById('open-folder').style.display = 'inline';
         document.getElementById('new-file').style.display = 'none';
+        document.getElementById('new-folder').style.display = 'none';
         document.getElementById('chat').style.display = 'none';
     }
 
@@ -275,14 +279,14 @@ function createAutocompleteDict() {
     return dict;
 }
 
-function buildSidebar() {
-    let root = new TreeNode("files");
+function buildSidebar(focusDir = '') {
+    root = new TreeNode("files");
     for (const dir in files) {
         if (dir === '' || dir === 'media') {
             continue;
         }
 
-        let dirNode = new TreeNode(dir, {expanded: false});
+        let dirNode = new TreeNode(dir, {expanded: false, dir: true});
         for (let file in files[dir]) {
             let fileNode = new TreeNode(file.replace(/\.md$/, ''), {expanded: false});
             fileNode.on('click', async function (n, node) {
@@ -291,6 +295,10 @@ function buildSidebar() {
             dirNode.addChild(fileNode);
         }
         root.addChild(dirNode);
+        if (dir === focusDir) {
+            dirNode.setExpanded(true);
+            dirNode.setSelected(true);
+        }
     }
 
     if (files['']) {
@@ -308,7 +316,7 @@ function buildSidebar() {
         }
     }
 
-    new TreeView(root, "#sidebar-tree", {
+    tree = new TreeView(root, "#sidebar-tree", {
         show_root: false,
     });
 }
@@ -405,7 +413,11 @@ async function openFile(dir, filename, saveToHistory = true) {
 }
 
 async function newFile() {
-    const dir = editor.currentDir || '';
+    let dir = editor.currentDir || '';
+    let selectedDirs = tree.getSelectedNodes();
+    if (selectedDirs.length > 0) {
+        dir = selectedDirs[0].toString();
+    }
     // TODO don't create on disk?
     let filename = "New file.md";
 
@@ -415,7 +427,7 @@ async function newFile() {
         num++;
     }
 
-    let handle = await getFileHandle(toPath(dir, filename));
+    let handle = await getFileHandle(toPath(dir, filename), true);
     files[dir][filename] = {
         content: "",
         lastModified: 0,
@@ -432,6 +444,32 @@ async function newFile() {
     );
 
     await buildSidebar();
+}
+
+async function newFolder() {
+    let folderName = prompt("Enter folder name:", "New Folder");
+    if (folderName === null) {
+        return;
+    }
+
+    folderName = folderName.trim();
+    if (!folderName) {
+        alert("Folder name cannot be empty");
+        return;
+    }
+
+    let finalFolderName = folderName;
+    let num = 1;
+    while (files[finalFolderName]) {
+        finalFolderName = `${folderName} (${num})`;
+        num++;
+    }
+
+    const rootDirHandle = await getRootDirHandle();
+    await rootDirHandle.getDirectoryHandle(finalFolderName, {create: true});
+    files[finalFolderName] = {};
+
+    await buildSidebar(finalFolderName);
 }
 
 // Focus last line before the links.
@@ -923,6 +961,7 @@ async function openDir() {
     let dirHandle = await window.showDirectoryPicker();
     document.getElementById('open-folder').style.display = 'none';
     document.getElementById('new-file').style.display = 'inline';
+    document.getElementById('new-folder').style.display = 'inline';
     document.getElementById('chat').style.display = 'inline';
     await saveDirectoryHandle(dirHandle);
     files = await loadLocalFiles(dirHandle)

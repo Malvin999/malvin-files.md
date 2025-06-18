@@ -77,15 +77,15 @@
     border-radius: 15px 15px 0 0;
 }
 
-.button-container:not(:has(> .telegram-button:last-child)) .button-row:last-of-type > :first-child {
+.button-container:not(:has(> .button:last-child)) .button-row:last-of-type > :first-child {
     border-radius: 5px 5px 5px 15px;
 }
 
-.button-container:not(:has(> .telegram-button:last-child)) .button-row:last-of-type > :last-child {
+.button-container:not(:has(> .button:last-child)) .button-row:last-of-type > :last-child {
     border-radius: 5px 5px 15px 5px;
 }
 
-.telegram-button:last-child:not(.button-row *) {
+.button:last-child:not(.button-row *) {
     border-radius: 5px 5px 15px 15px;
 }
 

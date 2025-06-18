@@ -121,11 +121,11 @@ async function loadLocalFiles(rootDirHandle) {
     }
 
     // Remove empty dirs
-    for (const dir in newFiles) {
-        if (Object.keys(newFiles[dir]).length === 0) {
-            delete newFiles[dir];
-        }
-    }
+    // for (const dir in newFiles) {
+    //     if (Object.keys(newFiles[dir]).length === 0) {
+    //         delete newFiles[dir];
+    //     }
+    // }
 
     // Load metadata
     const savedMetadata = localStorage.getItem(SERVER_STORAGE_KEY);
@@ -335,7 +335,7 @@ async function syncMedia() {
                 });
 
                 if (!response.ok) {
-                    console.error(`Failed to sync media file ${mediaFilename}:`, response.statusText, response.text(), mediaFilename, base64String);
+                    console.error(`Failed to sync media file ${mediaFilename}:`, response.statusText);
                 } else {
                     serverFiles['media'][mediaFilename] = {
                         lastModified: 0, // We don't track binary files modifications.

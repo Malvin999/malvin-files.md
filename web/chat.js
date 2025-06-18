@@ -55,7 +55,7 @@ function attachKeyboard(buttons) {
             row.forEach((btn) => {
                 const button = document.createElement('button');
                 button.innerText = btn.Name;
-                button.classList.add('telegram-button'); // Add a class for styling
+                button.classList.add('button'); // Add a class for styling
                 button.onclick = async () => {
                     if (btn.Cmd.t === "iq") {
                         let search = '';
@@ -78,7 +78,7 @@ function attachKeyboard(buttons) {
             }
             const button = document.createElement('button');
             button.innerText = row.Name;
-            button.classList.add('telegram-button'); // Add a class for styling
+            button.classList.add('button'); // Add a class for styling
             button.onclick = async () => {
                 replyCmd(JSON.stringify(row.Cmd))
                 // let update = await window.newUpdate('', row.Cmd)
