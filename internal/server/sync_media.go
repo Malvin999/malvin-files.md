@@ -45,7 +45,7 @@ func SyncMedias(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find media files newer than client's timestamp
-	ctimes, err := userFS.Ctimes(fs.DirMedia)
+	ctimes, err := userFS.Ctimes(fs.DirMedia, "")
 	if err != nil {
 		log.Printf("Error getting ctimes for media files: %v", err)
 		http.Error(w, "Error getting media file times", http.StatusInternalServerError)

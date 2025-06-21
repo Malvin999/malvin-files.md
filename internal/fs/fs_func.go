@@ -54,7 +54,7 @@ func UnsanitizeFilename(filename string) string {
 }
 
 func Title(filename string) string {
-	return txt.Ucfirst(strings.TrimSuffix(strings.TrimSpace(filename), FileExt))
+	return txt.Ucfirst(strings.TrimSuffix(strings.TrimSpace(filename), MDExt))
 }
 
 func Hash(filename string) string {
@@ -162,7 +162,7 @@ func OnlyMDFiles(entries []File) []File {
 			continue
 		}
 
-		if filepath.Ext(file.Name) != FileExt {
+		if filepath.Ext(file.Name) != MDExt {
 			continue
 		}
 

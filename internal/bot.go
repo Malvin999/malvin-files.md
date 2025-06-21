@@ -371,7 +371,7 @@ func (b *Bot) saveFromRegularMsg(u Update) error {
 	}
 
 	if b.cfg.OneFileOnlyMode() {
-		return b.createOrAdd(fs.DirRoot, userconfig.OneFileName+fs.FileExt, msg)
+		return b.createOrAdd(fs.DirRoot, userconfig.OneFileName+fs.MDExt, msg)
 	}
 
 	// Adding to an existing file

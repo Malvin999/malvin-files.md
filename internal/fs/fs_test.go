@@ -741,7 +741,7 @@ func TestCtimes(t *testing.T) {
 	r.NoError(err)
 
 	// Test Ctimes
-	ctimes, err := fs.Ctimes("/")
+	ctimes, err := fs.Ctimes("/", ".md")
 	r.NoError(err)
 
 	fmt.Println(ctimes)
@@ -782,6 +782,8 @@ func TestCtimesInSubDir(t *testing.T) {
 	fs, err := NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 
+	err = fs.Write("/", "rootfile.md", "content1")
+	r.NoError(err)
 	err = fs.Write("today", "file1.md", "content1")
 	r.NoError(err)
 	err = fs.Write("today", "file2.md", "content2")
@@ -798,7 +800,7 @@ func TestCtimesInSubDir(t *testing.T) {
 	r.NoError(err)
 
 	// Test Ctimes
-	ctimes, err := fs.Ctimes("today")
+	ctimes, err := fs.Ctimes("today", ".md")
 	r.NoError(err)
 
 	// Should only include .md files, not .txt or hidden files
@@ -824,7 +826,7 @@ func TestCtimesEmptyDir(t *testing.T) {
 	err = fs.MakeDir("empty")
 	r.NoError(err)
 
-	ctimes, err := fs.Ctimes("empty")
+	ctimes, err := fs.Ctimes("empty", ".md")
 	r.NoError(err)
 	r.Empty(ctimes)
 }

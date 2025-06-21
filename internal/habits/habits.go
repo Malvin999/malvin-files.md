@@ -165,7 +165,7 @@ func LastWeekHabits(userFS *fs.FS) (map[string]Year, error) {
 
 	habits := make(map[string]Year)
 	for _, habit := range existingHabits {
-		habitName := strings.TrimSuffix(habit.Name, fs.FileExt)
+		habitName := strings.TrimSuffix(habit.Name, fs.MDExt)
 		habits[habitName] = make(Year)
 		for offset := range 7 {
 			yearDay := currentDay.Add(time.Duration(offset) * 24 * time.Hour).YearDay()

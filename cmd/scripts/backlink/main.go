@@ -44,7 +44,7 @@ func main() {
 
 		notes = fs.OnlyMDFiles(notes)
 		for _, note := range notes {
-			if filepath.Ext(note.Name) != fs.FileExt {
+			if filepath.Ext(note.Name) != fs.MDExt {
 				continue
 			}
 
@@ -84,7 +84,7 @@ func main() {
 
 				filename := note.Name
 				filename = string(norm.NFC.Bytes([]byte(filename)))
-				filename = strings.TrimSuffix(filename, fs.FileExt)
+				filename = strings.TrimSuffix(filename, fs.MDExt)
 				link = fmt.Sprintf("%s/%s", dir.Name, filename)
 
 				if _, ok := backlinks[refToDir]; !ok {
@@ -98,7 +98,7 @@ func main() {
 	for dir, notes := range backlinks {
 		for note, links := range notes {
 			for _, link := range links {
-				content, err := userFS.Read(dir, note+fs.FileExt)
+				content, err := userFS.Read(dir, note+fs.MDExt)
 				if err != nil {
 					fmt.Printf("Can't get target note '%s/%s.md':%s, backlinks: %v", dir, note, err, links)
 					continue

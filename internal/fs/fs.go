@@ -52,7 +52,7 @@ const (
 
 	FilePomodoro = "Finished a break.md"
 
-	FileExt = ".md"
+	MDExt = ".md"
 
 	minSearchSimilarity = 70
 )
@@ -396,7 +396,7 @@ func (fs FS) md5(filename string) string {
 }
 
 func Filename(title string) string {
-	return txt.Ucfirst(title) + FileExt
+	return txt.Ucfirst(title) + MDExt
 }
 
 func IsChecklistItem(filename string) bool {
@@ -530,10 +530,10 @@ func (fs FS) Ctime(dir, filename string) (int64, error) {
 }
 
 // Ctimes recursively scans a directory and returns the ctime
-// for all .md files as Unix timestamps.
-// Returns [filename] => ctime
+// for all files with specified extension as Unix timestamps.
+// Returns [relPath] => ctime
 // TODO add tests
-func (fs FS) Ctimes(root string) (map[string]int64, error) {
+func (fs FS) Ctimes(root, extension string) (map[string]int64, error) {
 	rootPath := fs.UnsafePath(DirRoot, root)
 	isSafe, err := fs.isSafe(rootPath)
 	if err != nil {
@@ -550,7 +550,7 @@ func (fs FS) Ctimes(root string) (map[string]int64, error) {
 		}
 
 		base := filepath.Base(path)
-		// Ignore 2nd level nesting
+		// Skip hidden files.
 		if strings.HasPrefix(base, ".") && path != rootPath {
 			if info.IsDir() {
 				return filepath.SkipDir
@@ -558,8 +558,8 @@ func (fs FS) Ctimes(root string) (map[string]int64, error) {
 			return nil
 		}
 
-		// Only process .md files
-		if !strings.HasSuffix(strings.ToLower(path), FileExt) {
+		// Only process specified file extension.
+		if extension != "" && !strings.HasSuffix(strings.ToLower(path), extension) {
 			return nil
 		}
 
