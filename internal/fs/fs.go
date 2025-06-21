@@ -533,10 +533,19 @@ func (fs FS) Ctime(dir, filename string) (int64, error) {
 // for all .md files as Unix timestamps.
 // Returns [filename] => ctime
 // TODO recursively?
-func (fs FS) Ctimes() (map[string]int64, error) {
+func (fs FS) Ctimes(dir string) (map[string]int64, error) {
+	dirPath := fs.UnsafePath(DirRoot, dir)
+	isSafe, err := fs.isSafe(dirPath)
+	if err != nil {
+		return nil, fmt.Errorf("fs ctimes: can't check if the file is safe to access '%s': %w", dirPath, err)
+	}
+	if !isSafe {
+		return nil, fmt.Errorf("fs ctimes: unsafe dirPath '%s': %w", dirPath, errUnsafePath)
+	}
+
 	timestamps := make(map[string]int64)
 
-	err := afero.Walk(fs.backend, fs.RootPath, func(path string, info os.FileInfo, err error) error {
+	err = afero.Walk(fs.backend, dirPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
