@@ -228,6 +228,14 @@ func (tg *TG) buildBtn(btn Btn) tgbotapi.InlineKeyboardButton {
 			}
 			button.WebApp = &tgbotapi.WebAppInfo{URL: param}
 		}
+	case CmdTypeURL:
+		{
+			param := ""
+			if len(btn.Cmd.Params) > 0 {
+				param = btn.Cmd.Params[0]
+			}
+			button.URL = &param
+		}
 	default:
 		{
 			str := string(serializedCmd)

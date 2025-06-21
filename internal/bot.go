@@ -28,6 +28,7 @@ import (
 	"zakirullin/stuffbot/internal/journal"
 	"zakirullin/stuffbot/internal/plugins"
 	"zakirullin/stuffbot/internal/sched"
+	"zakirullin/stuffbot/internal/server"
 	"zakirullin/stuffbot/internal/stats"
 	"zakirullin/stuffbot/internal/userconfig"
 	"zakirullin/stuffbot/pkg/slice"
@@ -224,6 +225,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		consts.CmdShowShopChecklist:  b.showShop,
 		consts.CmdShowSchedule:       b.showSchedule,
 		consts.CmdShowSettings:       b.showSettings,
+		consts.CmdOpenInApp:          b.openInApp,
 		consts.CmdShowHelp:           b.showHelp,
 		consts.CmdDownload:           b.download,
 		// Button's commands (callbacks)
@@ -2383,6 +2385,14 @@ func (b *Bot) addToFile(dir, filename, content string) error {
 	}
 
 	return nil
+}
+
+func (b *Bot) openInApp(_ []string) error {
+	token := server.GenerateOneTimeToken(b.userID)
+	onetimeURL := fmt.Sprintf("%s?token=%s", config.BotCfg.AppHost, token)
+	kb := tg.NewKeyboard([]tg.Row{tg.NewBtn(i18n.StrToday, tg.NewURLCmd(i18n.Tr("Open in app"), onetimeURL))})
+
+	return b.showHTML(i18n.Tr("Here's your one-time link:"), kb)
 }
 
 // TODO release add help

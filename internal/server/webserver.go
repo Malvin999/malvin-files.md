@@ -19,20 +19,21 @@ import (
 	"zakirullin/stuffbot/internal/userconfig"
 )
 
-// TODO release graceful shutdown etc
-func Serve(apiHost, appHost, certDir, logFilename, token string) {
+// Serve TODO release graceful shutdown etc
+// All directories paths are absolute.
+func Serve(apiHost, appHost, certDir, logFilename, token, tokensDir string) {
 	// TODO fix
 	AuthToken = token
 
 	logger := newLogger(logFilename)
 	srv := ssl(logger, certDir, apiHost, appHost)
-	srv.Handler = newRouter(logger)
+	srv.Handler = newRouter(logger, tokensDir)
 
 	// For local environment.
 	if certDir == "" {
 		srv := &http.Server{
 			Addr:    ":8080",
-			Handler: newRouter(logger),
+			Handler: newRouter(logger, tokensDir),
 		}
 
 		logger.Printf("Starting HTTP server on %s", srv.Addr)
@@ -49,7 +50,7 @@ func Serve(apiHost, appHost, certDir, logFilename, token string) {
 	}
 }
 
-func newRouter(logger *log.Logger) *http.ServeMux {
+func newRouter(logger *log.Logger, tokensDir string) *http.ServeMux {
 	r := http.NewServeMux()
 	// TODO add hashing or secrets
 	// TODO before release habits_v2 => habits
@@ -162,11 +163,13 @@ func newRouter(logger *log.Logger) *http.ServeMux {
 		}
 	})
 
-	// TODO CHECK that user id belongs to token ID, or get userID by token id
-	r.HandleFunc("/syncTexts", corsMiddleware(authMiddleware(SyncTexts)))
-	r.HandleFunc("/syncText", corsMiddleware(authMiddleware(SyncText)))
-	r.HandleFunc("/syncMedias", corsMiddleware(authMiddleware(SyncMedias)))
-	r.HandleFunc("/syncMedia", corsMiddleware(authMiddleware(SyncMedia)))
+	// TODO CHECK that user id belongs to oneTimeToken ID, or get userID by oneTimeToken id
+	// TODO for further safety, remove * cors?
+	r.HandleFunc("/syncTexts", corsMiddleware(authMiddleware(SyncTexts, tokensDir)))
+	r.HandleFunc("/syncText", corsMiddleware(authMiddleware(SyncText, tokensDir)))
+	r.HandleFunc("/syncMedias", corsMiddleware(authMiddleware(SyncMedias, tokensDir)))
+	r.HandleFunc("/syncMedia", corsMiddleware(authMiddleware(SyncMedia, tokensDir)))
+	r.HandleFunc("/token", corsMiddleware(IssueToken))
 
 	return r
 }

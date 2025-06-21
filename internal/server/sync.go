@@ -25,6 +25,7 @@ const (
 
 var (
 	AuthToken string
+	tokensDir string
 )
 
 type file struct {
@@ -340,7 +341,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// validateAuthToken checks if the syncMediasRequest has a valid auth token
+// validateAuthToken checks if the syncMediasRequest has a valid auth oneTimeToken
 func validateAuthToken(r *http.Request) bool {
 	token := r.Header.Get("Authorization")
 
@@ -351,22 +352,11 @@ func validateAuthToken(r *http.Request) bool {
 	return token == AuthToken
 }
 
-// TODO CHECK that user id belongs to token ID, or get user id by token
-func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if !validateAuthToken(r) {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-		next(w, r)
-	}
-}
-
 func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, X-CSRF-Token")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, X-CSRF-OneTimeToken")
 
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
