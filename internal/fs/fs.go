@@ -63,7 +63,7 @@ const (
 // backends, like an in-memory backend, which we use for testing.
 // Check out types implementing afero.Fs for all available backends.
 type FS struct {
-	RootPath string // TODO make it private
+	rootPath string // TODO make it private
 	backend  afero.Fs
 }
 
@@ -118,7 +118,7 @@ func (fs FS) CreateDirsIfNotExist() error {
 		DirJournal,
 		DirInsights,
 	} {
-		userPath := path.Join(fs.RootPath, dir)
+		userPath := path.Join(fs.rootPath, dir)
 		exists, err := Exists(fs.backend, userPath)
 		if err != nil {
 			return fmt.Errorf("create default dirs: %w", err)
@@ -231,8 +231,8 @@ func (fs FS) Rename(oldDir, oldFilename, newDir, newFilename string) error {
 	ctime, err := fs.Ctime(newDir, newFilename)
 	// Nothing terrible will happen if we don't log a rename. The client would just have duplicate files.
 	if err == nil {
-		absOldPath := path.Join(fs.RootPath, oldDir, oldFilename)
-		absNewPath := path.Join(fs.RootPath, newDir, newFilename)
+		absOldPath := path.Join(fs.rootPath, oldDir, oldFilename)
+		absNewPath := path.Join(fs.rootPath, newDir, newFilename)
 		LogRename(ctime, absOldPath, absNewPath)
 	}
 
@@ -269,12 +269,12 @@ func (fs FS) Unhash(dir, filenameHash string) (string, error) {
 func (fs FS) FilesAndDirs(dir string) ([]File, error) {
 	userPath, err := fs.SafePath(dir, "")
 	if err != nil {
-		return nil, fmt.Errorf("can't get files for '%s': %w", path.Join(fs.RootPath, dir), errUnsafePath)
+		return nil, fmt.Errorf("can't get files for '%s': %w", path.Join(fs.rootPath, dir), errUnsafePath)
 	}
 
 	entries, err := ReadDir(fs.backend, userPath)
 	if err != nil {
-		return nil, fmt.Errorf("can't get files for '%s': %w", path.Join(fs.RootPath, dir), err)
+		return nil, fmt.Errorf("can't get files for '%s': %w", path.Join(fs.rootPath, dir), err)
 	}
 
 	var files []File
@@ -531,7 +531,7 @@ func (fs FS) Ctimes(root, extension string) (map[string]int64, error) {
 // because we build our own paths (???)
 // TODO release remove error?
 // isSafe doesn't eval symlinks, so an attacker can create a symlink to a file
-// outside the RootPath. If we use filepath.EvalSymlinks to expand symlinks and
+// outside the rootPath. If we use filepath.EvalSymlinks to expand symlinks and
 // check the real path for safety - we are still prone to TOCTOU (time-of-check to time-of-use)
 // attacks due to the race condition. The only real way to prevent this is to disallow symlinks
 // at the OS level. We can do this by mounting a folder with nosymfollow flag, see README.md.
@@ -540,7 +540,7 @@ func (fs FS) SafePath(dir, filename string) (string, error) {
 	if dir == "/" {
 		if filename == "" {
 			// Just the root directory
-			return fs.RootPath, nil
+			return fs.rootPath, nil
 		}
 		relativePath = filename
 	} else {
@@ -551,7 +551,7 @@ func (fs FS) SafePath(dir, filename string) (string, error) {
 		return "", errUnsafePath
 	}
 
-	return filepath.Join(fs.RootPath, relativePath), nil
+	return filepath.Join(fs.rootPath, relativePath), nil
 }
 
 func exists(backend afero.Fs, path string) (bool, error) {
