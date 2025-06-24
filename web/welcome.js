@@ -44,9 +44,12 @@ let defaultFiles = {
                 "#### Lists\n" +
                 "- First item\n" +
                 "- Second item\n" +
-                "  - Third item\n" +
+                "  - Third item\n\n" +
+                "1. First item\n" +
+                "2. Second item\n" +
+                "   1. Third item\n" +
                 "\n" +
-                "#### Task Lists\n" +
+                "#### Checklist\n" +
                 "- [x] Completed task\n" +
                 "- [ ] Incomplete task\n" +
                 "- [ ] Another incomplete task\n" +
