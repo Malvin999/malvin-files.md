@@ -104,12 +104,25 @@ test('send changes from current file to server', async ({ page }) => {
     await page.waitForTimeout(2000);
     await expectCurrentContent(page, '# File\ntest content\nadded');
 
+    // Place cursor at the end
+    await page.keyboard.press('Meta+ArrowDown');
+    await page.keyboard.press('Enter');
+
     await page.keyboard.type('addded from client');
+    await page.waitForTimeout(2000);
+    await expectFileOnServer(page, 'file.md', 'test content\nadded\naddded from client');
 });
 
 async function createFileOnServer(filepath, content) {
     const p = path.join(getServerDir(), filepath);
     await fs.writeFile(p, content, 'utf8');
+}
+
+async function expectFileOnServer(page, filepath, expectedContent) {
+    const p = path.join(getServerDir(), filepath);
+    const actualContent = await fs.readFile(p, 'utf8');
+
+    expect(actualContent).toBe(expectedContent);
 }
 
 function saltToken(token, salt = '') {
