@@ -143,14 +143,14 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 	// Based on known client dirs timestamps, send newly updated or created files.
 	serverTimestamps, err := userFS.Ctimes(fs.DirRoot, fs.MDExt)
 	if err != nil {
-		slog.Error("Sync error: syncTexts: error getting server timestamps: %v", err)
+		slog.Error("Sync error: syncTexts: error getting server timestamps", "error", err)
 		http.Error(w, fmt.Sprintf("Failed to get timestamps: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	configCtime, err := userFS.Ctime(fs.DirRoot, config.BotCfg.ConfigFilename)
 	if err != nil {
-		slog.Error("Sync error: syncTexts: error getting timestamp for config file: %v", err)
+		slog.Error("Sync error: syncTexts: error getting timestamp for config file", "error", err)
 	} else {
 		serverTimestamps[config.BotCfg.ConfigFilename] = configCtime
 	}
@@ -238,7 +238,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 	path := clientFile.Path
 	userFS, err := fs.NewUserFS(userID(r))
 	if err != nil {
-		slog.Error("Sync error: syncText: error creating user FS: %v", err)
+		slog.Error("Sync error: syncText: error creating user FS", "error", err)
 		http.Error(w, "Error creating user FS", http.StatusInternalServerError)
 		return
 	}
@@ -344,7 +344,7 @@ func logSync(msg string, r *http.Request) {
 
 	time := time.Now().Format("2006-01-02 15:04:05")
 	if _, err := file.WriteString(time + ": " + msg + "\n"); err != nil {
-		slog.Error("Sync error: logSync: error writing to log file: %v", err)
+		slog.Error("Sync error: logSync: error writing to log file", "error", err)
 		return
 	}
 }
@@ -353,7 +353,7 @@ func logDelete(msg string, r *http.Request) {
 	msg = fmt.Sprintf("%d: %s", userID(r), msg)
 	file, err := os.OpenFile("/tmp/del", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		slog.Error("Sync error: logDelete: error opening log file: %v", err)
+		slog.Error("Sync error: logDelete: error opening log file", "error", err)
 		return
 	}
 	defer file.Close()
