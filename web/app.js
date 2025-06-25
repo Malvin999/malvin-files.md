@@ -180,16 +180,6 @@ function initEditor(el) {
         await openFile(parts[0], parts[1] + '.md');
     };
 
-    // Make sure '#' is always at the start of the first line.
-    editor.on('beforeChange', function(cm, change) {
-        if (change.from.line === 0 && change.from.ch === 0) {
-            let newText = change.text.join('\n');
-            if (!newText.startsWith('# ')) {
-                change.update(change.from, change.to, ['# ' + newText.replace(/^#*\s*/, '')]);
-            }
-        }
-    });
-
     editor.on('inputRead', async function (cm, change) {
         if (change.text.length === 1 && change.text[0] === '[') {
             editor.showHint({
@@ -197,6 +187,17 @@ function initEditor(el) {
             })
         }
     })
+
+    // Force '# ' to remain at first line.
+    editor.on('change', function(cm, change) {
+        if (change.from.line === 0) {
+            const line = cm.getLine(0);
+            if (!line.startsWith('# ')) {
+                const content = line.replace(/^#*\s*/, '');
+                cm.replaceRange('# ' + content, {line: 0, ch: 0}, {line: 0, ch: line.length});
+            }
+        }
+    });
 
     // Remove '# ' from selection.
     editor.on('cursorActivity', function(cm) {
@@ -1155,7 +1156,7 @@ function toHeader(filename) {
     return `# ${title}`;
 }
 
-function fromHeader(header) {
+function fromHeaderToFilename(header) {
     if (header.startsWith('# ')) {
         return header.slice(2).trim() + '.md';
     }
