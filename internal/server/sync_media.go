@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"zakirullin/stuffbot/internal/fs"
@@ -28,7 +28,6 @@ func SyncMedias(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&syncMediasRequest); err != nil {
-		log.Printf("Error parsing syncMediasRequest JSON: %v", err)
 		http.Error(w, "Invalid syncMediasRequest JSON", http.StatusBadRequest)
 		return
 	}
@@ -38,7 +37,7 @@ func SyncMedias(w http.ResponseWriter, r *http.Request) {
 
 	userFS, err := fs.NewUserFS(userID(r))
 	if err != nil {
-		log.Printf("Error creating media FS: %v", err)
+		slog.Error("Sync error: syncMedias: error creating media FS", "error", err)
 		http.Error(w, "Error creating media FS", http.StatusInternalServerError)
 		return
 	}
@@ -46,7 +45,7 @@ func SyncMedias(w http.ResponseWriter, r *http.Request) {
 	// Find media files newer than client's timestamp
 	ctimes, err := userFS.Ctimes(fs.DirMedia, "")
 	if err != nil {
-		log.Printf("Error getting ctimes for media files: %v", err)
+		slog.Error("Sync error: syncMedias: error getting media file times", "error", err)
 		http.Error(w, "Error getting media file times", http.StatusInternalServerError)
 		return
 	}
@@ -78,7 +77,6 @@ func SyncMedias(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding media sync response: %v", err)
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 	}
 }
@@ -92,21 +90,20 @@ func SyncMedia(w http.ResponseWriter, r *http.Request) {
 
 	var clientMedia media
 	if err := json.NewDecoder(r.Body).Decode(&clientMedia); err != nil {
-		log.Printf("Error parsing syncMedia Request JSON: %v", err)
 		http.Error(w, "Invalid syncMedia Request JSON", http.StatusBadRequest)
 		return
 	}
 
 	userFS, err := fs.NewUserFS(userID(r))
 	if err != nil {
-		log.Printf("Error creating user FS: %v", err)
+		slog.Error("Sync error: syncMedia: error creating user FS", "error", err)
 		http.Error(w, "Error creating user FS", http.StatusInternalServerError)
 		return
 	}
 
 	exists, err := userFS.Exists(fs.DirMedia, clientMedia.Filename)
 	if err != nil {
-		log.Printf("Error checking if media exists: %v", err)
+		slog.Error("Sync error: syncMedia: error checking media existence", "error", err)
 		http.Error(w, "Error checking media existence", http.StatusInternalServerError)
 		return
 	}
@@ -131,7 +128,7 @@ func SyncMedia(w http.ResponseWriter, r *http.Request) {
 
 	path, err := userFS.SafePath(fs.DirMedia, clientMedia.Filename)
 	if err != nil {
-		log.Printf("The path is unsafe: %v", err)
+		slog.Error("Sync error: syncMedia: unsafe path", "error", err)
 		http.Error(w, "The path is unsafe", http.StatusInternalServerError)
 		return
 	}

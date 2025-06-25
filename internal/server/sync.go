@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -57,14 +57,13 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 
 	var request syncRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		log.Printf("Error parsing syncMediasRequest JSON: %v", err)
 		http.Error(w, "Invalid syncMediasRequest JSON", http.StatusBadRequest)
 		return
 	}
 
 	userFS, err := fs.NewUserFS(userID(r))
 	if err != nil {
-		log.Printf("Error creating user FS: %v", err)
+		slog.Error("Sync error: syncTexts: error creating user FS", "error", err)
 		http.Error(w, "Error creating user FS", http.StatusInternalServerError)
 		return
 	}
@@ -76,7 +75,7 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 			if errors.Is(err, os.ErrNotExist) {
 				continue
 			}
-			log.Printf("Error deleting file '%s': %v", path, err)
+			slog.Error("Sync error: syncTexts: error deleting file", "path", path, "error", err)
 			continue
 		}
 		logDelete(fmt.Sprintf("Deleting file: '%s'", path), r)
@@ -107,7 +106,7 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 		serverModifiedTime, err := userFS.Ctime(fs.DirRoot, path)
 		var clientContent string
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			log.Printf("Error reading file '%s': %v", path, err)
+			slog.Error("Sync error: syncTexts: error reading file '%s': %v", path, err)
 			logSync(fmt.Sprintf("Error reading file '%s': %v", path, err), r)
 			// TODO All-or-nothing sync?
 			continue
@@ -120,7 +119,7 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 			if fileWasModifiedOnServer {
 				serverContent, err := userFS.Read(fs.DirRoot, path)
 				if err != nil {
-					log.Printf("Error reading file '%s': %v", path, err)
+					slog.Error("Sync error: syncTexts: error reading modified on server file '%s': %v", path, err)
 					continue
 				}
 				logSync(fmt.Sprintf("Merging and writing: '%s'", clientFile.Path), r)
@@ -135,7 +134,7 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 		// Write the clientContent to the server at path
 		err = userFS.Write(fs.DirRoot, path, clientContent)
 		if err != nil {
-			log.Printf("Error writing file '%s': %v", path, err)
+			slog.Error("Sync error: syncTexts: error writing file '%s': %v", path, err)
 			logSync(fmt.Sprintf("Error writing file '%s': %v", path, err), r)
 			continue
 		}
@@ -144,14 +143,14 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 	// Based on known client dirs timestamps, send newly updated or created files.
 	serverTimestamps, err := userFS.Ctimes(fs.DirRoot, fs.MDExt)
 	if err != nil {
-		log.Printf("Error getting server timestamps: %v", err)
+		slog.Error("Sync error: syncTexts: error getting server timestamps: %v", err)
 		http.Error(w, fmt.Sprintf("Failed to get timestamps: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	configCtime, err := userFS.Ctime(fs.DirRoot, config.BotCfg.ConfigFilename)
 	if err != nil {
-		log.Printf("Error getting timestamp for config file: %v", err)
+		slog.Error("Sync error: syncTexts: error getting timestamp for config file: %v", err)
 	} else {
 		serverTimestamps[config.BotCfg.ConfigFilename] = configCtime
 	}
@@ -175,7 +174,7 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 			// Client needs this file - read its content
 			content, err := userFS.Read(fs.DirRoot, path)
 			if err != nil {
-				log.Printf("Error reading file %s: %v", path, err)
+				slog.Error("Sync error: syncTexts: error reading file", "path", path, "error", err)
 				logSync(fmt.Sprintf("Error reading file %s: %v", path, err), r)
 				continue
 			}
@@ -220,7 +219,7 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding sync response: %v", err)
+		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 	}
 }
 
@@ -232,7 +231,6 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 
 	var clientFile file
 	if err := json.NewDecoder(r.Body).Decode(&clientFile); err != nil {
-		log.Printf("Error parsing syncMediasRequest JSON: %v", err)
 		http.Error(w, "Invalid syncMediasRequest JSON", http.StatusBadRequest)
 		return
 	}
@@ -240,7 +238,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 	path := clientFile.Path
 	userFS, err := fs.NewUserFS(userID(r))
 	if err != nil {
-		log.Printf("Error creating user FS: %v", err)
+		slog.Error("Sync error: syncText: error creating user FS: %v", err)
 		http.Error(w, "Error creating user FS", http.StatusInternalServerError)
 		return
 	}
@@ -251,7 +249,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 	// TODO if no clientFile, severContent = ""
 	serverContent, err := userFS.Read(fs.DirRoot, path)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		log.Printf("Error reading one clientFile '%s': %v", path, err)
+		slog.Error("Sync error: syncText: error reading clientFile '%s': %v", path, err)
 		http.Error(w, "Error reading server clientFile", http.StatusBadRequest)
 		return
 	}
@@ -259,7 +257,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 	ctime, err := userFS.Ctime(fs.DirRoot, path)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
-			log.Printf("Error getting ctime for clientFile '%s': %v", path, err)
+			slog.Error("Sync error: syncText: error getting ctime for clientFile '%s': %v", path, err)
 			http.Error(w, "Error getting ctime for clientFile", http.StatusBadRequest)
 			return
 		}
@@ -300,7 +298,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 	// Write the content to the server at path
 	err = userFS.Write(fs.DirRoot, path, content)
 	if err != nil {
-		log.Printf("Error writing clientFile '%s': %v", path, err)
+		slog.Error("Sync error: syncText: error writing clientFile '%s': %v", path, err)
 		logSync(fmt.Sprintf("Error writing clientFile '%s': %v", path, err), r)
 		http.Error(w, "Error writing clientFile", http.StatusInternalServerError)
 		return
@@ -329,7 +327,6 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding sync response: %v", err)
 		http.Error(w, "Error encoding response", http.StatusInternalServerError)
 		return
 	}
@@ -347,7 +344,7 @@ func logSync(msg string, r *http.Request) {
 
 	time := time.Now().Format("2006-01-02 15:04:05")
 	if _, err := file.WriteString(time + ": " + msg + "\n"); err != nil {
-		fmt.Println("Error writing to log file:", err)
+		slog.Error("Sync error: logSync: error writing to log file: %v", err)
 		return
 	}
 }
@@ -356,7 +353,7 @@ func logDelete(msg string, r *http.Request) {
 	msg = fmt.Sprintf("%d: %s", userID(r), msg)
 	file, err := os.OpenFile("/tmp/del", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		fmt.Println("Error opening log file:", err)
+		slog.Error("Sync error: logDelete: error opening log file: %v", err)
 		return
 	}
 	defer file.Close()
