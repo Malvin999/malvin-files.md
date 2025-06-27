@@ -20,8 +20,6 @@ const (
 	ModeNotes   = "notes"
 	ModeJournal = "journal"
 	ModeFull    = "full"
-
-	ChatFilename = "Chat"
 )
 
 var DefaultConfig = config{

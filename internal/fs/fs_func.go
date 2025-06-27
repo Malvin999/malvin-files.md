@@ -114,7 +114,7 @@ func ExcludeTaskDirs(dirs []File) []File {
 func ExcludePomodoro(files []File) []File {
 	var newFiles []File
 	for _, file := range files {
-		if file.Name == FilePomodoro {
+		if file.Name == PomodoroFilename {
 			continue
 		}
 

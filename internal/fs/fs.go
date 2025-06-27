@@ -53,7 +53,8 @@ const (
 	DirWatch    = "_watch_"
 	DirShop     = "_shop_"
 
-	FilePomodoro = "Finished a break.md"
+	ChatFilename     = "Chat.md"
+	PomodoroFilename = "Finished a break.md"
 
 	MDExt = ".md"
 

@@ -905,7 +905,7 @@ func TestBotTodayLabelIcons(t *testing.T) {
 	r.Contains(label, "🍅")
 
 	// No pomodoro, but there is another task in today
-	r.Nil(b.complete([]string{fs.DirToday, fs.FilePomodoro}))
+	r.Nil(b.complete([]string{fs.DirToday, fs.PomodoroFilename}))
 	label = b.todayLabel()
 	r.NotContains(label, "🌴")
 	r.NotContains(label, "🍅")

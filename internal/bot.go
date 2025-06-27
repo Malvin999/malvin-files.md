@@ -201,7 +201,7 @@ func (b *Bot) Reply(u Update) error {
 	}
 
 	// Handle regular text messages
-	return b.saveFromRegularMsg(u)
+	return b.saveFromTextMsg(u)
 }
 
 // Commands and their handlers.
@@ -354,7 +354,7 @@ func (b *Bot) extractCmd(u Update) (*tg.Cmd, error) {
 	return nil, nil
 }
 
-func (b *Bot) saveFromRegularMsg(u Update) error {
+func (b *Bot) saveFromTextMsg(u Update) error {
 	msg := extractMarkdown(u)
 
 	// Collapse a few consecutive messages into one, see bot_forwards.go
@@ -371,7 +371,7 @@ func (b *Bot) saveFromRegularMsg(u Update) error {
 	}
 
 	if b.cfg.OneFileOnlyMode() {
-		return b.createOrAdd(fs.DirRoot, userconfig.ChatFilename+fs.MDExt, msg)
+		return b.createOrAdd(fs.DirRoot, fs.ChatFilename, msg)
 	}
 
 	// Adding to an existing file
@@ -379,31 +379,36 @@ func (b *Bot) saveFromRegularMsg(u Update) error {
 		return b.addToRepliedFile(replyMsgID, msg)
 	}
 
-	sanitizedTitle, content, err := b.extractTitleAndContent(msg)
+	////sanitizedTitle, content, err := b.extractTitleAndContent(msg)
+	////if err != nil {
+	////	return fmt.Errorf("save: %w", err)
+	////}
+	////
+	////filename := fs.Filename(sanitizedTitle)
+	////err = b.createOrAdd(fs.DirToday, filename, content)
+	////if err != nil {
+	////	return fmt.Errorf("save: %w", err)
+	////}
+	//
+	//if updateHasTime {
+	//	setFirstMsgFilename(b.userID, filename, msgTime)
+	//	setFirstMsgTime(b.userID, msgTime)
+	//}
+	//
+	//msgID, _ := u.MsgID()
+	//b.db.SetDirByMsgID(msgID, fs.DirToday)
+	//b.db.SetFilenameByMsgID(msgID, filename)
+	//
+	//if b.cfg.JournalOnlyMode() {
+	//	return b.moveToJournal([]string{fs.Hash(filename)})
+	//}
+
+	err := b.saveToChat(msg, b.cfg.Timezone())
 	if err != nil {
-		return fmt.Errorf("save: %w", err)
+		return fmt.Errorf("save to chat: %w", err)
 	}
 
-	filename := fs.Filename(sanitizedTitle)
-	err = b.createOrAdd(fs.DirToday, filename, content)
-	if err != nil {
-		return fmt.Errorf("save: %w", err)
-	}
-
-	if updateHasTime {
-		setFirstMsgFilename(b.userID, filename, msgTime)
-		setFirstMsgTime(b.userID, msgTime)
-	}
-
-	msgID, _ := u.MsgID()
-	b.db.SetDirByMsgID(msgID, fs.DirToday)
-	b.db.SetFilenameByMsgID(msgID, filename)
-
-	if b.cfg.JournalOnlyMode() {
-		return b.moveToJournal([]string{fs.Hash(filename)})
-	}
-
-	return b.showMoveTo([]string{fs.Hash(filename)})
+	return b.showMoveTo([]string{fs.Hash(fs.ChatFilename)})
 }
 
 // TODO test collapsing from both regular messages and images
@@ -654,6 +659,55 @@ func (b *Bot) createOrAdd(dir, filename, content string) error {
 	return nil
 }
 
+func (b *Bot) saveToChat(content string, timezone *time.Location) error {
+	exists, err := b.fs.Exists(fs.DirRoot, fs.ChatFilename)
+	if err != nil {
+		return fmt.Errorf("saveToChat: %w", err)
+	}
+
+	content = strings.TrimSpace(content)
+
+	var md string
+	if exists {
+		md, err = b.fs.Read(fs.DirRoot, fs.ChatFilename)
+		if err != nil {
+			return fmt.Errorf("saveToChat: %w", err)
+		}
+		md = txt.NormNewLines(md)
+		md = strings.TrimSpace(md)
+		if len(md) != 0 {
+			md += "\n"
+		}
+	}
+
+	// Add today's header if it doesn't exist
+	if !strings.Contains(md, todayHeader(timezone)) {
+		md += todayHeader(timezone) + "\n"
+	}
+
+	// Format timestamp with timezone
+	timestamp := time.Now().In(timezone).Format("`15:04`")
+
+	// Handle images similar to journal
+	if txt.HasImage(content) {
+		// If there's an image - place timestamp under the image
+		re := regexp.MustCompile(txt.ImgPattern)
+		imgLink := re.FindString(content)
+		content = strings.TrimSpace(strings.Replace(content, imgLink, "", 1))
+		content = fmt.Sprintf("%s\n%s %s\n", imgLink, timestamp, strings.TrimSpace(content))
+	} else {
+		content = fmt.Sprintf("%s %s\n", timestamp, content)
+	}
+
+	md += content
+
+	if err := b.fs.Write(fs.DirRoot, fs.ChatFilename, md); err != nil {
+		return fmt.Errorf("saveToChat: %w", err)
+	}
+
+	return nil
+}
+
 func (b *Bot) extractTitleAndContent(msg string) (string, string, error) {
 	if len(msg) == 0 {
 		return "", "", fmt.Errorf("extract title: empty msg")
@@ -820,7 +874,7 @@ func (b *Bot) showMoveTo(params []string) error {
 		userMoveToBtns = append(userMoveToBtns, *recentBtn)
 	}
 
-	userMoveToBtns = append(userMoveToBtns, tg.NewBtn(i18n.StrGoToToday, tg.NewCmd(consts.CmdShowToday, nil)))
+	userMoveToBtns = append(userMoveToBtns, tg.NewBtn(i18n.Tr("Move to tasks"), tg.NewCmd(consts.CmdShowToday, nil)))
 
 	userBtnsByRows := slice.Chunk(userMoveToBtns, btnsPerRow)
 	for _, row := range userBtnsByRows {
@@ -829,7 +883,7 @@ func (b *Bot) showMoveTo(params []string) error {
 
 	b.delAllKeyboards()
 
-	err := b.showHTML(b.tr("Task added for <b>today</b>!"), &kb)
+	err := b.showHTML(b.tr("Saved!"), &kb)
 	if err != nil {
 		return fmt.Errorf("move: %w", err)
 	}
@@ -990,9 +1044,9 @@ func (b *Bot) showLaterTasks(_ []string) error {
 func (b *Bot) todayLabel() string {
 	var statusBar string
 
-	hasPomodoroInToday, _ := b.fs.Exists(fs.DirToday, fs.FilePomodoro)
+	hasPomodoroInToday, _ := b.fs.Exists(fs.DirToday, fs.PomodoroFilename)
 	if hasPomodoroInToday {
-		statusBar = i18n.Emoji(fs.Title(fs.FilePomodoro))
+		statusBar = i18n.Emoji(fs.Title(fs.PomodoroFilename))
 	}
 
 	filesAndDirs, _ := b.fs.FilesAndDirs(fs.DirToday)
@@ -1901,7 +1955,7 @@ func (b *Bot) complete(params []string) error {
 		return fmt.Errorf("complete: can't complete %s: %w", filename, err)
 	}
 
-	if dir == fs.DirToday && filename == fs.FilePomodoro {
+	if dir == fs.DirToday && filename == fs.PomodoroFilename {
 		err = b.cfg.AddToSchedule(filename, time.Now().Unix()+int64(b.cfg.PomodoroDuration().Seconds()), "")
 		if err != nil {
 			return fmt.Errorf("complete: can't add to schedule: %w", err)
@@ -2281,23 +2335,23 @@ func (b *Bot) toChecklistKeyboard(filenameHash string) (*tg.Keyboard, error) {
 
 func (b *Bot) togglePomodoro(_ []string) error {
 	// Check if Pomodoro is already running
-	hasPomodoroInToday, err := b.fs.Exists(fs.DirToday, fs.FilePomodoro)
+	hasPomodoroInToday, err := b.fs.Exists(fs.DirToday, fs.PomodoroFilename)
 	if err != nil {
 		return fmt.Errorf("toggle pomodoro: failed to check if pomodoro is already running %w", err)
 	}
-	hasPomodoroInTrash, err := b.fs.Exists(fs.DirArchive, fs.FilePomodoro)
+	hasPomodoroInTrash, err := b.fs.Exists(fs.DirArchive, fs.PomodoroFilename)
 	if err != nil {
 		return fmt.Errorf("toggle pomodoro: failed to check if pomodoro is already running %w", err)
 	}
 
 	if hasPomodoroInToday {
-		err = b.fs.Del(fs.DirToday, fs.FilePomodoro)
+		err = b.fs.Del(fs.DirToday, fs.PomodoroFilename)
 		if err != nil {
 			return fmt.Errorf("toggle pomodoro: failed to delete pomodoro file: %w", err)
 		}
 	}
 	if hasPomodoroInTrash {
-		err = b.fs.Del(fs.DirArchive, fs.FilePomodoro)
+		err = b.fs.Del(fs.DirArchive, fs.PomodoroFilename)
 		if err != nil {
 			return fmt.Errorf("toggle pomodoro: failed to delete pomodoro file: %w", err)
 		}
@@ -2310,7 +2364,7 @@ func (b *Bot) togglePomodoro(_ []string) error {
 	}
 
 	// Create Pomodoro task
-	err = b.fs.Touch(fs.DirToday, fs.FilePomodoro)
+	err = b.fs.Touch(fs.DirToday, fs.PomodoroFilename)
 	if err != nil {
 		return fmt.Errorf("toggle pomodoro: failed to show pomodoro hint message %w", err)
 	}
@@ -2632,4 +2686,9 @@ func completedMsg() string {
 	}
 
 	return msgs[rand.Intn(len(msgs))]
+}
+
+func todayHeader(timezone *time.Location) string {
+	nowTZ := time.Now().In(timezone)
+	return fmt.Sprintf("#### %d %s, %s", nowTZ.Day(), nowTZ.Format("January"), nowTZ.Weekday())
 }
