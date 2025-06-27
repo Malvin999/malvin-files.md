@@ -282,9 +282,9 @@ async function mkdirAll(args) {
     }
 }
 
-function receive(val) {
-    // processResponse(val)
-}
+// function receive(val) {
+//     // processResponse(val)
+// }
 
 function createFileElement(fileName, isImage, markdownText, file = null) {
     const element = document.createElement('span');

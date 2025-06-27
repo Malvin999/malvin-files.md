@@ -238,7 +238,7 @@ function deleteNote(noteId) {
 
 function scrollToBottom() {
     setTimeout(function() {
-        chatContainer.scrollTop = 0;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
     }, 100);
 }
 

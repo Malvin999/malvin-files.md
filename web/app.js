@@ -347,6 +347,13 @@ async function initWasm() {
     window.replyCmd = replyCmd
 }
 
+async function receive(val) {
+    console.log(val);
+    await loadData();
+    renderMessages();
+    scrollToBottom();
+}
+
 function createAutocompleteDict() {
     const dict = {};
 
