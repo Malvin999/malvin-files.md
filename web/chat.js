@@ -226,7 +226,7 @@ function renderMessages() {
                         📺
                         <span class="btn-label">To Watch</span>
                     </button>
-                    <button class="action-btn journal-btn" data-index="${message.index}">
+                    <button class="action-btn to-journal-btn" data-index="${message.index}">
                         💚
                         <span class="btn-label">To Journal</span>
                     </button>
@@ -274,15 +274,17 @@ function attachEventListeners() {
         });
     });
 
-    chatContainer.querySelectorAll('.journal-btn').forEach(btn => {
+    chatContainer.querySelectorAll('.to-journal-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
-            let cmd = {
-                n: "mv_to_journal",
-                t: "cmd",
-                p: [btn.dataset.index.toString()]
+            const selectedMessages = document.querySelectorAll('.message.selected');
+
+            if (selectedMessages.length > 0) {
+                const indices = Array.from(selectedMessages).map(msg => msg.dataset.index);
+                sendCmd('mv_to_journal', indices);
+            } else {
+                sendCmd('mv_to_journal', [btn.dataset.index]);
             }
-            replyCmd(JSON.stringify(cmd))
         });
     });
 
@@ -290,6 +292,42 @@ function attachEventListeners() {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             deleteNote(btn.dataset.noteId);
+        });
+    });
+
+    // Message selection
+    chatContainer.querySelectorAll('.message').forEach(message => {
+        message.addEventListener('click', function(e) {
+            // Don't select if clicking on action buttons or editing content
+            if (e.target.closest('.message-actions') || e.target.classList.contains('editing')) {
+                return;
+            }
+
+            if (e.ctrlKey || e.metaKey) {
+                // Toggle selection with Ctrl/Cmd
+                this.classList.toggle('selected');
+            } else {
+                // Clear other selections and select this one
+                document.querySelectorAll('.message.selected').forEach(m => m.classList.remove('selected'));
+                this.classList.add('selected');
+            }
+        });
+    });
+
+    // Clear selection when clicking outside
+    chatContainer.addEventListener('click', function(e) {
+        if (!e.target.closest('.message')) {
+            document.querySelectorAll('.message.selected').forEach(m => m.classList.remove('selected'));
+        }
+    });
+
+    // Enable editing on double-click
+    chatContainer.querySelectorAll('.message-content').forEach(content => {
+        content.addEventListener('dblclick', function(e) {
+            e.stopPropagation();
+            this.style.pointerEvents = 'auto';
+            this.classList.add('editing');
+            this.focus();
         });
     });
 }
@@ -335,7 +373,7 @@ autoResize();
 
 function sendCmd(cmd, params) {
     let cmdObj = {
-        n: "mf",
+        n: cmd,
         t: "cmd",
         p: params.map(p => p.toString()),
     }

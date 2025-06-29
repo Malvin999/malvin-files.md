@@ -3,6 +3,7 @@ package internal
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -77,7 +78,7 @@ func (b *Bot) saveToChat(content string, timezone *time.Location) (int, error) {
 	return recordCount + 1, nil
 }
 
-func (b *Bot) MoveRecordFromChat(index int, callback func(content string, timestamp time.Time) error) error {
+func (b *Bot) MoveRecordFromChat(callback func(content string, timestamp time.Time) error, indices ...int) error {
 	key, err := b.fs.SafePath(fs.DirRoot, "")
 	if err != nil {
 		return fmt.Errorf("failed to get safe path: %w", err)
@@ -108,56 +109,80 @@ func (b *Bot) MoveRecordFromChat(index int, callback func(content string, timest
 		return fmt.Errorf("no records found")
 	}
 
-	if index < 0 || index >= len(recordIndices) {
-		return fmt.Errorf("index out of bounds: use 1-%d", len(recordIndices))
-	}
-
-	targetBlockIndex := recordIndices[index]
-	targetRecord := blocks[targetBlockIndex]
-
-	// Find closest header above target record for date context
-	var headerDate string
-	for i := targetBlockIndex - 1; i >= 0; i-- {
-		if headerRegex.MatchString(blocks[i]) {
-			headerDate = blocks[i]
-			break
+	// Validate all indices
+	for _, index := range indices {
+		if index < 0 || index >= len(recordIndices) {
+			return fmt.Errorf("index %d out of bounds: use 0-%d", index, len(recordIndices)-1)
 		}
 	}
 
-	// Extract time from record and content without timestamp
-	timestampRegex := regexp.MustCompile(`^` + "`" + `(\d{2}:\d{2})` + "`" + ` (.*)`)
-	matches := timestampRegex.FindStringSubmatch(targetRecord)
-	if len(matches) < 3 {
-		return fmt.Errorf("failed to parse record timestamp")
+	// Sort indices in descending order to avoid index shifting issues when removing
+	sort.Sort(sort.Reverse(sort.IntSlice(indices)))
+
+	// Remove duplicates
+	uniqueIndices := make([]int, 0, len(indices))
+	seen := make(map[int]bool)
+	for _, index := range indices {
+		if !seen[index] {
+			uniqueIndices = append(uniqueIndices, index)
+			seen[index] = true
+		}
 	}
 
-	timeStr := matches[1]
-	recordContent := matches[2]
+	// Track which block indices to remove
+	blocksToRemove := make(map[int]bool)
 
-	// Parse full timestamp from header date + time
-	// Assuming headerDate format: "#### 27 June, Friday"
-	dateRegex := regexp.MustCompile(`^#### (\d{1,2}) ([A-Za-z]+), [A-Za-z]+`)
-	dateMatches := dateRegex.FindStringSubmatch(headerDate)
-	if len(dateMatches) < 3 {
-		return fmt.Errorf("failed to parse header date")
+	// Process each record
+	for _, index := range uniqueIndices {
+		targetBlockIndex := recordIndices[index]
+		targetRecord := blocks[targetBlockIndex]
+
+		// Find closest header above target record for date context
+		var headerDate string
+		for i := targetBlockIndex - 1; i >= 0; i-- {
+			if headerRegex.MatchString(blocks[i]) {
+				headerDate = blocks[i]
+				break
+			}
+		}
+
+		// Extract time from record and content without timestamp
+		timestampRegex := regexp.MustCompile(`^` + "`" + `(\d{2}:\d{2})` + "`" + ` (.*)`)
+		matches := timestampRegex.FindStringSubmatch(targetRecord)
+		if len(matches) < 3 {
+			return fmt.Errorf("failed to parse record timestamp for index %d", index)
+		}
+
+		timeStr := matches[1]
+		recordContent := matches[2]
+
+		// Parse full timestamp from header date + time
+		dateRegex := regexp.MustCompile(`^#### (\d{1,2}) ([A-Za-z]+), [A-Za-z]+`)
+		dateMatches := dateRegex.FindStringSubmatch(headerDate)
+		if len(dateMatches) < 3 {
+			return fmt.Errorf("failed to parse header date for index %d", index)
+		}
+
+		// Build full timestamp
+		dateTimeStr := fmt.Sprintf("%s %s %s", dateMatches[1], dateMatches[2], timeStr)
+		timestamp, err := time.Parse("2 January 15:04", dateTimeStr)
+		if err != nil {
+			return fmt.Errorf("failed to parse timestamp for index %d: %w", index, err)
+		}
+
+		// Call callback with content and timestamp
+		if err := callback(recordContent, timestamp); err != nil {
+			return fmt.Errorf("callback failed for index %d: %w", index, err)
+		}
+
+		// Mark block for removal
+		blocksToRemove[targetBlockIndex] = true
 	}
 
-	// Build full timestamp (simplified - you may need more robust date parsing)
-	dateTimeStr := fmt.Sprintf("%s %s %s", dateMatches[1], dateMatches[2], timeStr)
-	timestamp, err := time.Parse("2 January 15:04", dateTimeStr)
-	if err != nil {
-		return fmt.Errorf("failed to parse timestamp: %w", err)
-	}
-
-	// Call callback with content and timestamp
-	if err := callback(recordContent, timestamp); err != nil {
-		return fmt.Errorf("callback failed: %w", err)
-	}
-
-	// Remove target block and rebuild content
-	newBlocks := make([]string, 0, len(blocks)-1)
+	// Remove target blocks and rebuild content
+	newBlocks := make([]string, 0, len(blocks)-len(blocksToRemove))
 	for i, block := range blocks {
-		if i != targetBlockIndex {
+		if !blocksToRemove[i] {
 			newBlocks = append(newBlocks, block)
 		}
 	}

@@ -1603,9 +1603,9 @@ func (b *Bot) moveToExistingFile(params []string) error {
 	//// We can tolerate this
 	//_ = b.fs.Del(fromDir, fromFilename)
 
-	err = b.MoveRecordFromChat(index, func(content string, timestamp time.Time) error {
+	err = b.MoveRecordFromChat(func(content string, timestamp time.Time) error {
 		return b.addToFile(fs.DirRoot, existingFilename, content)
-	})
+	}, index)
 	if err != nil {
 		return fmt.Errorf("move to file: can't add to existing file '%s': %w", existingFilename, err)
 	}
@@ -1797,7 +1797,15 @@ func (b *Bot) moveToNewChecklist(params []string) error {
 }
 
 func (b *Bot) moveToJournal(params []string) error {
-	index, _ := strconv.Atoi(params[0])
+	//index, _ := strconv.Atoi(params[0])
+	var indices []int
+	for _, indexStr := range params {
+		index, err := strconv.Atoi(indexStr)
+		if err != nil {
+			return fmt.Errorf("move to journal: can't convert index '%s' to int: %w", indexStr, err)
+		}
+		indices = append(indices, index)
+	}
 
 	//fromFilename, err := b.fs.Unhash(fs.DirToday, index)
 	//if err != nil {
@@ -1809,10 +1817,10 @@ func (b *Bot) moveToJournal(params []string) error {
 	//	return fmt.Errorf("move to journal: can't read content of '%s': %w", fromFilename, err)
 	//}
 
-	err := b.MoveRecordFromChat(index, func(content string, t time.Time) error {
+	err := b.MoveRecordFromChat(func(content string, t time.Time) error {
 		// TODO take into account time
 		return journal.AddRecord(b.fs, content, b.cfg.Timezone())
-	})
+	}, indices...)
 	if err != nil {
 		return fmt.Errorf("failed to move to journal: can't add record: %w", err)
 	}
