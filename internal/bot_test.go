@@ -40,7 +40,7 @@ func TestSaveFromTextMsg(t *testing.T) {
 	}
 
 	mode := userconfig.DefaultConfig.Mode
-	userconfig.DefaultConfig.Mode = userconfig.ModeTasks
+	userconfig.DefaultConfig.Mode = userconfig.ModeFull
 	defer func() {
 		userconfig.DefaultConfig.Mode = mode
 	}()
@@ -1362,24 +1362,30 @@ func TestMoveToExistingFile(t *testing.T) {
 		return time.Date(2024, 8, 11, 9, 54, 0, 0, time.UTC)
 	}
 
+	mode := userconfig.DefaultConfig.Mode
+	userconfig.DefaultConfig.Mode = userconfig.ModeFull
+	defer func() {
+		userconfig.DefaultConfig.Mode = mode
+	}()
+
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	err = userFS.Write("today", "Task.md", "")
+	err = userFS.Write("/", "Chat.txt", "#### 27 June, Friday\n`12:00` New message")
 	r.NoError(err)
-	err = userFS.Write("", "New file.md", "")
-	r.NoError(err)
+	//err = userFS.Write("", "New file.md", "")
+	//r.NoError(err)
 	err = userFS.Write("", "Existing file.md", "")
 	r.NoError(err)
 
 	tgram := tg.NewFakeTG()
 	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), fakeConfig())
-	upd := tg.NewUpdCmd(-1, tg.NewCmd("mf", []string{"1c8f819d075", "/", "501ef2410e2"}))
+	upd := tg.NewUpdCmd(-1, tg.NewCmd("mf", []string{"1c8f819d075", "0"}))
 	err = bot.Reply(upd)
 	r.NoError(err)
 
 	content, err := userFS.Read("", "Existing file.md")
 	r.NoError(err)
-	r.Equal("#### 11 August 2024, Sunday\nNew file", content)
+	r.Equal("#### 11 August 2024, Sunday\nNew message", content)
 }
 
 func TestMoveToExistingFileExistingRecord(t *testing.T) {
