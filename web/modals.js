@@ -167,10 +167,12 @@ class SearchModal {
         searchModal.showResults(results);
     }
 
-    open(text = '', messageIndex = null) {
+    open(text = '', messageIndex = null, buttonElement  = null) {
         this.messageIndex = messageIndex;
 
-        document.getElementById('search').style.display = 'block';
+        let modal = document.getElementById('search');
+        modal.style.display = 'block';
+
         const inputField = document.getElementById('search-input');
         inputField.value = text;
         inputField.focus();
@@ -185,6 +187,25 @@ class SearchModal {
             this.showRootFiles();
         } else {
             this.search();
+        }
+
+        // Position the modal
+        if (buttonElement && this.messageIndex !== null) {
+            // Position below the button, keep x centered
+            const rect = buttonElement.getBoundingClientRect();
+            modal.style.position = 'fixed';
+            modal.style.top = `${rect.bottom + 5}px`;
+            modal.style.right = '20px';
+            modal.style.left = '';
+            modal.style.transform = '';
+            // modal.style.transform = 'translateX(-50%)';
+        } else {
+            // Default center position
+            modal.style.position = 'fixed';
+            modal.style.top = '30%';
+            modal.style.left = '50%';
+            modal.style.right = '';
+            modal.style.transform = 'translate(-50%, 0)';
         }
     }
 

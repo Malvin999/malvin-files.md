@@ -103,7 +103,7 @@ function formatFileContent(messages) {
 
 async function loadData() {
     try {
-        const file = await ((await getFileHandle(CHAT_FILENAME)).getFile());
+        const file = await ((await getFileHandle(CHAT_FILENAME, true)).getFile());
         const content = await file.text();
 
         // Parse the content and load messages
@@ -270,7 +270,7 @@ function attachEventListeners() {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             console.log('clicking');
-            searchModal.open('', btn.dataset.index)
+            searchModal.open('', btn.dataset.index, e.target)
         });
     });
 
