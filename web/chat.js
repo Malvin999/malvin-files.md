@@ -269,6 +269,7 @@ function attachEventListeners() {
     chatContainer.querySelectorAll('.to-file-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
+            console.log('clicking');
             searchModal.open('', btn.dataset.index)
         });
     });

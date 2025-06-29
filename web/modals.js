@@ -41,6 +41,132 @@ class SearchModal {
         });
     }
 
+    search() {
+        let search = document.getElementById('search-input').value.toLowerCase();
+
+        const list = document.getElementById('search-results');
+        list.innerHTML = '';
+
+        if (search.endsWith('/')) {
+            const folderName = search.slice(0, -1);
+
+            // Check if the folder exists in files
+            if (files[folderName]) {
+                const list = document.getElementById('search-results');
+                list.innerHTML = '';
+
+                // Get all files from the specified folder
+                const folderResults = [];
+                for (const filename in files[folderName]) {
+                    folderResults.push({
+                        filename: filename,
+                        dir: folderName,
+                        score: 100 // Give max score since it's an exact folder match
+                    });
+                }
+
+                this.showResults(folderResults);
+                return;
+            }
+        }
+
+        let results = [];
+        const lowPriorityDirs = ['archive', '_read_', '_watch_', '_shop_', 'habits', 'triggers', 'today', 'later'];
+
+        const searchDirs = search.includes('/') && search.split('/').length === 2
+            ? [search.split('/')[0]]
+            : Object.keys(excludeDirs(SYSTEM_DIRS));
+
+        search = search.includes('/')
+            ? search.split('/')[1].toLowerCase()
+            : search;
+
+        // Similarity matching, check for direct file matches across directories.
+        for (const dir of searchDirs) {
+            if (!files[dir] || dir === 'media') continue;
+            for (const filename in files[dir]) {
+                const potentialMatch = filename.replace(/\.md$/, '');
+                let similarityScore = similarity(search, potentialMatch);
+
+                if (similarityScore >= 70) {
+                    if (lowPriorityDirs.includes(dir)) {
+                        similarityScore -= 30;
+                    }
+                    results.push({
+                        filename: filename, dir: dir, score: similarityScore
+                    });
+                }
+            }
+        }
+
+        // If search is equal to directory
+        if (files[search]) {
+            for (const filename in files[search]) {
+                results.push({
+                    filename: filename,
+                    dir: search,
+                    score: 100
+                });
+            }
+        }
+
+        // Check for "dir file" pattern (space separated)
+        const spaceIndex = search.indexOf(' ');
+        if (spaceIndex !== -1) {
+            const dirName = search.substring(0, spaceIndex);
+            const fileName = search.substring(spaceIndex + 1);
+
+            if (files[dirName]) {
+                for (const filename in files[dirName]) {
+                    const potentialMatch = filename.replace(/\.md$/, '');
+                    if (potentialMatch.toLowerCase().includes(fileName.toLowerCase())) {
+                        results.push({
+                            filename: filename,
+                            dir: dirName,
+                            score: 95
+                        });
+                    }
+                }
+            }
+        }
+
+        // Substring matching
+        for (const dir in files) {
+            // If dir is not in search dirs, skip
+            if (dir === 'media') {
+                continue;
+            }
+
+
+            for (const filename in files[dir]) {
+                const potentialMatch = filename.replace(/\.md$/, '');
+                const isSubstringMatch = potentialMatch.toLowerCase().includes(search.toLowerCase());
+
+                if (!isSubstringMatch) {
+                    continue; // Skip this filename if it doesn't match
+                }
+
+                let matchedPercent = (search.length / potentialMatch.length) * 100;
+
+                results.push({
+                    filename: filename, dir: dir, score: Math.round(matchedPercent)
+                });
+            }
+        }
+
+        const uniqueResultsMap = new Map();
+        for (let i = 0; i < results.length; i++) {
+            const item = results[i];
+            const key = `${item.filename}-${item.dir}`;
+
+            if (!uniqueResultsMap.has(key) || uniqueResultsMap.get(key).score < item.score) {
+                uniqueResultsMap.set(key, item);
+            }
+        }
+        results = Array.from(uniqueResultsMap.values()).sort((a, b) => b.score - a.score);
+        searchModal.showResults(results);
+    }
+
     open(text = '', messageIndex = null) {
         this.messageIndex = messageIndex;
 
@@ -54,12 +180,11 @@ class SearchModal {
         goToFileResults.innerHTML = '';
 
         if (text === '' && this.messageIndex === null) {
-            console.log("here");
             this.showRecentFiles();
         } else if (text === '') {
             this.showRootFiles();
-        } {
-            search();
+        } else {
+            this.search();
         }
     }
 
