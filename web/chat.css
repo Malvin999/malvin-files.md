@@ -101,6 +101,11 @@
     height: 32px;
 }
 
+.to-recent-btn {
+    max-width: 200px;
+    width: auto;
+}
+
 .action-btn:hover {
     background: var(--color-bg-active);
 }

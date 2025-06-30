@@ -194,6 +194,14 @@ function renderMessages() {
         return;
     }
 
+    const recentFiles = getRecentlyModifiedFiles();
+    const recentFilesButtons = recentFiles.map(filename => `
+        <button class="action-btn to-recent-btn" data-filename="${filename}">
+            ${filename.replace(/\.md$/, '').slice(0, 10)}${filename.replace(/\.md$/, '').length > 10 ? '…' : ''}
+            <span class="btn-label">${filename.replace(/\.md$/, '')}</span>
+        </button>
+    `).join('');
+
     chatContainer.innerHTML = messages.map(message => `
         <div class="message" data-index="${message.index}">
             <div class="message-content" 
@@ -203,6 +211,7 @@ function renderMessages() {
             <div class="message-footer">
                 <span class="message-time">${message.timestamp}</span>
                 <div class="message-actions">
+                    ${recentFilesButtons}
                     <button class="action-btn to-file-btn" data-index="${message.index}">
                         📄
                         <span class="btn-label">To File</span>
@@ -468,6 +477,33 @@ function attachEventListeners() {
                 updateSidebar();
             });
         });
+
+        chatContainer.querySelectorAll('.to-recent-btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                const selectedMessages = document.querySelectorAll('.message.selected');
+                let indices = [];
+                let messagesToRemove = [];
+                if (selectedMessages.length > 0) {
+                    indices = Array.from(selectedMessages).map(msg => msg.dataset.index);
+                    messagesToRemove = selectedMessages;
+                } else {
+                    let message = btn.closest('.message');
+                    indices = [message.dataset.index];
+                    messagesToRemove = [message];
+                }
+
+                sendCmd('mf', [btn.dataset.filename, indices.join(',')]);
+                messagesToRemove.forEach(message => {
+                    message.classList.add('removing');
+                    setTimeout(() => {
+                        message.remove();
+                    }, 300);
+                });
+                chatInput.focus();
+                updateSidebar();
+            });
+        });
     });
 
     chatContainer.querySelectorAll('.delete-btn').forEach(btn => {
@@ -540,4 +576,16 @@ function sendCmd(cmd, params) {
         p: params.map(p => p.toString()),
     }
     replyCmd(JSON.stringify(cmdObj));
+}
+
+function getRecentlyModifiedFiles() {
+    if (!files || typeof files !== 'object') return [];
+
+    return Object.entries(files[''])
+        .filter(([filename, content]) => filename && content && filename !== CHAT_FILENAME && filename !== CONFIG_FILENAME)
+        .sort(([, a], [, b]) => {
+            return new Date(b.lastModified || 0) - new Date(a.lastModified || 0);
+        })
+        .slice(0, 3)
+        .map(([filename]) => filename);
 }

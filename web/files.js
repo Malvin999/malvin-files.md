@@ -887,8 +887,6 @@ function saveServerFiles() {
 // TODO add hash of last read file comparison, merge on conflict (in which scenarious in can happen tho?)
 // TODO add lock / RC for currentFile change
 async function syncCurrentFile(syncWithServer = true) {
-    // TODO remove
-    return;
     if (files === undefined || isWelcome || debug || editor.currentFile === undefined) {
         return;
     }
