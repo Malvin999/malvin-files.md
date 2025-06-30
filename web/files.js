@@ -976,7 +976,7 @@ async function syncCurrentFile(syncWithServer = true) {
     // If fs has fresher change, merge.
     // Sync with server.
 
-    if (contentWasModifiedLocally && editor.isClean()) {
+    if (contentWasModifiedLocally && editor.isClean() && !isChat) {
         console.log(contentWasModifiedLocally, editor.isClean());
         console.log('WAS MODIFIED LOCALLY', editor.currentFile);
         // Changes only from local system
