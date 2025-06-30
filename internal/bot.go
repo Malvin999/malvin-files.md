@@ -239,7 +239,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		consts.CmdShowMoveToDirOrFile:         b.showMoveToFileOrDir,
 		consts.CmdShowMoveToChecklist:         b.showToChecklist,
 		consts.CmdMoveToExistingDir:           b.moveToDir,
-		consts.CmdMOveToExistingDirFromChat:   b.moveToDir,
+		consts.CmdMOveToExistingDirFromChat:   b.moveToDirFromChat,
 		consts.CmdRequestNewDir:               b.requestNewDirName,
 		consts.CmdMoveToNewDir:                b.moveToNewDir,
 		consts.CmdMoveToExistingFile:          b.moveToExistingFile,
@@ -1557,10 +1557,6 @@ func (b *Bot) moveToDirFromChat(params []string) error {
 		}
 
 		filename := fs.Filename(sanitizedTitle)
-		err = b.createOrAdd(toDir, filename, content)
-		if err != nil {
-			return fmt.Errorf("save: %w", err)
-		}
 
 		notesDir := fs.OnlyNoteDirs([]fs.File{{Name: toDir}})
 		isNotesDir := len(notesDir) == 1
@@ -1569,7 +1565,7 @@ func (b *Bot) moveToDirFromChat(params []string) error {
 			_ = journal.AddRecord(b.fs, fmt.Sprintf("📌 %s", fs.Title(filename)), b.cfg.Timezone())
 		}
 
-		return b.fs.Write(toDir, sanitizedTitle, content)
+		return b.createOrAdd(toDir, filename, content)
 	}, index)
 
 	if toDir != fs.DirLater {
