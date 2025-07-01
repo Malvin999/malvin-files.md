@@ -43,7 +43,7 @@ func SyncMedias(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find media files newer than client's timestamp
-	ctimes, err := userFS.Ctimes(fs.DirMedia, "")
+	ctimes, err := userFS.Ctimes(fs.DirMedia)
 	if err != nil {
 		slog.Error("Sync error: syncMedias: error getting media file times", "error", err)
 		http.Error(w, "Error getting media file times", http.StatusInternalServerError)
@@ -54,7 +54,6 @@ func SyncMedias(w http.ResponseWriter, r *http.Request) {
 	latestTimestamp := int64(0)
 	for filename, modTime := range ctimes {
 		// TODO theoretically it is possible to miss some files if there were created in the same second.
-		slog.Error("Mod time ", "filename", filename, "modTime", modTime, "syncMediasRequest.Timestamp", syncMediasRequest.Timestamp)
 		if modTime <= syncMediasRequest.Timestamp {
 			continue
 		}
