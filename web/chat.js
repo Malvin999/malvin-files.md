@@ -11,7 +11,7 @@ const chatContainer = document.getElementById('chat-container');
 async function openChat() {
     chatContainer.style.display = 'flex';
     chatButton.classList.add('hidden');
-    
+
     if (editor.currentFile !== CHAT_FILENAME) {
         const state = {dir: editor.currentDir, file: editor.currentFile};
         history.pushState(state, '');
