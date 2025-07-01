@@ -1,7 +1,6 @@
 // HyperMD/Codemirror editor
 let editor;
 let tree;
-let focusedMoveItemIndex = -1;
 let isChat = false;
 let isWelcome = false;
 let debug = false;
@@ -711,7 +710,8 @@ window.addEventListener('keydown', async (event) => {
 
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
-        closeMove();
+        searchModal.close();
+        moveModal.close();
     }
 });
 
@@ -789,29 +789,6 @@ window.addEventListener('popstate', (event) => {
     const state = event.state;
     if (state) {
         openFile(state['dir'], state['file'], false);
-    }
-});
-
-document.getElementById('move').addEventListener('keydown', (event) => {
-    const resultsList = document.getElementById('move-results').querySelectorAll('li');
-
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        if (resultsList[focusedMoveItemIndex]) {
-            const dir = resultsList[focusedMoveItemIndex].getAttribute('data-path');
-            moveCurrentFile(dir);
-            closeMoveModal();
-        }
-    }
-
-    if (event.key === 'ArrowDown') {
-        event.preventDefault();
-        focusedMoveItemIndex = (focusedMoveItemIndex + 1) % resultsList.length;
-        updateMoveFocusedItem(resultsList);
-    } else if (event.key === 'ArrowUp') {
-        event.preventDefault();
-        focusedMoveItemIndex = (focusedMoveItemIndex - 1 + resultsList.length) % resultsList.length;
-        updateMoveFocusedItem(resultsList);
     }
 });
 

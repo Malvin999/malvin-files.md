@@ -381,6 +381,14 @@ function attachEventListeners() {
         });
     });
 
+    chatContainer.querySelectorAll('.to-dir-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            moveModal.open(btn.dataset.index, e.target)
+            chatInput.focus();
+        });
+    });
+
     chatContainer.querySelectorAll('.to-journal-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();

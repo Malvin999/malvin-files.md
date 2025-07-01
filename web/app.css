@@ -142,12 +142,6 @@ a:hover {
     flex-direction: column;
 }
 
-#move {
-    top: 30%;
-    left: 50%;
-    transform: translate(-50%, 0);
-}
-
 #search-input, #move-input {
     width: 100%;
     padding: 8px;

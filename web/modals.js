@@ -235,7 +235,7 @@ class SearchModal {
             listItem.setAttribute('data-path', `${dir}/${filename}`);
             listItem.setAttribute('data-index', index);
 
-            listItem.onclick = () => this.handleItemClick(dir, filename);
+            listItem.onclick = () => this.handleClick(dir, filename);
 
             listItem.onmouseenter = () => {
                 document.querySelectorAll('#search-results li').forEach(li => li.classList.remove('focused'));
@@ -249,7 +249,7 @@ class SearchModal {
         this.updateFocusedItem();
     }
 
-    handleItemClick(dir, filename) {
+    handleClick(dir, filename) {
         if (this.messageIndex !== null) {
             const selectedMessages = document.querySelectorAll('.message.selected');
             let indices = [];
@@ -283,7 +283,7 @@ class SearchModal {
         const resultsList = document.getElementById('search-results').querySelectorAll('li');
         if (resultsList[this.focusedIndex]) {
             const [dir, filename] = resultsList[this.focusedIndex].getAttribute('data-path').split('/');
-            this.handleItemClick(dir, filename);
+            this.handleClick(dir, filename);
         }
     }
 
@@ -339,6 +339,7 @@ class SearchModal {
 
 class MoveModal {
     constructor() {
+        this.messageIndex = null;
         this.focusedIndex = 0;
         this.init();
     }
@@ -380,7 +381,33 @@ class MoveModal {
         });
     }
 
-    open() {
+    open(messageIndex = null, buttonElement = null) {
+        this.messageIndex = messageIndex;
+
+        let modal = document.getElementById('move');
+        modal.style.display = 'block';
+
+        // Position the modal
+        if (buttonElement && this.messageIndex !== null) {
+            // Position below the button, keep x centered
+            const rect = buttonElement.getBoundingClientRect();
+            modal.style.position = 'fixed';
+            modal.style.top = `${rect.bottom + 5}px`;
+            modal.style.right = '20px';
+            modal.style.left = '';
+            modal.style.transform = '';
+            modal.style.width = '320px';
+            // modal.style.transform = 'translateX(-50%)';
+        } else {
+            // Default center position
+            modal.style.position = 'fixed';
+            modal.style.top = '30%';
+            modal.style.left = '50%';
+            modal.style.right = '';
+            modal.style.transform = 'translate(-50%, 0)';
+            modal.style.width = '';
+        }
+
         document.getElementById('move').style.display = 'block';
         const inputField = document.getElementById('move-input');
         inputField.focus();
@@ -393,6 +420,7 @@ class MoveModal {
 
     close() {
         document.getElementById('move').style.display = 'none';
+        this.messageIndex = null;
     }
 
     getMoveDestinations() {
@@ -440,10 +468,7 @@ class MoveModal {
             listItem.setAttribute('data-path', dataDir);
             listItem.setAttribute('data-index', index);
 
-            listItem.onclick = async () => {
-                await moveCurrentFile(dataDir);
-                this.close();
-            };
+            listItem.onclick = () => this.handleClick(dir);
 
             listItem.onmouseenter = () => {
                 document.querySelectorAll('#move-results li').forEach(li => li.classList.remove('focused'));
@@ -461,11 +486,8 @@ class MoveModal {
     handleEnterKey() {
         const resultsList = document.getElementById('move-results').querySelectorAll('li');
         if (resultsList[this.focusedIndex]) {
-            const dataDir = resultsList[this.focusedIndex].getAttribute('data-path');
-            console.log('CLICKED ON folder to move', dataDir);
-            moveCurrentFile(dataDir).then(() => {
-                this.close();
-            });
+            const toDir = resultsList[this.focusedIndex].getAttribute('data-path');
+            this.handleClick(toDir);
         }
     }
 
@@ -480,6 +502,38 @@ class MoveModal {
                 item.classList.remove('focused');
             }
         });
+    }
+
+    handleClick(toDir) {
+        if (this.messageIndex !== null) {
+            const selectedMessages = document.querySelectorAll('.message.selected');
+            let indices = [];
+            let messagesToRemove = [];
+            if (selectedMessages.length > 0) {
+                indices = Array.from(selectedMessages).map(msg => msg.dataset.index);
+                messagesToRemove = selectedMessages;
+            } else {
+                indices = [this.messageIndex.toString()];
+                const btn = document.querySelector(`.message[data-index="${this.messageIndex}"] button`);
+                messagesToRemove = [btn.closest('.message')];
+            }
+
+            sendCmd('mv', [toDir, indices.join(',')]);
+            messagesToRemove.forEach(message => {
+                message.classList.add('removing');
+                setTimeout(() => {
+                    message.remove();
+                }, 300);
+            });
+            chatInput.focus();
+            updateSidebar();
+            this.close();
+        } else {
+            console.log('CLICKED ON folder to move', toDir);
+            moveCurrentFile(toDir).then(() => {
+                this.close();
+            });
+        }
     }
 }
 
