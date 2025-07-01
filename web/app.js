@@ -987,8 +987,8 @@ function stopResize() {
 
 document.addEventListener('keydown', (e) => {
     // If search or move dialog is focused - return
-    if (document.getElementById('search').style.display === 'block' ||
-        document.getElementById('move').style.display === 'block') {
+    if (document.getElementById('search').style.display !== 'none' ||
+        document.getElementById('move').style.display !== 'none') {
         return;
     }
 

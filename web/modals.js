@@ -34,7 +34,7 @@ class SearchModal {
         // Close on outside click
         document.addEventListener('click', (event) => {
             const searchModal = document.getElementById('search');
-            if (searchModal.style.display === 'block' && !searchModal.contains(event.target)) {
+            if (searchModal.style.display !== 'none' && !searchModal.contains(event.target)) {
                 this.close();
             }
         });
@@ -171,7 +171,7 @@ class SearchModal {
         this.messageIndex = messageIndex;
 
         let modal = document.getElementById('search');
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
 
         const inputField = document.getElementById('search-input');
         inputField.value = text;
@@ -196,6 +196,7 @@ class SearchModal {
             const spaceBelow = viewportHeight - rect.bottom;
             const spaceAbove = rect.top;
 
+            // TODO move to css
             const positionAbove = spaceBelow < modalHeight && spaceAbove > spaceBelow;
             modal.style.position = 'fixed';
             modal.style.right = '20px';
@@ -218,6 +219,7 @@ class SearchModal {
             // Default center position
             modal.style.position = 'fixed';
             modal.style.top = '30%';
+            modal.style.bottom = '';
             modal.style.left = '50%';
             modal.style.right = '';
             modal.style.transform = 'translate(-50%, 0)';
@@ -446,9 +448,6 @@ class MoveModal {
             modal.style.width = '';
             modal.classList.remove('modal-reversed');
         }
-
-        // document.getElementById('move').style.display = 'block';
-
 
         this.focusedIndex = 0;
         const moveResults = document.getElementById('move-results');

@@ -301,3 +301,13 @@
 #close-chat:hover {
     color: var(--color-tx) !important;
 }
+
+.modal-reversed {
+    display: flex !important;
+    flex-direction: column-reverse !important;
+}
+
+.modal-reversed #search-input, .modal-reversed #move-input {
+    margin-top: 8px;
+    margin-bottom: 0 !important;
+}

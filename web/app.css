@@ -538,13 +538,3 @@ body.dragging * {
 #move, #search {
     z-index: 10000;
 }
-
-.modal-reversed {
-    display: flex !important;
-    flex-direction: column-reverse !important;
-}
-
-.modal-reversed #search-input, .modal-reversed #move-input {
-    margin-top: 8px;
-    margin-bottom: 0 !important;
-}

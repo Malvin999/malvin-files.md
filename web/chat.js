@@ -55,10 +55,12 @@ async function openChatModal() {
 
 function closeChatModal() {
     chatContainer.classList.remove('modal');
-    chatContainer.style.display = 'none';
-    chatButton.classList.remove('hidden');
-    chat.style.display = 'none';
-    chatInput.style.display = 'none';
+    if (!isChat) {
+        chatContainer.style.display = 'none';
+        chat.style.display = 'none';
+        chatInput.style.display = 'none';
+        chatButton.classList.remove('hidden');
+    }
 }
 
 async function toggleChat() {
