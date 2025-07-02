@@ -301,10 +301,11 @@ async function syncLocalFileWithServer(dir, filename) {
         console.error('Network error occurred:', error.message);
         return;
     }
-    setServerFile(path, serverFile.content, serverFile.lastModified);
-    console.log(`saved metadata2 for ${path} with timestamp ${serverFile.lastModified}`);
+
+    const clientLastModified = await saveTextFile(path, serverFile.content);
+    setServerFile(path, serverFile.content, serverFile.lastModified, clientLastModified);
+    console.log(`saved server file for ${path} with timestamp ${serverFile.lastModified}`);
     saveServerFiles();
-    await saveTextFile(path, serverFile.content);
     console.log('showing file sync one');
     await openFile(dir, filename);
     console.log('File synced with server');
@@ -697,6 +698,9 @@ async function saveTextFile(path, content) {
     } else {
         console.log('Hashes match, no need to write file.');
     }
+
+    const file = await fileHandle.getFile();
+    return file.lastModified;
 }
 
 async function saveImageFile(fileName, file) {
@@ -850,7 +854,7 @@ function getMetadata(path) {
     }
 }
 
-function setServerFile(path, content, lastModified) {
+function setServerFile(path, content, lastModified, clientLastModified = null) {
     const parts = path.split('/');
     const filename = parts.pop();
     const dir = parts.join('/');
@@ -860,7 +864,8 @@ function setServerFile(path, content, lastModified) {
     serverFiles['files'][dir][filename] = {
         hash: hash(content),
         lastModified: lastModified,
-        path: path
+        clientLastModified: clientLastModified,
+        path: path,
     };
 }
 
