@@ -515,7 +515,6 @@ function TreeView(root, container, options) {
         span_desc.tj_node = node;
 
         if (node.isGroupEnd) {
-            console.log('yyyaah');
             span_desc.classList.add("group-end");
         }
 
