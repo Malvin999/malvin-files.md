@@ -429,8 +429,8 @@ function renderSidebar(focusDir = '') {
 
 
     const groups = [
-        ['_read_', '_watch_', '_shop_'],
         ['journal', 'habits', 'insights', 'archive'],
+        ['_read_', '_watch_', '_shop_'],
         ['today', 'later']
     ];
 
