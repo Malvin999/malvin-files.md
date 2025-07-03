@@ -277,6 +277,9 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Log client times
+	logSync(fmt.Sprintf("Client file '%s' last modified: %d, last synced: %d", clientFile.Path, clientFile.ClientLastModified, clientFile.ClientLastSynced), r)
+
 	var content string
 	fileWasModifiedOnServer := false
 	if errors.Is(err, os.ErrNotExist) {
@@ -312,7 +315,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 
 	serverLastModified, err = userFS.Ctime(fs.DirRoot, path)
 	// TODO what if 0?
-	logSync(fmt.Sprintf("Server timestamp for '%s': %d", path, serverLastModified), r)
+	logSync(fmt.Sprintf("Final server timestamp for '%s': %d", path, serverLastModified), r)
 
 	if !fileWasModifiedOnServer {
 		response := map[string]interface{}{

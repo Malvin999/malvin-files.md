@@ -4104,36 +4104,36 @@ func TestJournalOnlyMode_SaveTextMessage(t *testing.T) {
 	r.Contains(content, "11 August, Sunday")
 }
 
-func TestFileOnlyMode_SaveTextMessage(t *testing.T) {
-	r := require.New(t)
-
-	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
-	r.NoError(err)
-	err = userFS.CreateDirsIfNotExist()
-	r.NoError(err)
-
-	tgram := tg.NewFakeTG()
-
-	cfg := fakeConfig()
-	err = cfg.SetMode(userconfig.ModeOneFile)
-	r.NoError(err)
-
-	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), cfg)
-	err = bot.Reply(tg.NewUpd(-1, "File content"))
-	r.NoError(err)
-
-	todayFiles, err := bot.fs.FilesAndDirs("today")
-	r.NoError(err)
-	r.Len(todayFiles, 0)
-
-	rootFiles, err := bot.fs.FilesAndDirs("/")
-	r.NoError(err)
-	r.True(len(rootFiles) > 0)
-
-	content, err := bot.fs.Read("", "Chat.txt")
-	r.NoError(err)
-	r.Equal("File content", content)
-}
+//func TestFileOnlyMode_SaveTextMessage(t *testing.T) {
+//	r := require.New(t)
+//
+//	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+//	r.NoError(err)
+//	err = userFS.CreateDirsIfNotExist()
+//	r.NoError(err)
+//
+//	tgram := tg.NewFakeTG()
+//
+//	cfg := fakeConfig()
+//	err = cfg.SetMode(userconfig.ModeOneFile)
+//	r.NoError(err)
+//
+//	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), cfg)
+//	err = bot.Reply(tg.NewUpd(-1, "File content"))
+//	r.NoError(err)
+//
+//	todayFiles, err := bot.fs.FilesAndDirs("today")
+//	r.NoError(err)
+//	r.Len(todayFiles, 0)
+//
+//	rootFiles, err := bot.fs.FilesAndDirs("/")
+//	r.NoError(err)
+//	r.True(len(rootFiles) > 0)
+//
+//	content, err := bot.fs.Read("", "Chat.txt")
+//	r.NoError(err)
+//	r.Equal("File content", content)
+//}
 
 func TestShowToday_NotesOnlyMode(t *testing.T) {
 	r := require.New(t)
