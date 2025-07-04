@@ -577,6 +577,17 @@ body.dragging * {
     transition: opacity 0.2s;
 }
 
+#close-editor2 {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--color-link);
+    background: none;
+    border: none;
+}
+
 #sidebar:hover #close-sidebar {
     opacity: 1;
 }

@@ -1191,6 +1191,6 @@ function showEditor2() {
 
 function hideEditor2() {
     document.getElementById('editor2-container').style.display = 'none';
-    editor.setValue(editor2.getValue()); // Copy content back to editor
+    // editor.setValue(editor2.getValue()); // Copy content back to editor
     editor.focus();
 }

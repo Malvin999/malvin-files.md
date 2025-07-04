@@ -61,11 +61,11 @@
         stroke: #F5F5F5 !important;
     }
 
-    #close-sidebar {
+    #close-sidebar, #close-editor2 {
         color: var(--color-tx-alt) !important;
     }
 
-    #close-sidebar:hover {
+    #close-sidebar:hover, #close-editor2:hover {
         color: var(--color-link) !important;
     }
 
