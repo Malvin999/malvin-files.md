@@ -88,8 +88,8 @@ async function init(el) {
     console.log(`Sidebar built in: ${(performance.now() - perf).toFixed(3)} milliseconds`);
 
     // perf = performance.now();
-    // openChat();
-    showRandomFile();
+    openChat();
+    // showRandomFile();
     // console.log(`Random file opened in: ${(performance.now() - perf).toFixed(3)} milliseconds`);
 
     perf = performance.now();
@@ -658,7 +658,7 @@ async function openFile(dir, filename, saveToHistory = true, el = 'editor-textar
         // TODO only focus if there's no quick dialogue
         currentEditor.focus();
     } else {
-        // focusLastLine();
+        focusLastLine();
     }
 
     const end = performance.now();
