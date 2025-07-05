@@ -583,90 +583,6 @@ async function showRandomFile() {
     }
 }
 
-async function openFile(dir, filename, saveToHistory = true, el = 'editor-textarea') {
-    if (el === 'editor-textarea') {
-        currentEditor = editor;
-    } else if (el === 'editor2-textarea') {
-        currentEditor = editor2;
-    }
-
-    await syncCurrentFile(false);
-
-    if (dir === '' && filename === CHAT_FILENAME) {
-        openChat();
-        return;
-    } else {
-        const codemirror = document.querySelector('.CodeMirror-wrap');
-        codemirror.style.display = 'block';
-        chat.style.display = 'none';
-        chatInput.style.display = 'none';
-        isChat = false;
-    }
-    chatButton.classList.remove('hidden');
-    chatContainer.style.display = 'none';
-    closeChatModal();
-
-    const start = performance.now();
-    filename = filename.normalize('NFC');
-    const fileData = files[dir][filename];
-
-    // Check if we're loading the same file and save cursor position
-    let cursorPos = null;
-    if (currentEditor.currentDir === dir && currentEditor.currentFile === filename) {
-        console.log('saving cursor');
-        cursorPos = editor.getCursor();
-    }
-
-    const header = filename.replace(/\.md$/, '').replace(/^\w/, (c) => c.toUpperCase());
-    let content = '';
-    if (fileData.handle !== undefined) {
-        const file = await fileData.handle.getFile();
-        content = await file.text();
-        content = `# ${header}\n${content}`;
-    } else {
-        // We use welcome's files
-        content = fileData.content;
-    }
-
-    currentEditor.currentDir = dir;
-    currentEditor.currentFile = filename;
-    // TODO disable when syncing?
-    if (saveToHistory) {
-        const state = {dir: dir, file: filename};
-        history.pushState(state, '');
-    }
-
-    if (el === 'editor-textarea') {
-        editor = initEditor(document.getElementById(el));
-        currentEditor = editor;
-        hideEditor2();
-    } else if (el === 'editor2-textarea') {
-        editor2 = initEditor(document.getElementById(el));
-        currentEditor = editor2;
-        showEditor2();
-    }
-
-    currentEditor.currentDir = dir;
-    currentEditor.currentFile = filename;
-    currentEditor.getDoc().setValue(content);
-    currentEditor.clearHistory();
-    currentEditor.markClean();
-
-    if (cursorPos !== null) {
-        console.log('cursor not null');
-        currentEditor.setCursor(cursorPos);
-        currentEditor.scrollIntoView(cursorPos, 500);
-        // TODO only focus if there's no quick dialogue
-        currentEditor.focus();
-    } else {
-        focusLastLine();
-    }
-
-    const end = performance.now();
-    console.log(`File opened in: ${(end - start).toFixed(3)} milliseconds`);
-    // Get the editor instance
-}
-
 async function newFile() {
     let dir = editor.currentDir || '';
     let selectedDirs = tree.getSelectedNodes();
@@ -967,12 +883,15 @@ async function openDir() {
 }
 
 function getCurrentContent() {
-    let content = editor.getValue();
-    const header = toHeader(editor.currentFile);
-    if (content.toLowerCase().startsWith(`${header}`.toLowerCase())) {
+    let content = currentEditor.getValue();
+    const header = toHeader(currentEditor.currentFile).toLowerCase();
+    // Remove header if it exists.
+    if (content.toLowerCase().startsWith(header)) {
         content = content.slice(`${header}\n`.length);
     } else if (content.toLowerCase().startsWith('# ')) {
-        content = content.slice(`$# `.length);
+        // What is the case when starts with # '? Empty filename? Header not equal to original header?
+        // TODO but do we always have \n?
+        content = content.slice(`# \n`.length);
     }
 
     return content;

@@ -8,7 +8,7 @@ const LOAD_INTERVAL = 3000; // ms, how often to load current file from local fil
 let isSaving = false;
 let isSyncing = false;
 let isSyncingMedia = false;
-let isSyncingCurrent = false;
+let isSyncingCurrentFile = false;
 let isLoadingLocalFiles = false;
 
 // In-memory mapping of local file system:
@@ -746,7 +746,7 @@ async function removeFile(path) {
 
 // TODO can we reuse moveFile?
 async function moveCurrentFile(toDir) {
-    isSyncingCurrent = true;
+    isSyncingCurrentFile = true;
 
     // TODO add prevent syncing?
     const oldPath = toPath(editor.currentDir, editor.currentFile);
@@ -773,7 +773,7 @@ async function moveCurrentFile(toDir) {
         console.error('Error moving file:', error);
     }
 
-    isSyncingCurrent = false;
+    isSyncingCurrentFile = false;
 }
 
 // TODO lock on files modification?
@@ -878,13 +878,97 @@ function saveServerFiles() {
     localStorage.setItem(SERVER_STORAGE_KEY, JSON.stringify(serverFiles));
 }
 
+// TODO save old file
+async function openFile(dir, filename, saveToHistory = true, el = 'editor-textarea') {
+    if (el === 'editor-textarea') {
+        currentEditor = editor;
+    } else if (el === 'editor2-textarea') {
+        currentEditor = editor2;
+    }
+
+    await syncCurrentFile(false);
+
+    if (dir === '' && filename === CHAT_FILENAME) {
+        openChat();
+        return;
+    } else {
+        const codemirror = document.querySelector('.CodeMirror-wrap');
+        codemirror.style.display = 'block';
+        chat.style.display = 'none';
+        chatInput.style.display = 'none';
+        isChat = false;
+    }
+    chatButton.classList.remove('hidden');
+    chatContainer.style.display = 'none';
+    closeChatModal();
+
+    const start = performance.now();
+    filename = filename.normalize('NFC');
+    const fileData = files[dir][filename];
+
+    // Check if we're loading the same file and save cursor position
+    let cursorPos = null;
+    if (currentEditor.currentDir === dir && currentEditor.currentFile === filename) {
+        console.log('saving cursor');
+        cursorPos = editor.getCursor();
+    }
+
+    const header = filename.replace(/\.md$/, '').replace(/^\w/, (c) => c.toUpperCase());
+    let content = '';
+    if (fileData.handle !== undefined) {
+        const file = await fileData.handle.getFile();
+        content = await file.text();
+        content = `# ${header}\n${content}`;
+    } else {
+        // We use welcome's files
+        content = fileData.content;
+    }
+
+    currentEditor.currentDir = dir;
+    currentEditor.currentFile = filename;
+    // TODO disable when syncing?
+    if (saveToHistory) {
+        const state = {dir: dir, file: filename};
+        history.pushState(state, '');
+    }
+
+    if (el === 'editor-textarea') {
+        editor = initEditor(document.getElementById(el));
+        currentEditor = editor;
+        hideEditor2();
+    } else if (el === 'editor2-textarea') {
+        editor2 = initEditor(document.getElementById(el));
+        currentEditor = editor2;
+        showEditor2();
+    }
+
+    currentEditor.currentDir = dir;
+    currentEditor.currentFile = filename;
+    currentEditor.getDoc().setValue(content);
+    currentEditor.clearHistory();
+    currentEditor.markClean();
+
+    if (cursorPos !== null) {
+        console.log('cursor not null');
+        currentEditor.setCursor(cursorPos);
+        currentEditor.scrollIntoView(cursorPos, 500);
+        // TODO only focus if there's no quick dialogue
+        currentEditor.focus();
+    } else {
+        focusLastLine();
+    }
+
+    const end = performance.now();
+    console.log(`File opened in: ${(end - start).toFixed(3)} milliseconds`);
+    // Get the editor instance
+}
+
 // 0) Read content from local fs
 // 1) Save current content to local filesystem
 // 2) Sync it with the server
 // TODO add hash of last read file comparison, merge on conflict (in which scenarious in can happen tho?)
-// TODO add lock / RC for currentFile change
 async function syncCurrentFile(syncWithServer = true) {
-    if (files === undefined || isWelcome || debug || editor.currentFile === undefined) {
+    if (files === undefined || isWelcome || debug || currentEditor.currentFile === undefined) {
         return;
     }
 
@@ -895,77 +979,121 @@ async function syncCurrentFile(syncWithServer = true) {
         return;
     }
 
-    // Wait until not saving
-    // TODO what if lots of saving calls are stuck?
-    // I decided to go from loop to insta return
     if (isSaving) {
         return;
     }
 
-    if (isSyncingCurrent) {
+    if (isSyncingCurrentFile) {
         return;
     }
-    isSyncingCurrent = true;
+    isSyncingCurrentFile = true;
 
-    if (editor.currentFile !== CHAT_FILENAME) {
-        // Track in-editor renaming.
+    const dir = currentEditor.currentDir;
+    const filename = currentEditor.currentFile;
+    let isCurrentEditorSame = () => {
+        return filename === window.currentEditor.currentFile && dir === window.currentEditor.currentDir;
+    }
+
+    // Track in-editor renaming.
+    if (filename !== CHAT_FILENAME) {
         try {
             // TODO track if no first line?
-            const firstLine = editor.getValue().split('\n')[0];
-
+            const firstLine = currentEditor.getValue().split('\n')[0];
             let newFilename = ucfirst(fromHeaderToFilename(firstLine));
             // If filename is empty, generate an available "Untitled" name
+            // TODO check for forbidden filename chars
             if (newFilename.trim() === '.md') {
-                let hasOldName = !editor.currentFile.startsWith('Untitled');
+                let hasOldName = !filename.startsWith('Untitled');
                 if (hasOldName) {
                     newFilename = 'Untitled.md';
                     let counter = 1;
-                    while (files[editor.currentDir][newFilename]) {
+                    while (files[dir][newFilename]) {
                         newFilename = `Untitled ${counter}.md`;
                         counter++;
                     }
                 } else {
                     // TODO add tests
                     // Already renamed to untitled
-                    newFilename = editor.currentFile;
+                    newFilename = filename;
                 }
             }
 
-            const hasFilenameChanged = newFilename.toLowerCase() !== editor.currentFile.toLowerCase();
+            const hasFilenameChanged = newFilename.toLowerCase() !== filename.toLowerCase();
             if (hasFilenameChanged) {
-                await removeFile(`${editor.currentDir}/${editor.currentFile}`);
-                delete files[editor.currentDir][editor.currentFile];
-                console.log('Removed', `${editor.currentDir}/${editor.currentFile}`);
+                let content = getCurrentContent();
+                // TODO every await means we can can have RC due to editor content change
+                await removeFile(`${dir}/${filename}`);
+                delete files[dir][filename];
+                console.log('Removed', `${dir}/${filename}`);
                 // TODO Way to verbose, to we want to mess with it like this?
-                addFileToMemory(editor.currentDir, newFilename, {
-                    content: getCurrentContent(),
-                    lastModified: 0,
-                    handle: await getFileHandle(toPath(editor.currentDir, newFilename), true),
-                });
-                editor.currentFile = newFilename;
 
-                const path = `${editor.currentDir}/${editor.currentFile}`;
-                const content = getCurrentContent();
-                await saveTextFile(path, content);
+                // Get fresher content after await.
+                if (isCurrentEditorSame()) {
+                    content = getCurrentContent();
+                }
+                addFileToMemory(dir, newFilename, {
+                    content: content, // TODO do we have to store it in memory?
+                    lastModified: 0,
+                    handle: await getFileHandle(toPath(dir, filename), true),
+                });
+                // Get fresher content after await.
+                if (isCurrentEditorSame()) {
+                    content = getCurrentContent();
+                    // Change current file if the editor is unchanged.
+                    currentEditor.currentFile = newFilename;
+                }
+
+                const path = `${dir}/${filename}`;
+                await saveTextFile(path, getCurrentContent());
+
+                // Why adding to server files? What if we add a few consecutive renames?
                 setServerFile(path, content, 0);
                 saveServerFiles();
-                console.log('Created', `${editor.currentDir}/${editor.currentFile}`);
+                console.log('Created', `${dir}/${filename}`);
+
+                // Let's call it a day?
                 await renderSidebar();
+                isSyncingCurrentFile = false;
+                return;
             }
         } catch (error) {
             console.error('Error during filename change:', error);
-            isSyncingCurrent = false;
+            isSyncingCurrentFile = false;
             return;
         }
     }
 
-    let contentWasModifiedLocally = false;
-    try {
-        const path = `${editor.currentDir}/${editor.currentFile}`;
-        contentWasModifiedLocally = !await isContentEqual(path, getCurrentContent());
-    } catch (error) {
-        console.error('Error checking content equality:', error);
-        isSyncingCurrent = false;
+    if (filename === CHAT_FILENAME) {
+        // Try to load local changes.
+        if (chatIsClean) {
+            try {
+                let inMemoryLastModified = files[dir]?.[filename]?.lastModified;
+                let file = await ((await getFileHandle(CHAT_FILENAME)).getFile());
+                let localLastModified = file.lastModified;
+                // TODO inmemory lastmodified should be reloaded
+                files[dir][filename].lastModified = localLastModified;
+                if (inMemoryLastModified !== localLastModified) {
+                    console.log('Chat was modified locally', filename);
+                    await openFile(dir, filename);
+                    isSyncingCurrentFile = false;
+                    return;
+                }
+            } catch (error) {
+                console.error('Error opening file:', error);
+                isSyncingCurrentFile = false;
+                return;
+            }
+        }
+
+        if (syncWithServer) {
+            try {
+                await syncLocalFileWithServer(dir, filename);
+            } catch (error) {
+                console.error('Error during sync with server:', error);
+            }
+        }
+
+        isSyncingCurrentFile = false;
         return;
     }
 
@@ -974,43 +1102,42 @@ async function syncCurrentFile(syncWithServer = true) {
     // If in our memory we have actual TS, just write file back
     // If fs has fresher change, merge.
     // Sync with server.
+    const content = getCurrentContent();
+    let contentWasModifiedLocally = false;
+    try {
+        const path = `${dir}/${filename}`;
+        contentWasModifiedLocally = !await isContentEqual(path, content);
+    } catch (error) {
+        console.error('Error checking content equality:', error);
+        isSyncingCurrentFile = false;
+        return;
+    }
 
-    if (editor.currentFile === CHAT_FILENAME && chatIsClean) {
-        try {
-            let inMemoryLastModified = files[editor.currentDir]?.[editor.currentFile]?.lastModified;
-            let file = await ((await getFileHandle(CHAT_FILENAME)).getFile());
-            let localLastModified = file.lastModified;
-            // TODO inmemory lastmodified should be reloaded
-            files[editor.currentDir][editor.currentFile].lastModified = localLastModified;
-            if (inMemoryLastModified !== localLastModified) {
-                console.log('CHAT WAS MODIFIED LOCALLY', editor.currentFile);
-                await openFile(editor.currentDir, editor.currentFile);
-            }
-        } catch (error) {
-            console.error('Error opening file:', error);
-            isSyncingCurrent = false;
-            return;
-        }
-    } else if (contentWasModifiedLocally && editor.isClean()) {
-        console.log(contentWasModifiedLocally, editor.isClean());
-        console.log('WAS MODIFIED LOCALLY', editor.currentFile);
+    // I believe that after each await we should check that user hasn't changed the editor.
+    if (!isCurrentEditorSame()) {
+        isSyncingCurrentFile = false;
+        return;
+    }
+
+    // Handling editor changes.
+    if (contentWasModifiedLocally && currentEditor.isClean()) {
+        console.log('WAS MODIFIED LOCALLY, and the editor is clean', filename);
+
         // Changes only from local system
         try {
-            await openFile(editor.currentDir, editor.currentFile);
+            await openFile(dir, filename);
         } catch (error) {
             console.error('Error opening file:', error);
-            isSyncingCurrent = false;
+            isSyncingCurrentFile = false;
             return;
         }
-    } else if (!editor.isClean()) {
+    } else if (!currentEditor.isClean()) {
         isSaving = true;
         try {
-            const dir = editor.currentDir;
-            const filename = editor.currentFile;
-            const fileData = files[dir][filename];
-            if (fileData && fileData.handle) {
-                let content = getCurrentContent();
-                if (!editor.isClean() && contentWasModifiedLocally) {
+            const file = files[dir][filename];
+            if (file && file.handle) {
+                const freshContent = getCurrentContent();
+                if (!currentEditor.isClean() && contentWasModifiedLocally) {
                     // Changes from both sides: editor and local fs, need merging
 
                 }
@@ -1019,27 +1146,28 @@ async function syncCurrentFile(syncWithServer = true) {
                 // of our saving process. The new unsaved changes would be then handled by a subsequent saveCurrentFile() call.
                 // Initially, this flag assignment was erroneously placed at the end of the function, resulting in a race condition.
                 // If we override flag in the end, we would lose any changes that occurred during the 3 await calls.
-                editor.markClean();
+                currentEditor.markClean();
 
-                const writable = await fileData.handle.createWritable();
-                await writable.write(content);
+                const writable = await file.handle.createWritable();
+                await writable.write(freshContent);
                 // Buffer is flushed on disk at this moment. It could be interrupted
                 // by the event loop, so we use isSaving guard.
                 await writable.close();
             } else {
-                if (fileData.handle) {
-                    alert(`Cannot save ${filename}. No file handle found.`);
+                // When could that happen?
+                if (file.handle) {
+                    console.error(`Cannot save ${filename}. No file handle found.`);
                 }
             }
         } catch (error) {
-            // TODO We might switch to another current file.
-
             console.error('Error during save:', error);
             isSaving = false;
-            // Revert doc back to dirty state
-            editor.replaceRange(' ', editor.getCursor());
-            isSyncingCurrent = false;
-            editor.undo();
+            if (isCurrentEditorSame()) {
+                // Revert doc back to dirty state
+                editor.replaceRange(' ', editor.getCursor());
+                editor.undo();
+            }
+            isSyncingCurrentFile = false;
             return;
         }
         isSaving = false;
@@ -1047,13 +1175,13 @@ async function syncCurrentFile(syncWithServer = true) {
 
     if (syncWithServer) {
         try {
-            await syncLocalFileWithServer(editor.currentDir, editor.currentFile);
+            await syncLocalFileWithServer(dir, filename);
         } catch (error) {
             console.error('Error during sync with server:', error);
         }
     }
 
-    isSyncingCurrent = false;
+    isSyncingCurrentFile = false;
 }
 
 function hash(str) {
