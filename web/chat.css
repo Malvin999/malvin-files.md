@@ -120,7 +120,7 @@
     padding: 5px;
     border-radius: 5px;
     display: flex;
-    gap: 8px;
+    gap: 2px;
     opacity: 0;
     transition: opacity 0.2s;
     position: absolute;
