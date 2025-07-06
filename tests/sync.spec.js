@@ -96,9 +96,13 @@ test('sync existing files from client', async ({ page }) => {
 
     await page.waitForTimeout(3000);
 
-    // Check that file is updated on server
+    // Check that existing files from client are synced
     await expectFileOnServer(page, 'README.md', 'Hello world');
     await expectFileOnServer(page, 'Notes.md', 'Some Text');
+
+    // Check that existing server files are preserved
+    await clickAndExpectContent(page, 'file', '# File\ntest content');
+    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
 });
 
 test('get changes for current file from server', async ({ page }) => {
