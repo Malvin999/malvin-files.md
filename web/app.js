@@ -404,8 +404,8 @@ function initEditor(el) {
         toast.textContent = 'Copied!';
         toast.style.cssText = `
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: var(--color-bg-alt); color: var(--color-tx); padding: 8px 16px; border-radius: 5px;
-            border: 1px solid var(--color-border);
+            background: var(--col-bg-alt); color: var(--col-tx); padding: 8px 16px; border-radius: 5px;
+            border: 1px solid var(--col-border);
             z-index: 9999; font-size: 14px;
         `;
         document.body.appendChild(toast);
