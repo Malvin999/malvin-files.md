@@ -9,7 +9,6 @@
 }
 
 #chat-container {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     display: flex;
     flex-direction: column;
     height: 100%;

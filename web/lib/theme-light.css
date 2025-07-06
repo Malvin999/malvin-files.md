@@ -1,6 +1,7 @@
 @media (prefers-color-scheme: light) {
     :root {
-        --font: Rubik, Cambria, "Times New Roman", Times, serif;
+        --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+        /*--font: Rubik, Cambria, "Times New Roman", Times, serif;*/
         --color-tx: #100F0F;
         --color-tx-alt: #878787;
         --color-bg: #FFF;
