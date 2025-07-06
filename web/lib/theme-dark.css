@@ -49,5 +49,9 @@
     #close-chat:hover, #fullscreen-chat:hover, #close-sidebar:hover, #close-editor2:hover {
         color: var(--color-tx) !important;
     }
+
+    .message.own {
+        background: color-mix(in srgb, var(--color-bg) 25%, transparent);
+    }
 }
 

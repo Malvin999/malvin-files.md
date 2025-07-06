@@ -73,6 +73,10 @@
     #open-sidebar {
         background: var(--color-bg-active);
     }
+
+    .message.own {
+        background: color-mix(in srgb, var(--color-bg) 60%, transparent);
+    }
 }
 
 .cm-s-hypermd-light .cm-header.cm-header-1 {

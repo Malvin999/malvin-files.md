@@ -52,11 +52,6 @@
     border-bottom: none;
 }
 
-.message.own {
-    background: color-mix(in srgb, var(--color-bg) 35%, transparent);
-    /*background: var(--color-bg);*/
-}
-
 .message:hover {
     background: var(--color-bg-active);
 }
@@ -121,7 +116,7 @@
 }
 
 .message-actions {
-    background: var(--color-bg-alt);
+    background: var(--color-bg-active);
     padding: 5px;
     border-radius: 5px;
     display: flex;
@@ -129,8 +124,8 @@
     opacity: 0;
     transition: opacity 0.2s;
     position: absolute;
-    right: -12px;
-    bottom: -3px;
+    right: -23px;
+    bottom: -15px;
 }
 
 .message-hover-zone {
@@ -353,7 +348,6 @@
     border-color: var(--color-link);
 }
 
-
 .message-content {
     white-space: pre-wrap;
     line-height: 1.5;
@@ -420,7 +414,7 @@
     right: 5px;
     background: none;
     border: none;
-    font-size: 27px;
+    font-size: 28px;
     cursor: pointer;
     color: var(--color-link);
     z-index: 1001;
