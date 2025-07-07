@@ -149,6 +149,9 @@ class SearchModal {
 
                 let matchedPercent = (search.length / potentialMatch.length) * 100;
 
+                if (lowPriorityDirs.includes(dir)) {
+                    matchedPercent /= 5;
+                }
                 results.push({
                     filename: filename, dir: dir, score: Math.round(matchedPercent)
                 });
@@ -165,6 +168,7 @@ class SearchModal {
             }
         }
         results = Array.from(uniqueResultsMap.values()).sort((a, b) => b.score - a.score);
+        console.log(results);
         searchModal.showResults(results);
     }
 
