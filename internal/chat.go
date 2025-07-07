@@ -39,10 +39,10 @@ func (b *Bot) saveToChat(content string, timezone *time.Location) (int, error) {
 		}
 	}
 
-	messages := readMessages(md)
+	blocks := readBlocks(md)
 	headerRegex := regexp.MustCompile(`^#### `)
 	recordCount := 0
-	for _, block := range messages {
+	for _, block := range blocks {
 		if !headerRegex.MatchString(block) {
 			recordCount++
 		}
@@ -80,7 +80,13 @@ func (b *Bot) saveToChat(content string, timezone *time.Location) (int, error) {
 
 // moveFromChat passes messages at given indices to a specified callback function.
 // On callback success, it removes those messages from the chat file.
-func (b *Bot) moveFromChat(callback func(content string, timestamp time.Time) error, indices ...int) error {
+// msgIndices are 0-based and refer to the messages only blocks (not headers).
+// On collapse=false callback would be called on every message.
+func (b *Bot) moveFromChat(
+	callback func(content string, timestamp time.Time) error,
+	collapse bool,
+	msgIndices ...int,
+) error {
 	key, err := b.fs.SafePath(fs.DirRoot, "")
 	if err != nil {
 		return fmt.Errorf("failed to get safe path: %w", err)
@@ -95,134 +101,126 @@ func (b *Bot) moveFromChat(callback func(content string, timestamp time.Time) er
 		return err
 	}
 
-	messages := readMessages(content)
+	blocks := readBlocks(content)
 
-	// Filter to find record messages (not headers)
+	var msgIndicesToBlockIndices []int
 	headerRegex := regexp.MustCompile(`^#### `)
-	var recordIndices []int
-
-	for i, message := range messages {
-		if !headerRegex.MatchString(message) {
-			recordIndices = append(recordIndices, i)
+	for i, block := range blocks {
+		if !headerRegex.MatchString(block) {
+			msgIndicesToBlockIndices = append(msgIndicesToBlockIndices, i)
+		}
+	}
+	if len(msgIndicesToBlockIndices) == 0 {
+		return fmt.Errorf("no messages found")
+	}
+	for _, index := range msgIndices {
+		if index < 0 || index >= len(msgIndicesToBlockIndices) {
+			return fmt.Errorf("msgIndex %d out of bounds: use 0-%d", index, len(msgIndicesToBlockIndices)-1)
 		}
 	}
 
-	if len(recordIndices) == 0 {
-		return fmt.Errorf("no records found")
+	// Sort msgIndices in ascending order for processing
+	sortedMsgIndices := make([]int, len(msgIndices))
+	copy(sortedMsgIndices, msgIndices)
+	sort.Ints(sortedMsgIndices)
+
+	var msgs []struct {
+		content   string
+		timestamp time.Time
+		index     int
 	}
+	for _, msgIndex := range sortedMsgIndices {
+		blockIndex := msgIndicesToBlockIndices[msgIndex]
+		block := blocks[blockIndex]
 
-	// Validate all indices
-	for _, index := range indices {
-		if index < 0 || index >= len(recordIndices) {
-			return fmt.Errorf("index %d out of bounds: use 0-%d", index, len(recordIndices)-1)
-		}
-	}
-
-	// Remove duplicates
-	uniqueIndices := make([]int, 0, len(indices))
-	seen := make(map[int]bool)
-	for _, index := range indices {
-		if !seen[index] {
-			uniqueIndices = append(uniqueIndices, index)
-			seen[index] = true
-		}
-	}
-
-	// Collect all records to process (in original order)
-	var recordsToProcess []struct {
-		content      string
-		timestamp    time.Time
-		messageIndex int
-	}
-
-	// Sort indices in ascending order for processing
-	sortedIndices := make([]int, len(uniqueIndices))
-	copy(sortedIndices, uniqueIndices)
-	sort.Ints(sortedIndices)
-
-	// Collect all records first
-	for _, index := range sortedIndices {
-		targetBlockIndex := recordIndices[index]
-		targetRecord := messages[targetBlockIndex]
-
-		// Find closest header above target record for date context
+		// Find closest header above target msg for date context
 		var headerDate string
-		for i := targetBlockIndex - 1; i >= 0; i-- {
-			if headerRegex.MatchString(messages[i]) {
-				headerDate = messages[i]
+		for i := blockIndex - 1; i >= 0; i-- {
+			if headerRegex.MatchString(blocks[i]) {
+				headerDate = blocks[i]
 				break
 			}
 		}
 
 		// Extract time and get full content
 		timestampRegex := regexp.MustCompile(`^` + "`" + `(\d{2}:\d{2})` + "`" + ` `)
-		if !timestampRegex.MatchString(targetRecord) {
-			return fmt.Errorf("failed to parse record timestamp for index %d", index)
+		if !timestampRegex.MatchString(block) {
+			return fmt.Errorf("failed to parse msg timestamp for msgIndex %d", msgIndex)
 		}
 
 		// Extract timestamp
-		timeMatch := regexp.MustCompile(`^` + "`" + `(\d{2}:\d{2})` + "`").FindStringSubmatch(targetRecord)
+		timeMatch := regexp.MustCompile(`^` + "`" + `(\d{2}:\d{2})` + "`").FindStringSubmatch(block)
 		if len(timeMatch) < 2 {
-			return fmt.Errorf("failed to extract timestamp for index %d", index)
+			return fmt.Errorf("failed to extract timestamp for msgIndex %d", msgIndex)
 		}
 
 		timeStr := timeMatch[1]
 		// Remove timestamp prefix to get full content (including newlines)
 		timestampPrefix := "`" + timeStr + "` "
-		recordContent := strings.TrimPrefix(targetRecord, timestampPrefix)
+		recordContent := strings.TrimPrefix(block, timestampPrefix)
 
 		// Parse full timestamp from header date + time
 		dateRegex := regexp.MustCompile(`^#### (\d{1,2}) ([A-Za-z]+), [A-Za-z]+`)
 		dateMatches := dateRegex.FindStringSubmatch(headerDate)
 		if len(dateMatches) < 3 {
-			return fmt.Errorf("failed to parse header date for index %d", index)
+			return fmt.Errorf("failed to parse header date for msgIndex %d", msgIndex)
 		}
 
 		// Build full timestamp
 		dateTimeStr := fmt.Sprintf("%s %s %s", dateMatches[1], dateMatches[2], timeStr)
 		timestamp, err := time.Parse("2 January 15:04", dateTimeStr)
 		if err != nil {
-			return fmt.Errorf("failed to parse timestamp for index %d: %w", index, err)
+			return fmt.Errorf("failed to parse timestamp for msgIndex %d: %w", msgIndex, err)
 		}
 
-		recordsToProcess = append(recordsToProcess, struct {
-			content      string
-			timestamp    time.Time
-			messageIndex int
+		msgs = append(msgs, struct {
+			content   string
+			timestamp time.Time
+			index     int
 		}{
-			content:      recordContent,
-			timestamp:    timestamp,
-			messageIndex: targetBlockIndex,
+			content:   recordContent,
+			timestamp: timestamp,
+			index:     blockIndex,
 		})
 	}
 
-	// Track which message indices to remove
-	messagesToRemove := make(map[int]bool)
-
-	// Process callbacks in order
-	for _, record := range recordsToProcess {
-		if err := callback(record.content, record.timestamp); err != nil {
+	if collapse {
+		content := strings.Builder{}
+		for _, msg := range msgs {
+			content.WriteString(msg.content)
+			content.WriteString("\n")
+		}
+		err = callback(content.String(), msgs[0].timestamp)
+		if err != nil {
 			return fmt.Errorf("callback failed: %w", err)
 		}
-		messagesToRemove[record.messageIndex] = true
-	}
-
-	// Remove target messages and rebuild content
-	newMessages := make([]string, 0, len(messages)-len(messagesToRemove))
-	for i, block := range messages {
-		if !messagesToRemove[i] {
-			newMessages = append(newMessages, block)
+	} else {
+		for _, msg := range msgs {
+			if err := callback(msg.content, msg.timestamp); err != nil {
+				return fmt.Errorf("callback failed: %w", err)
+			}
 		}
 	}
 
-	modifiedContent := strings.TrimSpace(strings.Join(newMessages, "\n"))
+	blocksToRemove := make(map[int]bool)
+	for _, msg := range msgs {
+		blocksToRemove[msg.index] = true
+	}
+	newBlocks := make([]string, 0)
+	for i, block := range blocks {
+		if blocksToRemove[i] {
+			continue
+		}
+		newBlocks = append(newBlocks, block)
+	}
+	modifiedContent := strings.TrimSpace(strings.Join(newBlocks, "\n"))
 
 	return b.fs.Write(fs.DirRoot, fs.ChatFilename, modifiedContent)
 }
 
-// readMessages parses content into logical blocks
+// readBlocks parses content into logical blocks
 // Returns slice where each element is either a header or a complete record
-func readMessages(content string) []string {
+func readBlocks(content string) []string {
 	content = txt.NormNewLines(content)
 	lines := strings.Split(content, "\n")
 

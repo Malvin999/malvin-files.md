@@ -16,68 +16,68 @@ import (
 
 func TestReadMessagesEmpty(t *testing.T) {
 	r := require.New(t)
-	result := readMessages("")
+	result := readBlocks("")
 	r.Empty(result)
 }
 
 func TestReadMessagesOnlyHeader(t *testing.T) {
 	r := require.New(t)
-	result := readMessages("#### 27 June, Friday")
+	result := readBlocks("#### 27 June, Friday")
 	r.Equal([]string{"#### 27 June, Friday"}, result)
 }
 
 func TestReadMessagesSingleRecord(t *testing.T) {
 	r := require.New(t)
-	result := readMessages("`01:01` Simple record")
+	result := readBlocks("`01:01` Simple record")
 	r.Equal([]string{"`01:01` Simple record"}, result)
 }
 
 func TestReadMessagesHeaderWithRecord(t *testing.T) {
 	r := require.New(t)
 	content := "#### 27 June, Friday\n`01:01` Simple record"
-	result := readMessages(content)
+	result := readBlocks(content)
 	r.Equal([]string{"#### 27 June, Friday", "`01:01` Simple record"}, result)
 }
 
 func TestReadMessagesMultilineRecord(t *testing.T) {
 	r := require.New(t)
 	content := "#### 27 June, Friday\n`01:01` Multiline\nc\nontent"
-	result := readMessages(content)
+	result := readBlocks(content)
 	r.Equal([]string{"#### 27 June, Friday", "`01:01` Multiline\nc\nontent"}, result)
 }
 
 func TestReadMessagesMultipleRecords(t *testing.T) {
 	r := require.New(t)
 	content := "#### 27 June, Friday\n`01:01` First record\n`02:02` Second record"
-	result := readMessages(content)
+	result := readBlocks(content)
 	r.Equal([]string{"#### 27 June, Friday", "`01:01` First record", "`02:02` Second record"}, result)
 }
 
 func TestReadMessagesMultipleHeaders(t *testing.T) {
 	r := require.New(t)
 	content := "#### 27 June, Friday\n`01:01` First day\n#### 28 June, Saturday\n`02:02` Second day"
-	result := readMessages(content)
+	result := readBlocks(content)
 	r.Equal([]string{"#### 27 June, Friday", "`01:01` First day", "#### 28 June, Saturday", "`02:02` Second day"}, result)
 }
 
 func TestReadMessagesWindowsLineEndings(t *testing.T) {
 	r := require.New(t)
 	content := "#### 27 June, Friday\r\n`01:01` Windows record"
-	result := readMessages(content)
+	result := readBlocks(content)
 	r.Equal([]string{"#### 27 June, Friday", "`01:01` Windows record"}, result)
 }
 
 func TestReadMessagesWithEmptyLines(t *testing.T) {
 	r := require.New(t)
 	content := "#### 27 June, Friday\n\n`01:01` Record with\n\nempty lines"
-	result := readMessages(content)
+	result := readBlocks(content)
 	r.Equal([]string{"#### 27 June, Friday", "`01:01` Record with\n\nempty lines"}, result)
 }
 
 func TestReadMessagesInvalidTimestamp(t *testing.T) {
 	r := require.New(t)
 	content := "#### 27 June, Friday\n`not timestamp` Should be continuation\n`01:01` Real record"
-	result := readMessages(content)
+	result := readBlocks(content)
 	r.Equal([]string{"#### 27 June, Friday", "`not timestamp` Should be continuation", "`01:01` Real record"}, result)
 }
 
@@ -240,7 +240,7 @@ func TestReadMessages_NormalCase(t *testing.T) {
 #### 2 July, Wednesday
 ` + "`10:30`" + ` Почитать книгу`
 
-	result := readMessages(content)
+	result := readBlocks(content)
 	expected := []string{
 		"#### 1 July, Tuesday",
 		"`15:19` Пройтись на улице",
@@ -267,7 +267,7 @@ func TestReadMessages_MessageWithoutTimestamp(t *testing.T) {
 #### 2 July, Wednesday
 ` + "`10:30`" + ` Почитать книгу`
 
-	result := readMessages(content)
+	result := readBlocks(content)
 
 	// The message without timestamp should be grouped with the previous timestamped message
 	expected := []string{
@@ -343,7 +343,7 @@ func TestReadMessages_MessageWithoutTimestamp(t *testing.T) {
 //}
 
 // Test multiline message formatting
-func TestReadMessages_MultilineMessage(t *testing.T) {
+func TestReadBlocks_MultilineMessage(t *testing.T) {
 	content := `#### 1 July, Tuesday
 ` + "`15:19`" + ` Пройтись на улице
 и купить хлеб
@@ -351,7 +351,7 @@ func TestReadMessages_MultilineMessage(t *testing.T) {
 #### 2 July, Wednesday
 ` + "`10:30`" + ` Почитать книгу`
 
-	result := readMessages(content)
+	result := readBlocks(content)
 	expected := []string{
 		"#### 1 July, Tuesday",
 		"`15:19` Пройтись на улице\nи купить хлеб\nв магазине",
@@ -370,15 +370,14 @@ func TestReadMessages_MultilineMessage(t *testing.T) {
 	}
 }
 
-// Test record identification and timestamp validation
-func TestMoveFromChat_RecordIdentification(t *testing.T) {
+func TestReadBlocksHasTimestamp(t *testing.T) {
 	content := `#### 1 July, Tuesday
-` + "`15:19`" + ` Пройтись на улице
-Провести звонок с Нео
+` + "`15:19`" + ` Do some stuff 
+Arrange a call with Neo
 #### 2 July, Wednesday
-` + "`10:30`" + ` Почитать книгу`
+` + "`10:30`" + ` Read a book`
 
-	messages := readMessages(content)
+	messages := readBlocks(content)
 
 	// Filter to find record messages (not headers)
 	headerRegex := regexp.MustCompile(`^#### `)
@@ -397,7 +396,6 @@ func TestMoveFromChat_RecordIdentification(t *testing.T) {
 		t.Logf("Record %d: %q", i, record)
 	}
 
-	// Check if records have timestamps
 	timestampRegex := regexp.MustCompile(`^` + "`" + `\d{2}:\d{2}` + "`" + ` `)
 	for i, record := range records {
 		hasTimestamp := timestampRegex.MatchString(record)
@@ -483,7 +481,7 @@ func TestSaveToChat_ContentAddition(t *testing.T) {
 	timezone := time.UTC
 
 	// Test content formatting in saveToChat
-	content := "Провести звонок с Нео"
+	content := "Arrange call with Neo"
 	timestamp := Now().In(timezone).Format("`15:04`")
 	expectedFormat := timestamp + " " + content + "\n"
 
@@ -500,7 +498,7 @@ func TestSaveToChat_ContentAddition(t *testing.T) {
 // Test edge case: empty content handling
 func TestReadMessages_EmptyContent(t *testing.T) {
 	content := ""
-	result := readMessages(content)
+	result := readBlocks(content)
 
 	if len(result) != 0 {
 		t.Errorf("Expected 0 blocks for empty content, got %d: %v", len(result), result)
@@ -512,7 +510,7 @@ func TestReadMessages_OnlyHeaders(t *testing.T) {
 	content := `#### 1 July, Tuesday
 #### 2 July, Wednesday`
 
-	result := readMessages(content)
+	result := readBlocks(content)
 	expected := []string{
 		"#### 1 July, Tuesday",
 		"#### 2 July, Wednesday",
@@ -527,4 +525,114 @@ func TestReadMessages_OnlyHeaders(t *testing.T) {
 			t.Errorf("Block %d mismatch:\nExpected: %q\nGot: %q", i, expected[i], block)
 		}
 	}
+}
+
+func TestMoveFromChatSingleRecord(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+
+	initialContent := `#### 27 June, Thursday
+` + "`01:01`" + ` First record
+` + "`02:02`" + ` Second record
+#### 28 June, Friday
+` + "`03:03`" + ` Third record`
+
+	err = userFS.Write(fs.DirRoot, fs.ChatFilename, initialContent)
+	r.NoError(err)
+
+	bot := NewBot(-1, tg.NewFakeTG(), userFS, db.NewFakeDB(), fakeConfig())
+
+	var callbackCalls []struct {
+		content   string
+		timestamp time.Time
+	}
+
+	callback := func(content string, timestamp time.Time) error {
+		callbackCalls = append(callbackCalls, struct {
+			content   string
+			timestamp time.Time
+		}{content, timestamp})
+		return nil
+	}
+
+	err = bot.moveFromChat(callback, false, 1)
+	r.NoError(err)
+
+	r.Len(callbackCalls, 1)
+	r.Equal("Second record", callbackCalls[0].content)
+
+	expectedTime, _ := time.Parse("2 January 15:04", "27 June 02:02")
+	r.Equal(expectedTime, callbackCalls[0].timestamp)
+
+	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	r.NoError(err)
+
+	expectedContent := `#### 27 June, Thursday
+` + "`01:01`" + ` First record
+#### 28 June, Friday
+` + "`03:03`" + ` Third record`
+
+	r.Equal(expectedContent, content)
+}
+
+func TestMoveFromChatMultipleRecords(t *testing.T) {
+	r := require.New(t)
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+
+	initialContent := `#### 1 July, Monday
+` + "`10:30`" + ` Buy groceries
+milk, bread, eggs
+` + "`11:45`" + ` Call mom
+#### 2 July, Tuesday
+` + "`09:15`" + ` Morning workout
+` + "`14:20`" + ` Team meeting
+discuss project timeline
+and resource allocation`
+
+	err = userFS.Write(fs.DirRoot, fs.ChatFilename, initialContent)
+	r.NoError(err)
+
+	bot := NewBot(-1, tg.NewFakeTG(), userFS, db.NewFakeDB(), fakeConfig())
+
+	var callbackCalls []struct {
+		content   string
+		timestamp time.Time
+	}
+
+	callback := func(content string, timestamp time.Time) error {
+		callbackCalls = append(callbackCalls, struct {
+			content   string
+			timestamp time.Time
+		}{content, timestamp})
+		return nil
+	}
+
+	err = bot.moveFromChat(callback, false, 0, 2)
+	r.NoError(err)
+
+	r.Len(callbackCalls, 2)
+
+	r.Equal("Buy groceries\nmilk, bread, eggs", callbackCalls[0].content)
+	expectedTime1, _ := time.Parse("2 January 15:04", "1 July 10:30")
+	r.Equal(expectedTime1, callbackCalls[0].timestamp)
+
+	r.Equal("Morning workout", callbackCalls[1].content)
+	expectedTime2, _ := time.Parse("2 January 15:04", "2 July 09:15")
+	r.Equal(expectedTime2, callbackCalls[1].timestamp)
+
+	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	r.NoError(err)
+
+	expectedContent := `#### 1 July, Monday
+` + "`11:45`" + ` Call mom
+#### 2 July, Tuesday
+` + "`14:20`" + ` Team meeting
+discuss project timeline
+and resource allocation`
+
+	r.Equal(expectedContent, content)
 }

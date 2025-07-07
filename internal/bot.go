@@ -241,7 +241,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		consts.CmdShowScheduleForDay:          b.showToADay,
 		consts.CmdShowMoveToDirOrFile:         b.showMoveToFileOrDir,
 		consts.CmdShowMoveToChecklist:         b.showToChecklist,
-		consts.CmdMoveToExistingDir:           b.moveToDirFromChat,
+		consts.CmdMoveToExistingDir:           b.moveToDir,
 		consts.CmdMoveToExistingDirFromToday:  b.moveToDirFromToday,
 		consts.CmdRequestNewDir:               b.requestNewDirName,
 		consts.CmdMoveToNewDir:                b.moveToNewDir,
@@ -632,7 +632,7 @@ func (b *Bot) answerFileRequest(msg string) error {
 			}
 
 			return nil
-		}, msgIndex)
+		}, false, msgIndex)
 		if err != nil {
 			return fmt.Errorf("inline query: can't move from chat: %w", err)
 		}
@@ -977,20 +977,20 @@ func (b *Bot) ShowToday(_ []string) error {
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("show today: can't read chat file: %w", err)
 	}
-	messages := readMessages(content)
+	blocks := readBlocks(content)
 	msgIndex := 0
-	for _, msg := range messages {
-		if !strings.HasPrefix(msg, "`") {
+	for _, block := range blocks {
+		if !strings.HasPrefix(block, "`") {
 			continue
 		}
 		// Trim `xx:yy` timestamp from begging
 		// TODO make it not as dirty
-		if len(msg) > 8 {
-			msg = strings.TrimSpace(msg[8:])
+		if len(block) > 8 {
+			block = strings.TrimSpace(block[8:])
 		}
 
 		cmd := tg.NewCmd(consts.CmdCompleteFromChat, []string{strconv.Itoa(msgIndex)})
-		btn := tg.NewBtn(txt.Emoji(i18n.Emoji(msg), msg), cmd)
+		btn := tg.NewBtn(txt.Emoji(i18n.Emoji(block), block), cmd)
 		kb.AddRow(btn)
 
 		msgIndex++
@@ -1611,7 +1611,7 @@ func (b *Bot) moveToDirFromToday(params []string) error {
 	return b.ShowToday(nil)
 }
 
-func (b *Bot) moveToDirFromChat(params []string) error {
+func (b *Bot) moveToDir(params []string) error {
 	// TODO Remove input expectations if dir is not today
 	toDirHash := params[0]
 
@@ -1657,7 +1657,7 @@ func (b *Bot) moveToDirFromChat(params []string) error {
 		}
 
 		return b.createOrAdd(toDir, filename, content)
-	}, msgIndices...)
+	}, false, msgIndices...)
 
 	if toDir != fs.DirLater {
 		//b.db.SetRecentCommand(consts.CmdMoveToExistingNote)
@@ -1689,11 +1689,11 @@ func (b *Bot) requestNewDirName(params []string) error {
 	return nil
 }
 
+// moveToNewDir accepts dir name as a second parameter
+// which is a bit off, but the thing is sometimes it is replaced with
+// inputExpectation, which only can add parameters in the end.
 func (b *Bot) moveToNewDir(params []string) error {
-	index, err := strconv.Atoi(params[0])
-	if err != nil {
-		return fmt.Errorf("move to new dir from chat: can't parse hash or index from params: %w", err)
-	}
+	msgIndicesStr := params[0]
 	dir := strings.ToLower(fs.SanitizeFilename(params[1]))
 
 	exists, err := b.fs.Exists(fs.DirRoot, dir)
@@ -1707,7 +1707,7 @@ func (b *Bot) moveToNewDir(params []string) error {
 		}
 	}
 
-	return b.moveToDirFromChat([]string{dir, strconv.Itoa(index)})
+	return b.moveToDir([]string{dir, msgIndicesStr})
 }
 
 // TODO reuse move to existing note as more general?
@@ -1732,7 +1732,7 @@ func (b *Bot) moveToExistingFile(params []string) error {
 
 	err = b.moveFromChat(func(content string, timestamp time.Time) error {
 		return b.addToFile(fs.DirRoot, existingFilename, content)
-	}, msgIndices...)
+	}, false, msgIndices...)
 	if err != nil {
 		return fmt.Errorf("move to file: can't add to existing file '%s': %w", existingFilename, err)
 	}
@@ -1788,7 +1788,7 @@ func (b *Bot) moveToExistingNote(params []string) error {
 		b.db.SetRecentCommandParams([]string{toFilename, fs.ShortHash(toDir)})
 
 		return nil
-	}, msgIndices...)
+	}, false, msgIndices...)
 	if err != nil {
 		return fmt.Errorf("move to existing note: can't read content from chat: %w", err)
 	}
@@ -1857,7 +1857,7 @@ func (b *Bot) moveToChecklist(params []string) error {
 		}
 
 		return nil
-	}, msgIndices...)
+	}, false, msgIndices...)
 	if err != nil {
 		return fmt.Errorf("move to checklistDir: can't read content from chat: %w", err)
 	}
@@ -1928,7 +1928,7 @@ func (b *Bot) moveToNewFile(params []string) error {
 
 		// TODO add if exists
 		return b.fs.Write(fs.DirRoot, newFilenameFromUserInput, content)
-	}, msgIndex)
+	}, false, msgIndex)
 	if err != nil {
 		return fmt.Errorf("move to new file: can't read content from chat: %w", err)
 	}
@@ -1955,7 +1955,7 @@ func (b *Bot) moveToNewChecklist(params []string) error {
 		err = b.fs.MakeDir(dir)
 	}
 
-	return b.moveToDirFromChat([]string{dir, msgIndexStr})
+	return b.moveToDir([]string{dir, msgIndexStr})
 }
 
 func (b *Bot) moveToJournal(params []string) error {
@@ -1971,7 +1971,7 @@ func (b *Bot) moveToJournal(params []string) error {
 	err := b.moveFromChat(func(content string, t time.Time) error {
 		// TODO take into account time from chat
 		return journal.AddRecord(b.fs, content, b.cfg.Timezone())
-	}, msgIndicies...)
+	}, false, msgIndicies...)
 	if err != nil {
 		return fmt.Errorf("failed to move to journal: can't add record: %w", err)
 	}
@@ -2053,7 +2053,7 @@ func (b *Bot) addToRecentFileOrNoteFromShortcut(params []string) error {
 func (b *Bot) moveToLater(params []string) error {
 	msgIndexStr := params[0]
 
-	return b.moveToDirFromChat([]string{fs.DirLater, msgIndexStr})
+	return b.moveToDir([]string{fs.DirLater, msgIndexStr})
 }
 
 func (b *Bot) complete(params []string) error {
@@ -2106,7 +2106,7 @@ func (b *Bot) completeFromChat(params []string) error {
 
 		// Write to archive, no rename
 		return b.fs.Write(fs.DirArchive, filename, content)
-	}, msgIndex)
+	}, false, msgIndex)
 	if err != nil {
 		return fmt.Errorf("complete: can't read content from chat: %w", err)
 	}
@@ -2231,7 +2231,7 @@ func (b *Bot) schedule(params []string) error {
 		}
 
 		return nil
-	}, msgIndex)
+	}, false, msgIndex)
 
 	return b.ShowToday(nil)
 }
@@ -2251,7 +2251,7 @@ func (b *Bot) scheduleForTmrw(params []string) error {
 		filename := fs.Filename(title)
 		filenameHash = fs.ShortHash(filename)
 		return b.fs.Write(fs.DirToday, filename, content)
-	}, msgIndex)
+	}, false, msgIndex)
 	if err != nil {
 		return fmt.Errorf("schedule for tomorrow from chat: can't read content from chat: %w", err)
 	}
