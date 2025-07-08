@@ -492,7 +492,7 @@ async function collectModifiedAndDeletedFiles() {
             // TODO write tests for that?
             if ((dir === editor.currentDir && filename === editor.currentFile)
             || (dir === editor2.currentDir && filename === editor2.currentFile)) {
-                console.log('Skip sending current file');
+                console.log('Skip sending current file: ' + dir + '/' + filename);
                 continue;
             }
 

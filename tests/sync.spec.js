@@ -82,6 +82,37 @@ test('sync new files from client', async ({ page }) => {
     await expectFileOnServer(page, 'New file.md', 'Content');
 });
 
+test('sync new files from client, ignore current file in syncTexts', async ({ page }) => {
+    await setup(page);
+
+    const consoleMessages = [];
+    page.on('console', msg => {
+        consoleMessages.push({
+            type: msg.type(),
+            text: msg.text()
+        });
+    });
+
+    await page.click('#new-file');
+    await page.waitForTimeout(100);
+    await page.keyboard.type('Content');
+
+    // Trigger syncTexts
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event('focus'));
+    });
+
+
+    await page.waitForTimeout(3000);
+
+    await expectFileOnServer(page, 'New file.md', 'Content');
+
+    expect(consoleMessages).toContainEqual({
+        type: 'log',
+        text: 'Skip sending current file: /New file.md'
+    });
+});
+
 test('sync existing files from client', async ({ page }) => {
     await createFileOnServer('file.md', 'test content');
     await createFileOnServer('another.md', '*italic*');
