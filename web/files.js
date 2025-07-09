@@ -1027,6 +1027,7 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
 
     // Sync previous file
     if (currentEditor.path !== undefined) {
+        console.log('sync previous file');
         await syncCurrentFile(false);
     }
 
@@ -1070,6 +1071,7 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
     }
 
     // TODO disable when syncing?
+    currentEditor.path = path;
     if (saveToHistory) {
         const state = {path: path};
         history.pushState(state, '');
@@ -1142,6 +1144,7 @@ async function syncCurrentFile(syncWithServer = true) {
     let isCurrentEditorSame = () => {
         return path === window.currentEditor.path;
     }
+    console.log('really syncing', path);
 
     // Track in-editor renaming.
     if (path !== CHAT_PATH) {

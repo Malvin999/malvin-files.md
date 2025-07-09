@@ -755,15 +755,15 @@ async function newFile() {
 
     // TODO check tests
     let num = 1;
-    console.log('TRYING dir');
+    console.log('TRYING dir', dir);
+    console.log(files);
     while (files[dir + '/'] && files[dir + '/'][filename]) {
-        console.log('TRYING dir');
+        console.log('TRYING dir', dir + '/');
         filename = `New file (${num}).md`;
         num++;
     }
 
     const path = dir + '/' + filename;
-    console.log('Creating new file', path);
     let handle = await getFileHandle(path, true);
     // TODO multidir all mem files should add path key ? Search
     addMemFile(path, {
@@ -777,6 +777,7 @@ async function newFile() {
 
     console.log('Creating new file', path);
     await openFile(path);
+    console.log('CURRENT path after new', currentEditor.path);
     editor.setCursor({line: 1, ch: 0});
     editor.focus();
 
