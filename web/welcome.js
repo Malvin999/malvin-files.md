@@ -97,6 +97,7 @@ const DEFAULT_FILES = {
                 "| `Cmd+Y` / `Ctrl+Y`| Insert ✅ checkbox at line start |\n" +
                 "| `Cmd` / `Ctrl`+`Click`| Copy text from `inline` element |\n" +
                 "| `Cmd` / `Ctrl`+`Click`| To open a link like https//files.md |\n" +
+                "| `Ctrl` + `Cmd` + `Space`| Insert emoji (MacOS) |\n" +
                 "\n" +
                 "#### Editor Functions\n" +
                 "\n" +

@@ -11,6 +11,12 @@ let isSyncingMedia = false;
 let isSyncingCurrentFile = false;
 let isLoadingLocalFiles = false;
 
+// The types of files we have:
+// - serverFile, file on server
+// - localFile, file on local fs
+// - memFile, in-memory representation of local file
+// The latter is needed for quick access to file's handle and metadata.
+
 // In-memory mapping of local file system:
 // {
 //   'dir/': [
@@ -28,6 +34,7 @@ let isLoadingLocalFiles = false;
 //     ...
 //   ]
 // }
+// TODO multidir rename to memFiles
 let files = {}; // In-memory representation of files
 let serverFiles = {files: {}, media: {}, timestamps: {}, mediaTimestamp: 0};
 const SERVER_STORAGE_KEY = 'files';
@@ -212,14 +219,14 @@ async function syncTextsWithServer() {
 
             try {
                 await saveTextFile(path, content)
-                addFileToMemory(path, {
+                addMemFile(path, {
                     content: content,
                     lastModified: lastModified,
                     handle: await getFileHandle(path),
                 });
 
                 console.log('SYNC texsts: write file: ', path);
-                setServerFile(path, content, lastModified);
+                addServerFile(path, content, lastModified);
                 // Unfortunately rename is not working, so we have to delete the old file
                 const shouldRemoveOldFile = path in server.renames;
                 if (shouldRemoveOldFile) {
@@ -291,7 +298,7 @@ async function syncLocalFileWithServer(dir, filename) {
         }
         if (json.status === 'updatedOnServer') {
             // TODO maybe RC here? When file was updated, but during this time we already changed it
-            setServerFile(path, content, json.lastModified, serverFiles?.files?.[dir]?.[filename]?.lastSynced);
+            addServerFile(path, content, json.lastModified, serverFiles?.files?.[dir]?.[filename]?.lastSynced);
             console.log(`saved metadata for ${path} with timestamp ${json.lastModified}`, json);
             saveServerFiles();
             return;
@@ -304,7 +311,7 @@ async function syncLocalFileWithServer(dir, filename) {
     }
 
     const lastSynced = await saveTextFile(path, serverFile.content);
-    setServerFile(path, serverFile.content, serverFile.lastModified, lastSynced);
+    addServerFile(path, serverFile.content, serverFile.lastModified, lastSynced);
     console.log(`Saved server file for ${path} with timestamp ${serverFile.lastModified}`);
     saveServerFiles();
     console.log('Opening file after sync');
@@ -496,6 +503,7 @@ async function collectModifiedAndDeletedFiles() {
     for (const dir in files) {
         if (dir === 'media') continue; // Skip image directory
 
+        // TODO multidir walk
         for (const filename in files[dir]) {
             // TODO write tests for that?
             if ((dir === editor.currentDir && filename === editor.currentFile)
@@ -771,8 +779,8 @@ async function moveCurrentFile(toDir) {
     isSyncingCurrentFile = true;
 
     // TODO add prevent syncing?
-    const oldPath = toPath(editor.currentDir, editor.currentFile);
-    const newPath = toPath(toDir, editor.currentFile);
+    const oldPath = currentEditor.path;
+    const newPath = toPath(toDir, toFilename(currentEditor.path));
 
     try {
         let content = getCurrentContent();
@@ -786,7 +794,7 @@ async function moveCurrentFile(toDir) {
             handle: await getFileHandle(newPath),
         }
         editor.currentDir = toDir;
-        setServerFile(newPath, content, 0);
+        addServerFile(newPath, content, 0);
         saveServerFiles();
 
         await removeFile(oldPath);
@@ -799,7 +807,7 @@ async function moveCurrentFile(toDir) {
 }
 
 // TODO lock on files modification?
-function addFileToMemory(path, memFile) {
+function addMemFile(path, memFile) {
     let dirs = path.split('/');
     dirs = dirs.filter(d => d !== '');
     const filename = dirs.pop();
@@ -846,12 +854,12 @@ async function moveFile(oldPath, newPath) {
         await saveTextFile(newPath, content);
 
         console.log('saving ' + newDir + '/' + newFilename);
-        addFileToMemory(newDir, newFilename,  {
+        addMemFile(newDir, newFilename,  {
             content: content,
             lastModified: 0,
             handle: await getFileHandle(newPath),
         });
-        setServerFile(newPath, content, 0);
+        addServerFile(newPath, content, 0);
         saveServerFiles();
 
         // Server file will be removed here.
@@ -877,7 +885,7 @@ function getMetadata(path) {
     }
 }
 
-function setServerFile(path, content, lastModifiedAt, clientLastSynced = null) {
+function addServerFile(path, content, lastModifiedAt, clientLastSynced = null) {
     const parts = path.split('/');
     const filename = parts.pop();
     const dir = parts.join('/');
@@ -910,6 +918,9 @@ function saveServerFiles() {
 
 // TODO save old file
 async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
+    // Why we do normalize here as well?
+    path = path.normalize('NFC');
+
     if (el === 'editor-textarea') {
         currentEditor = editor;
     } else if (el === 'editor2-textarea') {
@@ -933,9 +944,8 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
     closeChatModal();
 
     const start = performance.now();
-    // Why we do normalize here as well?
-    path = path.normalize('NFC');
-    const memFile = getMemFile(path);
+
+    const memFile = getMemoryFile(path);
     console.log(memFile);
 
     // Check if we're loading the same file and save cursor position
@@ -945,7 +955,7 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
         cursorPos = editor.getCursor();
     }
 
-   let filename = toFilename(path);
+    let filename = toFilename(path);
     const header = filename.replace(/\.md$/, '').replace(/^\w/, (c) => c.toUpperCase());
     let content = '';
     if (memFile.handle !== undefined) {
@@ -957,9 +967,6 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
         content = memFile.content;
     }
 
-    // currentEditor.currentDir = dir;
-    // currentEditor.currentFile = filename;
-    currentEditor.path = path;
     // TODO disable when syncing?
     if (saveToHistory) {
         const state = {path: path};
@@ -976,8 +983,7 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
         showEditor2();
     }
 
-    // currentEditor.currentDir = dir;
-    // currentEditor.currentFile = filename;
+    currentEditor.path = path;
     currentEditor.getDoc().setValue(content);
     currentEditor.clearHistory();
     currentEditor.markClean();
@@ -1011,7 +1017,7 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
 // TODO add hash of last read file comparison, merge on conflict (in which scenarious in can happen tho?)
 async function syncCurrentFile(syncWithServer = true) {
     return;
-    if (files === undefined || isWelcome || debug || currentEditor.currentFile === undefined) {
+    if (files === undefined || isWelcome || debug || currentEditor.path === undefined) {
         return;
     }
 
@@ -1031,14 +1037,14 @@ async function syncCurrentFile(syncWithServer = true) {
     }
     isSyncingCurrentFile = true;
 
-    const dir = currentEditor.currentDir;
-    let filename = currentEditor.currentFile;
+    const path = currentEditor.path;
     let isCurrentEditorSame = () => {
-        return filename === window.currentEditor.currentFile && dir === window.currentEditor.currentDir;
+        return path === window.currentEditor.path;
     }
 
     // Track in-editor renaming.
-    if (filename !== CHAT_PATH) {
+    if (path !== CHAT_PATH) {
+        const filename = toFilename(path);
         try {
             // TODO track if no first line?
             const firstLine = currentEditor.getValue().split('\n')[0];
@@ -1051,10 +1057,11 @@ async function syncCurrentFile(syncWithServer = true) {
                 if (hasOldName) {
                     newFilename = 'Untitled.md';
                     let counter = 1;
-                    while (files[dir][newFilename]) {
-                        newFilename = `Untitled ${counter}.md`;
-                        counter++;
-                    }
+                    // TODO multidir
+                    // while (files[dir][newFilename]) {
+                    //     newFilename = `Untitled ${counter}.md`;
+                    //     counter++;
+                    // }
                 } else {
                     // TODO add tests
                     // Already renamed to untitled
@@ -1065,36 +1072,35 @@ async function syncCurrentFile(syncWithServer = true) {
             const hasFilenameChanged = newFilename.toLowerCase() !== filename.toLowerCase();
             if (hasFilenameChanged) {
                 // Change the file immediately, because on further await calls it can be synced by syncTexts.
-                currentEditor.currentFile = newFilename;
+                currentEditor.path = toDir(path) + '/' + newFilename;
 
                 // 1. Remove file with old filename
                 // 2. Create file with new filename
 
                 let content = getCurrentContent();
                 // TODO every await means we can can have RC due to editor content change
-                await removeFile(`${dir}/${filename}`);
-                delete files[dir][filename];
-                console.log('Removed', `${dir}/${filename}`);
+                await removeFile(path);
+                removeMemFile(path);
+                console.log('Removed', path);
 
                 // Get fresher content after await.
                 // if (isCurrentEditorSame()) {
                 //     content = getCurrentContent();
                 // }
-                addFileToMemory(dir, newFilename, {
+                addMemFile(path, {
                     content: content,
                     lastModified: 0,
-                    handle: await getFileHandle(toPath(dir, newFilename), true),
+                    handle: await getFileHandle(path, true),
                 });
                 // if (isCurrentEditorSame()) {
                 //     content = getCurrentContent();
                 //     // Change current file if the editor is unchanged.
                 // }
-                const path = `${dir}/${newFilename}`;
-                await saveTextFile(path, getCurrentContent());
-
-                setServerFile(path, content, 0);
+                const newPath = toDir(path) + '/' + newFilename;
+                await saveTextFile(newPath, getCurrentContent());
+                addServerFile(newPath, content, 0);
                 saveServerFiles();
-                console.log('Created', `${dir}/${newFilename}`);
+                console.log('Created', newPath);
 
                 await renderSidebar();
 
@@ -1112,18 +1118,24 @@ async function syncCurrentFile(syncWithServer = true) {
         }
     }
 
-    if (filename === CHAT_PATH) {
+    if (path === CHAT_PATH) {
         // Try to load local changes.
         if (chatIsClean) {
             try {
-                let inMemoryLastModified = files[dir]?.[filename]?.lastModified;
+                let inMemoryLastModified = getMemoryFile(path)?.lastModified;
                 let file = await ((await getFileHandle(CHAT_PATH)).getFile());
+
+                // Update last modified in memory.
+                let memFile = getMemoryFile(path);
+                memFile.lastModified = file.lastModified;
+                addMemFile(path, memFile);
+
                 let localLastModified = file.lastModified;
                 // TODO inmemory lastmodified should be reloaded
-                files[dir][filename].lastModified = localLastModified;
+                // files[dir][filename].lastModified = localLastModified;
                 if (inMemoryLastModified !== localLastModified) {
-                    console.log('Chat was modified locally', filename);
-                    await openFile(dir, filename);
+                    console.log('Chat was modified locally', CHAT_PATH);
+                    await openFile(CHAT_PATH);
                     isSyncingCurrentFile = false;
                     return;
                 }
@@ -1311,6 +1323,14 @@ function toFilename(path) {
     return filename;
 }
 
+// Dir with no slash at the end.
+function toDir(path) {
+    const { dirPath } = toDirAndFilename(path);
+
+    return dirPath;
+}
+
+// Dir with no slash at the end.
 function toDirAndFilename(path) {
     let parts = path.split('/');
     parts = parts.filter(p => p !== '');
@@ -1328,7 +1348,7 @@ function toFilename(path) {
 }
 
 // Gets a file from memory by its path.
-function getMemFile(path) {
+function getMemoryFile(path) {
     if (files === undefined) {
         return null;
     }
@@ -1349,6 +1369,32 @@ function getMemFile(path) {
     }
 
     return currentDir[filename] || null;
+}
+
+function removeMemFile(path) {
+    if (files === undefined) {
+        return;
+    }
+    if (path === '/') {
+        console.warn('Trying to remove /');
+        return;
+    }
+
+    let dirs = path.split('/');
+    dirs = dirs.filter(d => d !== '');
+    const filename = dirs.pop();
+
+    let currentDir = files;
+    for (const dir of dirs) {
+        if (!currentDir[dir]) {
+            return;
+        }
+        currentDir = currentDir[dir];
+    }
+
+    if (currentDir[filename]) {
+        delete currentDir[filename];
+    }
 }
 
 

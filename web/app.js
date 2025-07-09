@@ -626,6 +626,7 @@ function renderSidebar(focusDir = '') {
         parentNode.addChild(fileNode);
     });
 
+    // TODO if we have only two groups - hide them (personal + files case)
     const groups = [
         ['_read_', '_watch_', '_shop_'],
         ['today', 'later'],
@@ -755,7 +756,7 @@ async function newFile() {
     }
 
     let handle = await getFileHandle(toPath(dir, filename), true);
-    addFileToMemory(dir, filename, {
+    addMemFile(dir, filename, {
         content: '',
         lastModified: 0,
         handle: handle,
@@ -861,6 +862,7 @@ window.addEventListener('keydown', async (event) => {
     }
 
     if (isMetaKey(event) && event.key === 'd') {
+        console.log('cmd+d');
         event.preventDefault();
         event.stopPropagation();
 
