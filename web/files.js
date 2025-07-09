@@ -527,7 +527,7 @@ async function collectModifiedAndDeletedFiles() {
     //     }
     // }
     //
-    walk(files, (path, entry, isFile) => {
+    walk(files, (path, isFile) => {
         if (!isFile) {
             return;
         }
@@ -576,7 +576,11 @@ async function collectModifiedAndDeletedFiles() {
     //         }
     //     }
     // }
-    walk(serverFiles.files, (path, entry, isFile) => {
+    walk(serverFiles.files, (path, isFile) => {
+        if (!isFile) {
+            return;
+        }
+
         if (/[<>:'|?*\\/\x00-\x1F\x7F]/.test(toFilename(path))) {
             return;
         }
@@ -1439,14 +1443,14 @@ function walk(obj, callback, path = '/') {
     for (const key of files) {
         const item = obj[key];
         const fullPath = path + key;
-        callback(fullPath, item, true);
+        callback(fullPath, true);
     }
 
     // Then process directories
     for (const key of dirs) {
         const item = obj[key];
         const fullPath = path + key;
-        callback(fullPath, item, false);
+        callback(fullPath, false);
         walk(item, callback, fullPath);
     }
 }
@@ -1536,7 +1540,7 @@ function findSiblingPath(path) {
     const allFiles = [];
     let foundDesiredPath = false;
     let nextPath = null;
-    walk(files, (filePath, file, isFile) => {
+    walk(files, (filePath, isFile) => {
         if (filePath === CONFIG_PATH || filePath === CHAT_PATH) {
             return;
         }

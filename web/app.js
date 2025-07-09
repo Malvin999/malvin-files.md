@@ -583,7 +583,7 @@ function renderSidebar(focusDir = '') {
     let dirNodes = {'/': root};
 
     // First pass: create all directories
-    walk(files, (path, item, isFile) => {
+    walk(files, (path, isFile) => {
         if (path === '/media' || path.startsWith('/media/')) {
             return;
         }
@@ -602,7 +602,7 @@ function renderSidebar(focusDir = '') {
     });
 
     // Second pass: add all files
-    walk(files, (path, item, isFile) => {
+    walk(files, (path, isFile) => {
         if (path === '/media' || path.startsWith('/media/')) {
             return;
         }
