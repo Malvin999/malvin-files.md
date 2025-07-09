@@ -257,7 +257,6 @@ async function syncTextsWithServer() {
     isSyncing = false;
 }
 
-// TODO multidir all callers
 async function syncLocalFileWithServer(path) {
     return;
     // TODO multidir
@@ -1405,16 +1404,31 @@ function walk(obj, callback, path = '/') {
         callback(path, obj, true);
         return;
     }
-    for (const key in obj) {
+
+    const keys = Object.keys(obj);
+    const files = [];
+    const dirs = [];
+    for (const key of keys) {
+        if (obj[key].isFile) {
+            files.push(key);
+        } else {
+            dirs.push(key);
+        }
+    }
+
+    // Process files first, so that the order would be preserved
+    for (const key of files) {
         const item = obj[key];
         const fullPath = path + key;
+        callback(fullPath, item, true);
+    }
 
-        if (item.isFile) {
-            callback(fullPath, item, true);
-        } else {
-            callback(fullPath, item, false);
-            walk(item, callback, fullPath);
-        }
+    // Then process directories
+    for (const key of dirs) {
+        const item = obj[key];
+        const fullPath = path + key;
+        callback(fullPath, item, false);
+        walk(item, callback, fullPath);
     }
 }
 
@@ -1498,6 +1512,62 @@ function removeMemFile(path) {
     }
 }
 
+// Returns nextPath for sibling or null
+function findNextFile(path) {
+    const allFiles = [];
+    let foundDesiredPath = false;
+    let nextPath = null;
+    walk(files, (filePath, file, isFile) => {
+        if (filePath === CONFIG_PATH || file === CHAT_PATH) {
+            return;
+        }
+
+        if (!isFile) {
+            return;
+        }
+
+        // TODO we may wanna break from walk
+        if (foundDesiredPath && nextPath === null) {
+            console.log('NEXT path', filePath);
+            nextPath = filePath;
+            return ;
+        }
+
+        if (filePath === path) {
+            console.log('FOUND desired', filePath);
+            foundDesiredPath = true;
+        }
+    });
+
+    return nextPath;
+
+    // // Collect all files except system files
+    // for (let dir in files) {
+    //     for (let file in files[dir]) {
+    //         if (file === CONFIG_PATH || file === CHAT_PATH) {
+    //             continue;
+    //         }
+    //         allFiles.push({dir, filename: file});
+    //     }
+    // }
+    //
+    // if (allFiles.length <= 1) {
+    //     return null; // No other files available
+    // }
+    //
+    // // Find current file index
+    // const currentIndex = allFiles.findIndex(f =>
+    //     f.dir === currentDir && f.filename === currentFilename
+    // );
+    //
+    // if (currentIndex === -1) {
+    //     return allFiles[0]; // Fallback to first file
+    // }
+    //
+    // // Return next file, or first file if we're at the end
+    // const nextIndex = (currentIndex + 1) % allFiles.length;
+    // return allFiles[nextIndex];
+}
 
 window.addEventListener('beforeunload', function () {
     // clearInterval(window.loader);

@@ -903,6 +903,7 @@ const TreeUtil = {
 window.handleNodeMove = async function(sourceDir, sourceFile, targetDir) {
     console.log(`Moving ${sourceDir}/${sourceFile} to ${targetDir}/`);
 
+    // TODO multidir
     if (sourceDir === editor.currentDir && sourceFile === editor.currentFile) {
        await moveCurrentFile(targetDir);
     } else {

@@ -1264,38 +1264,6 @@ function getCurrentVersion() {
     return window.COMMIT_HASH ? window.COMMIT_HASH.replace('?v=', '') : '';
 }
 
-// TODO multidir
-function findNextFile(currentDir, currentFilename) {
-    const allFiles = [];
-
-    // Collect all files except system files
-    for (let dir in files) {
-        for (let file in files[dir]) {
-            if (file === CONFIG_PATH || file === CHAT_PATH) {
-                continue;
-            }
-            allFiles.push({dir, filename: file});
-        }
-    }
-
-    if (allFiles.length <= 1) {
-        return null; // No other files available
-    }
-
-    // Find current file index
-    const currentIndex = allFiles.findIndex(f =>
-        f.dir === currentDir && f.filename === currentFilename
-    );
-
-    if (currentIndex === -1) {
-        return allFiles[0]; // Fallback to first file
-    }
-
-    // Return next file, or first file if we're at the end
-    const nextIndex = (currentIndex + 1) % allFiles.length;
-    return allFiles[nextIndex];
-}
-
 function showEditor2() {
     rememberEditorPos();
     const editor2Container = document.getElementById('editor2-container');
