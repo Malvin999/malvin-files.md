@@ -125,13 +125,32 @@ function renderSidebar(focusDir = '') {
         parentNode.addChild(fileNode);
     });
 
+    const groupedDirs = new Set(['_read_', '_watch_', '_shop_', 'journal', 'habits', 'insights', 'archive', 'today', 'later']);
+    const underscoreDirs = [];
+    // Find all directories that match _checklist_ pattern
+    for (const dir in dirNodes) {
+        const filename = toFilename(dir);
+        if (filename.startsWith('_') && filename.endsWith('_')) {
+            underscoreDirs.push(dir);
+            groupedDirs.add(filename);
+        }
+    }
+    underscoreDirs.forEach((dir, index) => {
+        const dirNode = dirNodes[dir];
+        if (dirNode && dirNode.parent === root) {
+            root.removeChild(dirNode);
+            if (index === underscoreDirs.length - 1) {
+                dirNode.isGroupEnd = true;
+            }
+            root.addChild(dirNode);
+        }
+    });
+
     // TODO if we have only two groups - hide them (personal + files case)
     const groups = [
-        ['_read_', '_watch_', '_shop_'],
         ['today', 'later'],
         ['journal', 'habits', 'insights', 'archive'],
     ];
-
     for (let i = 0; i < groups.length; i++) {
         const dirList = groups[i];
         const existingDirs = dirList.filter(dir => dirNodes['/' + dir]);
@@ -152,7 +171,6 @@ function renderSidebar(focusDir = '') {
     }
 
     // Move all other nodes down
-    const groupedDirs = new Set(['_read_', '_watch_', '_shop_', 'journal', 'habits', 'insights', 'archive', 'today', 'later']);
     for (const dir in dirNodes) {
         console.log('TRYING ot move', dir);
         if (dir === '/' ||  groupedDirs.has(toFilename(dir))) continue;
