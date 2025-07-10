@@ -235,7 +235,7 @@ test("sync one new file from client doesn't conflict with syncTexts", async ({ p
     await expectFileOnServer(page, 'New file.md', 'abcdefabcdef\ndef\nContent');
 });
 
-test('delete files on client will propogate to server as well', async ({ page }) => {
+test('delete files on client will propagate to server as well', async ({ page }) => {
     await createFileOnServer('file.md', 'test content');
     await createFileOnServer('another.md', '*italic*');
 
@@ -251,7 +251,8 @@ test('delete files on client will propogate to server as well', async ({ page })
     await page.keyboard.press('Meta+d');
 
     await page.waitForTimeout(1000);
-    // SyncTexts should propogate deletion to server
+
+    // SyncTexts should propagate deletion to server
     await page.evaluate(() => {
         window.dispatchEvent(new Event('focus'));
     });
@@ -262,7 +263,6 @@ test('delete files on client will propogate to server as well', async ({ page })
 
     expectFileOnServer(page, 'file.md', 'test content');
     expectNoFileOnServer(page, 'another.md');
-
 });
 
 async function createFileOnServer(filepath, content) {
