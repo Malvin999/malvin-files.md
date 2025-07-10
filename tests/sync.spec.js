@@ -287,11 +287,11 @@ test('files exist on both client and server, config is not removed on first sync
     await clickAndExpectContent(page, 'another', '# Another\n*italic*');
 
     // Trigger syncTexts
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(300);
     await page.evaluate(() => {
         window.dispatchEvent(new Event('focus'));
     });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(300);
 
     await expectFileOnServer(page, 'file.md', 'test content');
     await expectFileOnServer(page, 'another.md', '*italic*');
@@ -315,11 +315,11 @@ test('files exist on both client and server, serverFiles contains proper server 
     await clickAndExpectContent(page, 'another', '# Another\n*italic*');
 
     // Trigger syncTexts
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(300);
     await page.evaluate(() => {
         window.dispatchEvent(new Event('focus'));
     });
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(300);
 
     await expectFileOnServer(page, 'file.md', 'test content');
     await expectFileOnServer(page, 'another.md', '*italic*');
