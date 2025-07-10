@@ -42,7 +42,6 @@ const urlsToCache = [
 
 const urlParams = new URLSearchParams(self.location.search);
 const COMMIT_HASH = urlParams.get('v') ? `?v=${urlParams.get('v')}` : '';
-console.log('SW commit hash:', COMMIT_HASH);
 
 const cacheName = `files-md-v${COMMIT_HASH}`;
 

@@ -68,7 +68,7 @@ async function loadLocalFiles(rootDirHandle) {
             const filename = entry.name.normalize('NFC');
 
             let isSupportedExtension = SUPPORTED_EXTENSIONS.includes(filename.split('.').pop());
-            let isConfig = filename === CONFIG_PATH;
+            let isConfig = filename === toFilename(CONFIG_PATH);
 
             let dirs = path.split('/');
             dirs = dirs.filter(d => d !== '');
@@ -535,7 +535,6 @@ async function collectModifiedAndDeletedFiles() {
             return;
         }
 
-        console.log('walked to', path);
         const promise = getFileStatus(path)
             .then(result => {
                 if (result.status === 'modified' || result.status === 'new') {
@@ -569,6 +568,7 @@ async function collectModifiedAndDeletedFiles() {
     //         }
     //     }
     // }
+    console.log('WALKING', serverFiles.files);
     walk(serverFiles.files, (path, isFile) => {
         if (!isFile) {
             return;
@@ -583,6 +583,7 @@ async function collectModifiedAndDeletedFiles() {
             return;
         }
 
+        console.log('EXISTING files', existingFiles);
         if (existingFiles[path] === undefined) {
             console.log('DELETED ' + path);
             deleted.push(path);

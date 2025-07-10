@@ -43,6 +43,10 @@ async function setup(page) {
             }
 
             await root.getFileHandle('Chat.txt', { create: true });
+            const fileHandle =  await root.getFileHandle('config.json', { create: true });
+            const writable = await fileHandle.createWritable()
+            await writable.write('{}');
+            await writable.close();
 
             return root;
         };
@@ -263,6 +267,34 @@ test('delete files on client will propagate to server as well', async ({ page })
 
     expectFileOnServer(page, 'file.md', 'test content');
     expectNoFileOnServer(page, 'another.md');
+});
+
+test('files exist on both client and server, config is not removed on first sync', async ({ page }) => {
+    await createFileOnServer('file.md', 'test content');
+    await createFileOnServer('another.md', '*italic*');
+    await createFileOnServer('config.json', '{mode:"full"}');
+
+    await setup(page);
+    await page.waitForTimeout(300);
+
+    // Check that existing files are not removed
+    await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
+    await clickAndExpectContent(page, 'README', '# README\nHello world');
+
+    // Check that new files are added
+    await clickAndExpectContent(page, 'file', '# File\ntest content');
+    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
+
+    // Trigger syncTexts
+    await page.waitForTimeout(2000);
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event('focus'));
+    });
+    await page.waitForTimeout(2000);
+
+    await expectFileOnServer(page, 'file.md', 'test content');
+    await expectFileOnServer(page, 'another.md', '*italic*');
+    await expectFileOnServer(page, 'config.json', '{}');
 });
 
 async function createFileOnServer(filepath, content) {
