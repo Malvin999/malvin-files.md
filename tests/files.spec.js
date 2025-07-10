@@ -700,7 +700,7 @@ test('create file in selected folder', async ({ page }) => {
         window.getRootDirHandle = async function() {
             const root = await navigator.storage.getDirectory();
             const testDir = await root.getDirectoryHandle('files', { create: true });
-            await testDir.getDirectoryHandle('projects', { create: true });
+            await root.getDirectoryHandle('projects', { create: true });
             const rootFiles = [
                 { name: 'README.md', content: 'Hello world' }
             ];
@@ -737,12 +737,14 @@ test('create file in selected folder', async ({ page }) => {
 
     await page.keyboard.type('Project file');
     await page.waitForTimeout(100);
-    await page.keyboard.press('Enter');
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.type('File created in projects folder');
     await page.waitForTimeout(200);
 
+    // close projects dir
     await page.click('#sidebar >> text=projects');
     await page.waitForTimeout(200);
+
 
     await page.click('#sidebar >> text=files');
     await page.waitForTimeout(100);
@@ -760,7 +762,7 @@ test('create file in selected folder', async ({ page }) => {
         const cm = document.querySelector('.CodeMirror').CodeMirror;
         return cm.getValue();
     });
-    expect(codeMirrorContent).toBe("# Project file\nFile created in projects folder\n");
+    expect(codeMirrorContent).toBe("# Project file\nFile created in projects folder");
 
     const projectFiles = await page.locator('#sidebar >> text=projects').locator('..').locator('text=Project file');
     expect(await projectFiles.count()).toBe(1);

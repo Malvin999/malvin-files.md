@@ -533,29 +533,29 @@ function renderSidebar(focusDir = '') {
     let selectedNodes = new Set();
 
     // TODO save state
-    // if (tree) {
-    //     // Save state for all nodes (both directories and files)
-    //     function saveNodeState(node) {
-    //         if (node.isExpanded()) {
-    //             expandedDirs.add(node.toString());
-    //         }
-    //         if (node.isSelected()) {
-    //             selectedNodes.add(node.toString());
-    //         }
-    //
-    //         // Recursively save state for child nodes
-    //         if (node.getChildren) {
-    //             node.getChildren().forEach(child => {
-    //                 saveNodeState(child);
-    //             });
-    //         }
-    //     }
-    //
-    //     tree.getRoot().getChildren().forEach(child => {
-    //         saveNodeState(child);
-    //     });
-    // }
-    //
+    if (tree) {
+        // Save state for all nodes (both directories and files)
+        function saveNodeState(node) {
+            if (node.isExpanded()) {
+                expandedDirs.add(node.toString());
+            }
+            if (node.isSelected()) {
+                selectedNodes.add(node.toString());
+            }
+
+            // Recursively save state for child nodes
+            if (node.getChildren) {
+                node.getChildren().forEach(child => {
+                    saveNodeState(child);
+                });
+            }
+        }
+
+        tree.getRoot().getChildren().forEach(child => {
+            saveNodeState(child);
+        });
+    }
+
     root = new TreeNode('');
 
     // Process directories
@@ -610,6 +610,16 @@ function renderSidebar(focusDir = '') {
         const {dirPath, _ } = toDirPathAndFilename(path);
         const parentNode = dirNodes[dirPath + '/'] || root;
         parentNode.addChild(dirNode);
+
+        // Handle focus directory or restore previous state
+        let dir = trimPostfix(dirPath, '/');
+        if (dir === focusDir) {
+            dirNode.setExpanded(true);
+            dirNode.setSelected(true);
+        } else {
+            if (expandedDirs.has(dir)) dirNode.setExpanded(true);
+            if (selectedNodes.has(dir)) dirNode.setSelected(true);
+        }
     });
 
     // Second pass: add all files
@@ -749,7 +759,6 @@ async function newFile() {
     console.log('New file clicked');
     let dir = toDirPath(currentEditor.path);
     let selectedDirs = tree.getSelectedNodes();
-    // TODO multidir
     if (selectedDirs.length > 0 &&
         selectedDirs[0].getOptions &&
         typeof selectedDirs[0].getOptions === 'function' &&
