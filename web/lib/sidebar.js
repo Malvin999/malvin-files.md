@@ -5,6 +5,7 @@
  * @author Matthias Thalmann
  */
 
+let tree;
 
 function renderSidebar(focusDir = '') {
     let expandedDirs = new Set();

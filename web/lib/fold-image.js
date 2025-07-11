@@ -118,11 +118,12 @@
                 img.src = url;
                 img.title = title;
                 return marker;
-            } else {
-                if (DEBUG) {
-                    console.log("[image]FAILED TO REQUEST RANGE: ", rngReq);
-                }
             }
+            // else {
+            //     // if (DEBUG) {
+            //     //     console.log("[image]FAILED TO REQUEST RANGE: ", rngReq);
+            //     // }
+            // }
             // PATCHED, add ![[img/link]] support, TODO it is copypaste from above
         } else if (token.string === "!") {
             // <span >!<span

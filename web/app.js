@@ -1,7 +1,4 @@
 // HyperMD/Codemirror editor
-// let editor;
-// let editor2;
-let tree;
 let isChat = false;
 let isWelcome = false;
 let debug = false;
