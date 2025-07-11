@@ -108,6 +108,7 @@ func SyncMedia(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO add size limits!
 	shouldWriteToServer := clientMedia.Data != "" && !exists
 	if shouldWriteToServer {
 		content, err := base64.StdEncoding.DecodeString(clientMedia.Data)

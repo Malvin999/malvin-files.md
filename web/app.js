@@ -55,7 +55,7 @@ async function init(el) {
         files = DEFAULT_FILES;
         isWelcome = true;
         renderSidebar();
-        await openFile('', 'Welcome.md');
+        await openFile('/Welcome.md');
         return;
     } else {
         isWelcome = false;
@@ -152,7 +152,7 @@ function initEditor(el) {
         currentEditor = newEditor;
         currentEditor.refresh(); // Cursor & hide tokens conflict if we don't call it
         closeChatModal();
-        console.log('Focused to:', newEditor.currentFile);
+        console.log('Focused to:', newEditor.path);
     });
 
     newEditor.hmdResolveURL = function (path) {
@@ -181,18 +181,19 @@ function initEditor(el) {
         // TODO support other than media and img folders
         const match = path.match(/\/(.+\.(png|jpg|jpeg|gif|webp))$/i);
 
-        if (match && files['media'] && files['media'][match[1]]) {
-            return files['media'][match[1]].imageUrl;
+        if (match && files['media/'] && files['media/'][match[1]]) {
+            return files['media/'][match[1]].imageUrl;
         }
 
-        if (match && files['img'] && files['img'][match[1]]) {
-            return files['img'][match[1]].imageUrl;
+        if (match && files['img/'] && files['img/'][match[1]]) {
+            return files['img/'][match[1]].imageUrl;
         }
 
         return path;
     };
 
     newEditor.hmdReadLink = async function (path) {
+        console.log('PATH', path);
         path = path.replace(/\|.*]$/, '');
         path = path.replace('[', '').replace(']', '');
 
@@ -202,33 +203,37 @@ function initEditor(el) {
             return;
         }
 
-        let parts = path.split('/');
-        if (parts.length === 1) {
-            path += '.md';
-            // Does file exist in root dir?
-            if (files[''] && files[''][path]) {
-                openFile('', path, true, 'editor2-textarea');
-                return;
-            }
-
-            // Does file exist in current dir?
-            if (files[editor.currentDir] && files[editor.currentDir][path]) {
-                openFile(editor.currentDir, path, true, 'editor2-textarea');
-                return;
-            }
-
-            // Loop through all 1st level dirs to find
-            for (const dir in files) {
-                if (files[dir][path]) {
-                    openFile(dir, path, true, 'editor2-textarea');
-                    return;
-                }
-            }
-
-            return;
-        }
-
-        await openFile(parts[0], parts[1] + '.md', true, 'editor2-textarea');
+        console.log('READ LINK', path);
+        // let parts = path.split('/');
+        // if (parts.length === 1) {
+        //     path += '.md';
+        //     // Does file exist in root dir?
+        //     if (files[''] && files[''][path]) {
+        //         openFile('', path, true, 'editor2-textarea');
+        //         return;
+        //     }
+        //
+        //     // Does file exist in current dir?
+        //     if (files[editor.currentDir] && files[editor.currentDir][path]) {
+        //         openFile(editor.currentDir, path, true, 'editor2-textarea');
+        //         return;
+        //     }
+        //
+        //     // Loop through all 1st level dirs to find
+        //     for (const dir in files) {
+        //         if (files[dir][path]) {
+        //             openFile(dir, path, true, 'editor2-textarea');
+        //             return;
+        //         }
+        //     }
+        //
+        //     return;
+        // }
+        //
+        // await openFile(parts[0], parts[1] + '.md', true, 'editor2-textarea');
+        // TODO add obsidian like "search file through all dirs"
+        console.log(path);
+        openFile(path + '.md', true, 'editor2-textarea')
     };
 
     newEditor.on('inputRead', async function (cm, change) {
@@ -280,10 +285,10 @@ function initEditor(el) {
                 try {
                     const fileHandle = await saveImageFile(fileName, file);
                     if (fileHandle) {
-                        if (!files['media']) {
-                            files['media'] = {};
+                        if (!files['media/']) {
+                            files['media/'] = {};
                         }
-                        files['media'][fileName] = {
+                        files['media/'][fileName] = {
                             handle: fileHandle,
                             lastModified: Date.now(),
                             imageUrl: URL.createObjectURL(file)
@@ -467,21 +472,22 @@ function createAutocompleteDict() {
     const entries = [];
 
     // Collect all files with their metadata
-    Object.keys(excludeDirs(SYSTEM_DIRS)).forEach(dir => {
-        Object.keys(files[dir]).forEach(filename => {
-            if (filename === CONFIG_FILENAME || filename === CHAT_FILENAME) {
-                return;
-            }
-            const key = `${filename.replace(/\.md$/, '')}`;
-            const url = `${dir}/${filename}`.replace(/ /g, '%20');
-            const filePath = `${filename.replace(/\.md$/, '')}](${url})`;
+    walkFilesExcludingSystemDirs((path) => {
+        if (path === CONFIG_PATH || path === CHAT_PATH) {
+            return;
+        }
 
-            entries.push({
-                key,
-                filePath,
-                lastModified: files[dir][filename].lastModified
-            });
+        const filename = toFilename(path);
+        const key = `${filename.replace(/\.md$/, '')}`;
+        const url = path.replace(/ /g, '%20');
+        const filePath = `${filename.replace(/\.md$/, '')}](${url})`;
+
+        entries.push({
+            key,
+            filePath,
+            lastModified: getMemFile(path).lastModified
         });
+
     });
 
     // Sort by last modified (most recent first)
@@ -492,9 +498,13 @@ function createAutocompleteDict() {
     });
 
     let lowPriorityEntries = [];
-    ['_read_', '_watch_', '_shop_', 'today', 'later', 'journal'].forEach(dir => {
+    ['_read_/', '_watch_/', '_shop_/', 'today/', 'later/', 'journal/'].forEach(dir => {
+        if (!files[dir]) {
+            return;
+        }
+
         Object.keys(files[dir]).forEach(filename => {
-            if (filename === CONFIG_FILENAME || filename === CHAT_FILENAME) {
+            if (filename === CONFIG_PATH || filename === CHAT_PATH) {
                 return;
             }
             const key = `${filename.replace(/\.md$/, '')}`;
@@ -517,129 +527,6 @@ function createAutocompleteDict() {
     return dict;
 }
 
-function renderSidebar(focusDir = '') {
-    let expandedDirs = new Set();
-    let selectedNodes = new Set();
-
-    if (tree) {
-        // Save state for all nodes (both directories and files)
-        function saveNodeState(node) {
-            if (node.isExpanded()) {
-                expandedDirs.add(node.toString());
-            }
-            if (node.isSelected()) {
-                selectedNodes.add(node.toString());
-            }
-
-            // Recursively save state for child nodes
-            if (node.getChildren) {
-                node.getChildren().forEach(child => {
-                    saveNodeState(child);
-                });
-            }
-        }
-
-        tree.getRoot().getChildren().forEach(child => {
-            saveNodeState(child);
-        });
-    }
-
-    root = new TreeNode('');
-
-    // Process directories
-    for (const dir in files) {
-        if (dir === '' || dir === 'media') {
-            continue;
-        }
-
-        let dirNode = new TreeNode(dir, {expanded: false, dir: true});
-
-        // Process files in directory
-        for (let file in files[dir]) {
-            let fileNode = new TreeNode(file.replace(/\.md$/, ''), {expanded: false});
-            fileNode.on('click', async function (n, node) {
-                await openFile(node.parent.toString(), node.toString() + '.md');
-            });
-            dirNode.addChild(fileNode);
-
-            // Restore selected state for file nodes
-            if (selectedNodes.has(file.replace(/\.md$/, ''))) {
-                fileNode.setSelected(true);
-            }
-        }
-
-        root.addChild(dirNode);
-
-        // Handle focus directory or restore previous state
-        if (dir === focusDir) {
-            dirNode.setExpanded(true);
-            dirNode.setSelected(true);
-        } else {
-            if (expandedDirs.has(dir)) dirNode.setExpanded(true);
-            if (selectedNodes.has(dir)) dirNode.setSelected(true);
-        }
-    }
-
-    const groups = [
-        ['_read_', '_watch_', '_shop_'],
-        ['today', 'later'],
-        ['journal', 'habits', 'insights', 'archive'],
-    ];
-
-    for (let i = 0; i < groups.length; i++) {
-        const dirList = groups[i];
-        const existingDirs = dirList.filter(dir => files[dir]);
-        if (existingDirs.length === 0) continue;
-
-        existingDirs.forEach((dir, index) => {
-            const dirNode = root.getChildren().find(child => child.toString() === dir);
-            if (dirNode) {
-                root.removeChild(dirNode);
-                if (index === existingDirs.length - 1) {
-                    dirNode.isGroupEnd = true;
-                }
-                root.addChild(dirNode);
-            }
-        });
-    }
-
-    const groupedDirs = new Set(['_read_', '_watch_', '_shop_', 'journal', 'habits', 'insights', 'archive', 'today', 'later']);
-    for (const dir in files) {
-        if (dir === '' || dir === 'media' || groupedDirs.has(dir)) continue;
-
-        const dirNode = root.getChildren().find(child => child.toString() === dir);
-        if (dirNode) {
-            root.removeChild(dirNode);
-            root.addChild(dirNode);
-        }
-    }
-
-    // Process root-level files
-    if (files['']) {
-        for (let file in files['']) {
-            if (file === CONFIG_FILENAME || file === CHAT_FILENAME) {
-                continue;
-            }
-
-            let fileNode = new TreeNode(file.replace(/\.md$/, '').replace(/\.txt$/, ''), {expanded: false});
-            fileNode.on('click', async function (n, node) {
-                await openFile('', file);
-            });
-            root.addChild(fileNode);
-
-            // Restore selected state for root-level file nodes
-            if (selectedNodes.has(file.replace(/\.md$/, ''))) {
-                fileNode.setSelected(true);
-            }
-        }
-    }
-
-
-    tree = new TreeView(root, '#sidebar-tree', {
-        show_root: false,
-    });
-}
-
 async function showRandomFile() {
     if (debug) {
         await openFile(debug.dir, debug.file);
@@ -647,57 +534,63 @@ async function showRandomFile() {
     }
 
     const allFiles = [];
-    for (let dir in excludeDirs(SYSTEM_DIRS)) {
-        for (let file in files[dir]) {
-            if (file === CONFIG_FILENAME) {
-                continue;
-            }
-
-            allFiles.push({dir, file});
+    walkFilesExcludingSystemDirs((path) => {
+        if (path === CONFIG_PATH) {
+            return;
         }
-    }
+
+        allFiles.push(path);
+    });
 
     if (allFiles.length === 0) {
         console.error('No files found to open.');
         return;
     }
 
-    const randomFile = allFiles[Math.floor(Math.random() * allFiles.length)];
-
+    const randomPath = allFiles[Math.floor(Math.random() * allFiles.length)];
     try {
-        await openFile(randomFile.dir, randomFile.file);
+        await openFile(randomPath);
     } catch (error) {
         console.error('Failed to open random file:', error);
     }
 }
 
 async function newFile() {
-    let dir = editor.currentDir || '';
+    console.log('New file clicked');
+    let dirPath = toDirPath(currentEditor.path);
     let selectedDirs = tree.getSelectedNodes();
     if (selectedDirs.length > 0 &&
         selectedDirs[0].getOptions &&
         typeof selectedDirs[0].getOptions === 'function' &&
         selectedDirs[0].getOptions()['dir'] === true) {
-        dir = selectedDirs[0].toString();
+        dirPath = '/' + selectedDirs[0].toString();
     }
     // TODO don't create on disk?
     let filename = 'New file.md';
 
+    // TODO check tests
     let num = 1;
-    while (files[dir] && files[dir][filename]) {
+    while (getMemFile(joinPath(dirPath, filename)) !== null) {
+        console.log('file exists', joinPath(dirPath, filename));
         filename = `New file (${num}).md`;
         num++;
     }
 
-    let handle = await getFileHandle(toPath(dir, filename), true);
-    addFileToMemory(dir, filename, {
+    const path = joinPath(dirPath, filename);
+    console.log('PATH', path);
+    let handle = await getFileHandle(path, true);
+    addMemFile(path, {
+        isFile: true,
         content: '',
         lastModified: 0,
         handle: handle,
+        path: path,
         imageUrl: null
     });
 
-    await openFile(dir, filename);
+    console.log('Creating new file', path);
+    await openFile(path);
+    console.log('CURRENT path after new', currentEditor.path);
     editor.setCursor({line: 1, ch: 0});
     editor.focus();
 
@@ -718,14 +611,14 @@ async function newFolder() {
 
     let finalFolderName = folderName;
     let num = 1;
-    while (files[finalFolderName]) {
+    while (files[finalFolderName + '/']) {
         finalFolderName = `${folderName} (${num})`;
         num++;
     }
 
     const rootDirHandle = await getRootDirHandle();
     await rootDirHandle.getDirectoryHandle(finalFolderName, {create: true});
-    files[finalFolderName] = {};
+    files[finalFolderName + '/'] = {};
 
     console.log('CREATED folder', finalFolderName);
 
@@ -796,29 +689,32 @@ window.addEventListener('keydown', async (event) => {
     }
 
     if (isMetaKey(event) && event.key === 'd') {
+        console.log('cmd+d');
         event.preventDefault();
         event.stopPropagation();
 
-        let dir = currentEditor.currentDir;
-        let filename = currentEditor.currentFile;
-        if (filename === CHAT_FILENAME) {
+        const path = currentEditor.path;
+        if (path === CHAT_PATH) {
             return;
         }
 
-        const nextFile = findNextFile(dir, filename);
+        const nextFilePath = findSiblingPath(path);
 
-        let oldPath = toPath(dir, filename);
-        let newPath = toPath('archive', filename);
+        let oldPath = path;
+        let newPath = '/archive/' + toFilename(path);
 
-        if (dir === 'archive') {
+        currentEditor.path = undefined;
+        if (toDirPath(path) === '/archive') {
+            console.log('Removing file permanently', path);
             await removeFile(oldPath);
         } else {
+            console.log('Moving file to archive', path);
             await moveFile(oldPath, newPath);
         }
 
         await renderSidebar();
-        if (nextFile) {
-            await openFile(nextFile.dir, nextFile.filename);
+        if (nextFilePath) {
+            await openFile(nextFilePath);
         } else {
             showRandomFile();
         }
@@ -932,18 +828,6 @@ window.addEventListener('popstate', (event) => {
     }
 });
 
-function excludeDirs(excludedDirs) {
-    const filteredFiles = {};
-
-    for (const dir in files) {
-        if (!excludedDirs.includes(dir)) {
-            filteredFiles[dir] = files[dir];
-        }
-    }
-
-    return filteredFiles;
-}
-
 async function openDir() {
     let dirHandle = await window.showDirectoryPicker({'mode': 'readwrite'});
     document.getElementById('open-folder').style.display = 'none';
@@ -960,15 +844,19 @@ async function openDir() {
     if (Object.keys(files).length === 0) {
         const hotkeysFilename = '🎹 Hotkeys.md';
         await saveTextFile(hotkeysFilename, HOTKEYS_CONTENT);
-        files[''] = {};
-        files[''][hotkeysFilename] = {
+        files = {};
+        files[hotkeysFilename] = {
+            path: hotkeysFilename,
+            isFile: true,
             lastModified: 0,
             handle: await getFileHandle(hotkeysFilename),
         }
 
         const welcomeFilename = '🪴 Welcome.md';
         await saveTextFile(welcomeFilename, WELCOME_CONTENT);
-        files[''][welcomeFilename] = {
+        files[welcomeFilename] = {
+            path: welcomeFilename,
+            isFile: true,
             lastModified: 0,
             handle: await getFileHandle(welcomeFilename),
         }
@@ -985,7 +873,7 @@ async function openDir() {
 
 function getCurrentContent() {
     let content = currentEditor.getValue();
-    const header = toHeader(currentEditor.currentFile).toLowerCase();
+    const header = toHeader(toFilename(currentEditor.path)).toLowerCase();
     // Remove header if it exists.
     if (content.toLowerCase().startsWith(header)) {
         content = content.slice(`${header}\n`.length);
@@ -1074,7 +962,7 @@ window.addEventListener('focus', async () => {
 
     console.log('FOCUS');
 
-    if (editor.currentFile === undefined) {
+    if (currentEditor.path === undefined) {
         return;
     }
 
@@ -1182,39 +1070,22 @@ function toggleSidebar() {
     }
 }
 
-function getCurrentVersion() {
-    return window.COMMIT_HASH ? window.COMMIT_HASH.replace('?v=', '') : '';
+function trimPostfix(str, postfix) {
+    if (str.endsWith(postfix)) {
+        return str.slice(0, -postfix.length);
+    }
+    return str;
 }
 
-function findNextFile(currentDir, currentFilename) {
-    const allFiles = [];
-
-    // Collect all files except system files
-    for (let dir in files) {
-        for (let file in files[dir]) {
-            if (file === CONFIG_FILENAME || file === CHAT_FILENAME) {
-                continue;
-            }
-            allFiles.push({dir, filename: file});
-        }
+function trimPrefix(str, prefix) {
+    if (str.startsWith(prefix)) {
+        return str.slice(prefix.length);
     }
+    return str;
+}
 
-    if (allFiles.length <= 1) {
-        return null; // No other files available
-    }
-
-    // Find current file index
-    const currentIndex = allFiles.findIndex(f =>
-        f.dir === currentDir && f.filename === currentFilename
-    );
-
-    if (currentIndex === -1) {
-        return allFiles[0]; // Fallback to first file
-    }
-
-    // Return next file, or first file if we're at the end
-    const nextIndex = (currentIndex + 1) % allFiles.length;
-    return allFiles[nextIndex];
+function getCurrentVersion() {
+    return window.COMMIT_HASH ? window.COMMIT_HASH.replace('?v=', '') : '';
 }
 
 function showEditor2() {

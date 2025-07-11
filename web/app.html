@@ -63,6 +63,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M 25 7 H 11 a 4 4 0 0 0 -4 4 v 10 a 4 4 0 0 0 4 4 h 7 l 6 4 v -4 h 1 a 4 4 0 0 0 4 -4 V 11 a 4 4 0 0 0 -4 -4 z"/>
                 </svg>
             </button>
+<!--            TODO add icon for saving, would swith opfs to local-->
             <!--        <button id="move-file" title="Move file" onclick="openMoveModal()">-->
             <!--            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 32 32">-->
             <!--                <path stroke="#535358" stroke-linecap="round" stroke-width="2" d="M5 16h21"/>-->
@@ -122,7 +123,7 @@
 </div>
 <div id="move" style="display: none;">
     <form autocomplete="off">
-        <input type="text" id="move-input" placeholder="Move to folder..." oninput="suggestMove()">
+        <input type="text" id="move-input" placeholder="Move to folder..." oninput="moveModal.suggestMove()">
     </form>
     <ul id="move-results"></ul>
 </div>
@@ -138,11 +139,10 @@
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('offline.js?v=')
             .then(reg => console.log('Service Worker registered'))
-            .catch(err => console.log('Serrvice Worker registration failed'));
+            .catch(err => console.log('Service Worker registration failed'));
     }
 
-
-    window.currentEditor = null; // Expose to global scope
+    window.currentEditor = null;
     editor = initEditor(document.getElementById("editor-textarea"));
     init(editor);
     currentEditor = editor;

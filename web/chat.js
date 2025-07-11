@@ -1,6 +1,5 @@
-// Global variables
+const CHAT_PATH = '/Chat.txt';
 let messages = [];
-const CHAT_FILENAME = 'Chat.txt';
 let chatIsClean = true; // Are there any unsaved changes?
 
 const chat = document.getElementById('chat');
@@ -13,13 +12,12 @@ async function openChat() {
     chatContainer.style.display = 'flex';
     chatButton.classList.add('hidden');
 
-    if (editor.currentFile !== CHAT_FILENAME) {
-        const state = {dir: editor.currentDir, file: editor.currentFile};
+    if (editor.path !== CHAT_PATH) {
+        const state = {path: editor.path};
         history.pushState(state, '');
     }
 
-    editor.currentDir = "";
-    editor.currentFile = CHAT_FILENAME;
+    editor.path = CHAT_PATH;
 
     const codemirror = document.querySelector('.CodeMirror-wrap');
     codemirror.style.display = 'none';
@@ -35,11 +33,6 @@ async function openChat() {
 }
 
 async function openChatModal() {
-    // editor.currentDir = "";
-    // editor.currentFile = CHAT_FILENAME;
-
-    // codemirror.style.display = 'none';
-
     chatContainer.classList.add('modal');
     chatContainer.style.display = 'flex';
     chatButton.classList.add('hidden');
@@ -49,7 +42,6 @@ async function openChatModal() {
     chatInput.style.display = 'block';
 
     chatInput.focus();
-    // isChat = true;
     await loadData();
     renderMessages();
     scrollToBottom();
@@ -185,13 +177,13 @@ function formatFileContent(messages) {
 
 async function loadData() {
     try {
-        const file = await ((await getFileHandle(CHAT_FILENAME, true)).getFile());
+        const file = await ((await getFileHandle(CHAT_PATH, true)).getFile());
         const content = await file.text();
 
         // Parse the content and load messages
         messages = parseFileContent(content);
 
-        console.log(`Loaded ${messages.length} messages from ${CHAT_FILENAME}`);
+        console.log(`Loaded ${messages.length} messages from ${CHAT_PATH}`);
     } catch (error) {
         console.error('Error loading data:', error);
         // Initialize with empty data if file doesn't exist or can't be read
@@ -200,22 +192,7 @@ async function loadData() {
 }
 
 async function saveData() {
-    try {
-        // For now, just save the current file's messages
-        // You can extend this to save all files
-        const content = formatFileContent(files[currentFile]);
 
-        // You'll need to implement the file writing part
-        // This is a placeholder for your file system API
-        console.log('Would save to file:', content);
-
-        // Example of what the save might look like:
-        // const fileHandle = await getFileHandle(CHAT_FILENAME);
-        // await fileHandle.write(content);
-
-    } catch (error) {
-        console.error('Error saving data:', error);
-    }
 }
 
 function initChat() {
@@ -250,7 +227,7 @@ async function send() {
 async function receive(val) {
     console.log('Receiving:', val);
     let isChatModal = document.getElementById('chat-container').classList.contains('modal');
-    if (!isChatModal && editor.currentFile !== CHAT_FILENAME) {
+    if (!isChatModal && currentEditor.path !== CHAT_PATH) {
         return;
     }
 
@@ -258,10 +235,10 @@ async function receive(val) {
     renderMessages();
     scrollToBottom();
 
-    let file = await ((await getFileHandle(CHAT_FILENAME)).getFile());
+    let file = await ((await getFileHandle(CHAT_PATH)).getFile());
     // TODO inmemory lastmodified should be reloaded
-    if (currentEditor !== null && currentEditor.currentFile === CHAT_FILENAME) {
-        files[currentEditor.currentDir][currentEditor.currentFile].lastModified = file.lastModified;
+    if (currentEditor !== null && currentEditor.path === CHAT_PATH) {
+        getMemFile(CHAT_PATH).lastModified = file.lastModified;
     }
     chatIsClean = true;
 }
@@ -766,15 +743,37 @@ function sendCmd(cmd, params) {
 }
 
 function getRecentlyModifiedFiles() {
-    if (!files || typeof files !== 'object') return [];
+    if (files === undefined) return [];
 
-    return Object.entries(files[''])
-        .filter(([filename, content]) => filename && content && filename !== CHAT_FILENAME && filename !== CONFIG_FILENAME)
-        .sort(([, a], [, b]) => {
-            return new Date(b.lastModified || 0) - new Date(a.lastModified || 0);
-        })
-        .slice(0, 3)
-        .map(([filename]) => filename);
+    const entries = [];
+    for (const filename in files) {
+        const content = files[filename];
+        if (filename && content && filename !== toFilename(CHAT_PATH) && filename !== toFilename(CONFIG_PATH)) {
+            entries.push([filename, content]);
+        }
+    }
+
+    for (let i = 0; i < entries.length - 1; i++) {
+        for (let j = i + 1; j < entries.length; j++) {
+            const aTime = new Date(entries[i][1].lastModified || 0);
+            const bTime = new Date(entries[j][1].lastModified || 0);
+            if (aTime < bTime) {
+                // Swap
+                const temp = entries[i];
+                entries[i] = entries[j];
+                entries[j] = temp;
+            }
+        }
+    }
+
+    // Take first 3 and extract filenames
+    const result = [];
+    const limit = Math.min(3, entries.length);
+    for (let i = 0; i < limit; i++) {
+        result.push(entries[i][0]);
+    }
+
+    return result;
 }
 
 chatInput.addEventListener('paste', async (e) => {

@@ -162,9 +162,8 @@ func SyncTexts(w http.ResponseWriter, r *http.Request) {
 
 	// Include config file timestamp, so it will be sent to the client if stale.
 	configCtime, err := userFS.Mtime(fs.DirRoot, config.BotCfg.ConfigFilename)
-	if err != nil {
-		slog.Error("Sync error: syncTexts: error getting timestamp for config file", "error", err)
-	} else {
+	// We can ignore the error since config.json is not used on client in any way, pure for read-only purposes.
+	if err == nil {
 		serverTimestamps[config.BotCfg.ConfigFilename] = configCtime
 	}
 

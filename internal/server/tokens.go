@@ -84,7 +84,7 @@ func IssueToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	permanentToken, ok := issueNewToken(r)
+	permanentToken, ok := issueNewPermanentToken(r)
 	if !ok {
 		http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
 		return
@@ -117,7 +117,6 @@ func tokenMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		token := r.Header.Get("Authorization")
 		userID, ok := findUserID(token)
 		if !ok {
-			// Block for 1 hour
 			blockedIPsMutex.Lock()
 			blockedIPs[ip] = time.Now().Add(10 * time.Minute)
 			blockedIPsMutex.Unlock()
@@ -132,7 +131,7 @@ func tokenMiddleware(next http.HandlerFunc) http.HandlerFunc {
 }
 
 // TODO add tests
-func issueNewToken(r *http.Request) (string, bool) {
+func issueNewPermanentToken(r *http.Request) (string, bool) {
 	// Return false if IP is blocked.
 	ipAndPort := strings.Split(r.RemoteAddr, ":")
 	ip := ipAndPort[0]

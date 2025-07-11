@@ -43,6 +43,10 @@ async function setup(page) {
             }
 
             await root.getFileHandle('Chat.txt', { create: true });
+            const fileHandle =  await root.getFileHandle('config.json', { create: true });
+            const writable = await fileHandle.createWritable()
+            await writable.write('{}');
+            await writable.close();
 
             return root;
         };
@@ -102,15 +106,15 @@ test('sync new files from client, ignore current file in syncTexts', async ({ pa
         window.dispatchEvent(new Event('focus'));
     });
 
-
     await page.waitForTimeout(3000);
 
     await expectFileOnServer(page, 'New file.md', 'Content');
 
     expect(consoleMessages).toContainEqual({
         type: 'log',
-        text: 'Skip sending current file: /New file.md'
+        text: 'Skip receiving current file during bath sync /New file.md'
     });
+
 });
 
 test('sync existing files from client', async ({ page }) => {
@@ -125,7 +129,20 @@ test('sync existing files from client', async ({ page }) => {
     await clickAndExpectContent(page, 'README', '# README\nHello world');
     await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
 
-    await page.waitForTimeout(3000);
+
+    // Trigger syncTexts, first time to get server state
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event('focus'));
+    });
+
+    await page.waitForTimeout(500);
+
+    // Trigger syncTexts, second time to send client files
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event('focus'));
+    });
+
+    await page.waitForTimeout(500);
 
     // Check that existing files from client are synced
     await expectFileOnServer(page, 'README.md', 'Hello world');
@@ -211,8 +228,6 @@ test('changed on both client and serve, should merge', async ({ page }) => {
 test("sync one new file from client doesn't conflict with syncTexts", async ({ page }) => {
     await setup(page);
 
-    await page.pause();
-
     await page.click('#new-file');
     await page.waitForTimeout(100);
     await page.keyboard.type('abc');
@@ -237,17 +252,173 @@ test("sync one new file from client doesn't conflict with syncTexts", async ({ p
     await expectFileOnServer(page, 'New file.md', 'abcdefabcdef\ndef\nContent');
 });
 
+test('delete files on client will propagate to server as well', async ({ page }) => {
+    await createFileOnServer('file.md', 'test content');
+    await createFileOnServer('another.md', '*italic*');
+
+    await setup(page);
+
+    await page.waitForTimeout(300);
+
+    await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
+    await clickAndExpectContent(page, 'README', '# README\nHello world');
+
+    await clickAndExpectContent(page, 'file', '# File\ntest content');
+    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
+
+    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
+    await page.keyboard.press('Meta+d');
+
+    await page.waitForTimeout(1000);
+
+    // SyncTexts should propagate deletion to server
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event('focus'));
+    });
+
+    await page.waitForTimeout(500);
+
+    await page.pause();
+
+    expectFileOnServer(page, 'file.md', 'test content');
+    expectNoFileOnServer(page, 'another.md');
+});
+
+test('files exist on both client and server, config is not removed on first sync', async ({ page }) => {
+    await createFileOnServer('file.md', 'test content');
+    await createFileOnServer('another.md', '*italic*');
+
+    await setup(page);
+    await page.waitForTimeout(300);
+
+    // Check that existing files are not removed
+    await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
+    await clickAndExpectContent(page, 'README', '# README\nHello world');
+
+    // Check that new files are added
+    await clickAndExpectContent(page, 'file', '# File\ntest content');
+    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
+
+    // Trigger syncTexts
+    await page.waitForTimeout(300);
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event('focus'));
+    });
+    await page.waitForTimeout(300);
+
+    await expectFileOnServer(page, 'file.md', 'test content');
+    await expectFileOnServer(page, 'another.md', '*italic*');
+    await expectFileOnServer(page, 'config.json', '{}');
+});
+
+test('files exist on both client and server, serverFiles contains proper server files', async ({ page }) => {
+    await createFileOnServer('file.md', 'test content');
+    await createFileOnServer('dir/file2.md', 'test content2');
+    await createFileOnServer('another.md', '*italic*');
+
+    await setup(page);
+    await page.waitForTimeout(300);
+
+    // Check that existing files are not removed
+    await clickAndExpectContent(page, 'Notes', '# Notes\nSome Text');
+    await clickAndExpectContent(page, 'README', '# README\nHello world');
+
+    // Check that new files are added
+    await clickAndExpectContent(page, 'file', '# File\ntest content');
+    await clickAndExpectContent(page, 'another', '# Another\n*italic*');
+
+    // Trigger syncTexts
+    await page.waitForTimeout(300);
+    await page.evaluate(() => {
+        window.dispatchEvent(new Event('focus'));
+    });
+    await page.waitForTimeout(300);
+
+    await expectFileOnServer(page, 'file.md', 'test content');
+    await expectFileOnServer(page, 'another.md', '*italic*');
+    await expectFileOnServer(page, 'config.json', '{}');
+
+    let filesOnServer = await page.evaluate(() => {
+        return server['files'];
+    });
+    expect(filesOnServer).toEqual({
+        'Chat.txt': {
+            hash: expect.any(Number),
+            isFile: true,
+            lastModified: expect.any(Number),
+            lastSynced: null,
+            path: '/Chat.txt'
+        },
+        'Notes.md': {
+            hash: expect.any(Number),
+            isFile: true,
+            lastModified: expect.any(Number),
+            lastSynced: null,
+            path: '/Notes.md'
+        },
+        'README.md': {
+            hash: expect.any(Number),
+            isFile: true,
+            lastModified: expect.any(Number),
+            lastSynced: null,
+            path: '/README.md'
+        },
+        'another.md': {
+            hash: expect.any(Number),
+            isFile: true,
+            lastModified: expect.any(Number),
+            lastSynced: null,
+            path: '/another.md'
+        },
+        'config.json': {
+            hash: expect.any(Number),
+            isFile: true,
+            lastModified: expect.any(Number),
+            lastSynced: null,
+            path: '/config.json'
+        },
+        'dir/': {
+            'file2.md': {
+                hash: expect.any(Number),
+                isFile: true,
+                lastModified: expect.any(Number),
+                lastSynced: null,
+                path: '/dir/file2.md'
+            }
+        },
+        'file.md': {
+            hash: expect.any(Number),
+            isFile: true,
+            lastModified: expect.any(Number),
+            lastSynced: null,
+            path: '/file.md'
+        }
+    });
+
+    await clickAndExpectContent(page, 'dir/file2', '# File2\ntest content2');
+});
+
 async function createFileOnServer(filepath, content) {
     const p = path.join(getServerDir(), filepath);
+
+    // Create all intermediate directories
+    await fs.mkdir(path.dirname(p), { recursive: true });
+
     await fs.writeFile(p, content, 'utf8');
 }
 
 async function expectFileOnServer(page, filepath, expectedContent) {
     const p = path.join(getServerDir(), filepath);
-    console.log(p);
     const actualContent = await fs.readFile(p, 'utf8');
 
     expect(actualContent).toBe(expectedContent);
+}
+
+async function expectNoFileOnServer(page, filepath) {
+    const p = path.join(getServerDir(), filepath);
+
+    const exists = await fs.access(p).then(() => true).catch(() => false);
+    expect(exists).toBe(false);
 }
 
 function saltToken(token, salt = '') {
@@ -258,11 +429,11 @@ function saltToken(token, salt = '') {
 
 async function clickAndExpectContent(page, filePath, expectedContent) {
     const parts = filePath.split('/');
-    const dirs = parts.slice(0, -1);
-    const file = parts[parts.length - 1];
+    const file = parts.pop();
+    const dirs = parts;
 
     for (const dir of dirs) {
-        const isSelected = await page.locator(`#sidebar-tree .tj_description:has-text('${dir}')`).evaluate(el => el.classList.contains('expanded'));
+        const isSelected = await page.locator(`#sidebar-tree .tj_description:text-is('${dir}')`).evaluate(el => el.classList.contains('expanded'));
         if (!isSelected) {
             await page.click(`#sidebar-tree .tj_description:has-text('${dir}')`);
             await page.waitForTimeout(100);

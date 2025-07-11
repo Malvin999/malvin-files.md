@@ -11,9 +11,17 @@ let isSyncingMedia = false;
 let isSyncingCurrentFile = false;
 let isLoadingLocalFiles = false;
 
+// The types of files we have:
+// - serverFile, file on server
+// - localFile, file on local fs
+// - memFile, in-memory representation of local file
+// The latter is needed for quick access to file's handle and metadata.
+
+// We operate with absolute paths in our webapp. Server/wasm is currently operating with relative paths (better for safety checks).
+
 // In-memory mapping of local file system:
 // {
-//   'dir': [
+//   'dir/': [
 //     {
 //       'filename': [
 //         {
@@ -28,24 +36,15 @@ let isLoadingLocalFiles = false;
 //     ...
 //   ]
 // }
-let files = {}; // In-memory representation of files
-let serverFiles = {files: {}, media: {}, timestamps: {}, mediaTimestamp: 0};
-const SERVER_STORAGE_KEY = 'files';
+// TODO multidir rename to memFiles?
+let files = {}; // In-memory representation of local files
+let server = {files: {}, media: {}, timestamps: {}, mediaTimestamp: 0}; // In-memory representation of server
+
+const SERVER_STORAGE_KEY = 'server'; // If scheme is migrated, I believe it's better to introduce a new key, because for now old keys aren't removed.
 const SUPPORTED_EXTENSIONS = ['md', 'txt', 'png', 'jpg', 'jpeg', 'webp', 'gif',];
 const SYSTEM_DIRS = ['media', 'archive', '_read_', '_watch_', '_shop_', 'today', 'later', 'journal', 'habits', 'triggers', 'places', 'insights'];
-const CONFIG_FILENAME = 'config.json';
+const CONFIG_PATH = '/config.json';
 
-// Returns files in flattened structure:
-// {
-//   'dir': {
-//      ...
-//   },
-//   'dir/dir2': {
-//      ...
-//   },
-// }
-// The code is quite messy. We have to make lots of optimizations,
-// otherwise it's going to be slow even with 5K files.
 async function loadLocalFiles(rootDirHandle) {
     if (isLoadingLocalFiles) {
         return;
@@ -55,11 +54,10 @@ async function loadLocalFiles(rootDirHandle) {
         await new Promise(r => setTimeout(r, 50));
     }
 
-    isLoadingLocalFiles = true;
     let newFiles = {};
-
+    isLoadingLocalFiles = true;
     // Loads files recursively
-    async function loadDir(dirHandle, path = '', depth = 3) {
+    async function loadDir(dirHandle, path = '/', depth = 3) {
         const entries = [];
         for await (const entry of dirHandle.values()) {
             entries.push(entry);
@@ -71,33 +69,52 @@ async function loadLocalFiles(rootDirHandle) {
             const filename = entry.name.normalize('NFC');
 
             let isSupportedExtension = SUPPORTED_EXTENSIONS.includes(filename.split('.').pop());
-            let isConfig = filename === CONFIG_FILENAME;
+            let isConfig = filename === toFilename(CONFIG_PATH);
+
+            let dirs = path.split('/');
+            dirs = dirs.filter(d => d !== '');
+            let currentDir = newFiles;
+            for (let dir of dirs) {
+                dir += '/';
+                if (!currentDir[dir]) {
+                    currentDir[dir] = {};
+                }
+                currentDir = currentDir[dir]; // Move reference deeper
+            }
+
             if (entry.kind === 'directory') {
                 if (filename.startsWith('.') || depth >= 5) continue;
 
+                currentDir[filename + '/'] = {};
                 const dir = `${path}${filename}/`;
-                newFiles[filename] = {};
-                dirPromises.push({handle: entry, dir, depth: depth + 1});
-
+                dirPromises.push({handle: entry, path: dir, depth: depth + 1});
             } else if (entry.kind === 'file' && (isSupportedExtension || isConfig)) {
-                const dir = path.replace(/\/+$/, '');
-                if (!newFiles[dir]) newFiles[dir] = {};
-
                 // Reuse existing file handle if it exists
-                if (files?.[dir]?.[filename] !== undefined) {
-                    newFiles[dir][filename] = files[dir][filename];
+                let existingDir = files;
+                for (let dir of dirs) {
+                    dir += '/';
+                    if (existingDir === undefined || existingDir[dir] === undefined) {
+                        existingDir = undefined;
+                        break;
+                    }
+                    existingDir = existingDir[dir];
+                }
+                if (existingDir && existingDir[filename] !== undefined) {
+                    currentDir[filename] = existingDir[filename];
                     continue;
                 }
-                newFiles[dir][filename] = {handle: entry};
 
+                currentDir[filename] = {path: `${path}${filename}`, isFile: true, handle: entry};
                 entry.getFile().then(file => {
-                    newFiles[dir][filename].lastModified = file.lastModified;
+                    currentDir[filename].lastModified = file.lastModified;
                 });
 
                 // TODO support any dirs
-                if (dir === 'media' || dir === 'img') {
+                if (dirs[0] === 'media' || dirs[0] === 'img') {
                     getImageUrl(entry).then(imageUrl => {
-                        newFiles[dir][filename].imageUrl = imageUrl;
+                        currentDir[filename].path = `${path}${filename}`;
+                        currentDir[filename].isFile = true;
+                        currentDir[filename].imageUrl = imageUrl;
                     });
                 }
             }
@@ -111,8 +128,8 @@ async function loadLocalFiles(rootDirHandle) {
             return;
         }
 
-        await Promise.all(dirPromises.map(({handle, dir, depth}) =>
-            loadDir(handle, dir, depth)
+        await Promise.all(dirPromises.map(({handle, path, depth}) =>
+            loadDir(handle, path, depth)
         ));
     }
 
@@ -124,17 +141,10 @@ async function loadLocalFiles(rootDirHandle) {
         throw error;
     }
 
-    // Remove empty dirs
-    // for (const dir in newFiles) {
-    //     if (Object.keys(newFiles[dir]).length === 0) {
-    //         delete newFiles[dir];
-    //     }
-    // }
-
-    // Load metadata
-    const savedMetadata = localStorage.getItem(SERVER_STORAGE_KEY);
-    if (savedMetadata) {
-        serverFiles = JSON.parse(savedMetadata);
+    // Load server files
+    const savedServerFiles = localStorage.getItem(SERVER_STORAGE_KEY);
+    if (savedServerFiles) {
+        server = JSON.parse(savedServerFiles);
     }
 
     isLoadingLocalFiles = false;
@@ -142,7 +152,7 @@ async function loadLocalFiles(rootDirHandle) {
     return newFiles;
 }
 
-// TODO add support for config.json
+// config.json is currently only synced from server, no local changes are propogated.
 async function syncTextsWithServer() {
     if (files === undefined || Object.keys(files).length === 0) {
         return;
@@ -161,65 +171,71 @@ async function syncTextsWithServer() {
     console.log('Starting sync with server...');
 
     // Send locally modified files and timestamps of last seen dirs from the server
-    const {modified, deleted} = await collectModifiedAndDeletedFiles();
-    const server = await post('syncTexts', {
+    // TODO check if we fully synced at least once (timestamps exists)
+
+    let modified = [];
+    let deleted = [];
+    // TODO is it possible that the server has zero files? I think at least '.' is sent
+    let hasFullySyncedFilesAtLeastOnce = server['timestamps'] !== undefined && Object.keys(server['timestamps']).length > 0;;
+    if (hasFullySyncedFilesAtLeastOnce) {
+        console.log('SYNCED AT LEAST ONCE, collecting local files', server['timestamps']);
+        ({modified, deleted} = await collectModifiedAndDeletedFiles());
+    } else {
+        console.log('NEVER SYNCED BEFORE');
+    }
+    const response = await post('syncTexts', {
         modified: modified,
         deleted: deleted,
-        timestamps: serverFiles['timestamps'] || [],
+        timestamps: server['timestamps'] || [],
     });
-    if (server === null) {
+    if (response === null) {
         isSyncing = false;
         return;
     }
 
     // Remove info about server files on client
     for (const path of deleted) {
-        removeInfoAboutServerFile(path);
+        removeServerFile(path);
     }
 
     try {
         // Write files received from the server
         let failedAtLeastOnce = false;
-        for (const fileInfo of server.files) {
-            const {path, content, lastModified} = fileInfo;
+        for (const fileInfo of response.files) {
+            let {path, content, lastModified} = fileInfo;
+            // We get relative paths from server, and in our app we use absolute paths
+            const relPath = path;
+            path = joinPath('/', relPath);
+
             // If it is current file, skip, because we sync it separately
             // TODO if we skip current, don't take it's timestamp? We had a bug when sync was broken for 1 file
             // TODO fix missing / for root files
-            if (path === `${editor.currentDir}/${editor.currentFile}` || path === editor.currentFile
-                || path === `${editor2.currentDir}/${editor2.currentFile}` || path === editor2.currentFile
-            ) {
-                console.log('Skip current received from server' + path);
+            if (path === editor.path || path === editor2.path) {
+                console.log('Skip receiving current file during bath sync', path);
                 continue;
             }
 
             try {
                 await saveTextFile(path, content)
-
-                // TODO get rid of this
-                let dir, filename;
-                if (path.includes('/')) {
-                    const parts = path.split('/');
-                    filename = parts.pop();
-                    dir = parts.join('/');
-                } else {
-                    dir = '';
-                    filename = path;
-                }
-                addFileToMemory(dir, filename, {
+                addMemFile(path, {
+                    isFile: true,
                     content: content,
                     lastModified: lastModified,
+                    path: path,
                     handle: await getFileHandle(path),
                 });
 
-                console.log('SYNC texsts: write file: ', path);
-                setServerFile(path, content, lastModified);
+                console.log('SYNC texts: write file: ', path);
+                addServerFile(path, content, lastModified);
                 // Unfortunately rename is not working, so we have to delete the old file
-                const shouldRemoveOldFile = path in server.renames;
+                const shouldRemoveOldFile = relPath in response.renames;
+                // TODO write e2e for renames
                 if (shouldRemoveOldFile) {
-                    const oldPath = server.renames[path];
+                    const oldPath = joinPath('/', resposne.renames[relPath]);
                     try {
+                        console.log('REMOVING due to renaming', oldPath);
                         await removeFile(oldPath);
-                    } catch(err) {
+                    } catch (err) {
                         console.log('RENAME: cant remove file: ', err, path);
                     }
                 }
@@ -234,15 +250,19 @@ async function syncTextsWithServer() {
             }
         }
         // Only move timestamp pointers when we were able to sync all the files.
+        // Otherwise we can have situation when we synced files only partially,
+        // let's say serverFiles is having only half files from server, then they
+        // will be sent by subsequent syncTexts call, because collectLocalFiles
+        // would report them as new.
         if (!failedAtLeastOnce) {
             console.log('BATCH sync ok, moving timestamps');
-            serverFiles['timestamps'] = server.timestamps;
+            server['timestamps'] = response.timestamps;
             saveServerFiles();
         } else {
-            console.log('BATCH sync error, timestamps aren\'t moved');
+            console.log("BATCH sync error, timestamps aren't moved");
         }
     } catch (error) {
-        console.error('Can\'t sync: ', error.message)
+        console.error("Can't sync:", error.message)
     }
 
     console.log('Sync completed in ' + (performance.now() - startTime) + 'ms');
@@ -250,27 +270,30 @@ async function syncTextsWithServer() {
     isSyncing = false;
 }
 
-async function syncLocalFileWithServer(dir, filename) {
+async function syncLocalFileWithServer(path) {
     if (localStorage.getItem('token') === null) {
         return;
     }
 
-    const path = toPath(dir, filename);
     let file = await (await getFileHandle(path)).getFile();
     // TODO we might only need to send content when modifying
     let content = await file.text();
-    let serverTimestamp = getMetadata(path)?.lastModified || 0;
+    let serverTimestamp = getServerFile(path)?.lastModified || 0;
 
     let serverFile = {};
     try {
         let response = await fetch(`${API_HOST}/syncText`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json', 'Authorization': localStorage.getItem('token'), 'Version': getCurrentVersion()},
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': localStorage.getItem('token'),
+                'Version': getCurrentVersion()
+            },
             body: JSON.stringify({
-                path: toPath(dir, filename),
+                path: path,
                 lastModified: serverTimestamp,
                 clientLastModified: file.lastModified,
-                clientLastSynced: serverFiles?.files?.[dir]?.[filename]?.lastSynced || 0,
+                clientLastSynced: getServerFile(path)?.lastSynced || 0,
                 content: content,
             })
         });
@@ -284,7 +307,7 @@ async function syncLocalFileWithServer(dir, filename) {
         }
         if (json.status === 'updatedOnServer') {
             // TODO maybe RC here? When file was updated, but during this time we already changed it
-            setServerFile(path, content, json.lastModified, serverFiles?.files?.[dir]?.[filename]?.lastSynced);
+            addServerFile(path, content, json.lastModified, getServerFile(path)?.lastSynced);
             console.log(`saved metadata for ${path} with timestamp ${json.lastModified}`, json);
             saveServerFiles();
             return;
@@ -297,11 +320,11 @@ async function syncLocalFileWithServer(dir, filename) {
     }
 
     const lastSynced = await saveTextFile(path, serverFile.content);
-    setServerFile(path, serverFile.content, serverFile.lastModified, lastSynced);
+    addServerFile(path, serverFile.content, serverFile.lastModified, lastSynced);
     console.log(`Saved server file for ${path} with timestamp ${serverFile.lastModified}`);
     saveServerFiles();
     console.log('Opening file after sync');
-    await openFile(dir, filename);
+    await openFile(path);
     console.log('File synced with server');
 }
 
@@ -323,7 +346,7 @@ async function syncMedia() {
 
     const startTime = performance.now();
 
-    const mediaTimestamp = serverFiles['mediaTimestamp'] || 0;
+    const mediaTimestamp = server['mediaTimestamp'] || 0;
     if (mediaTimestamp !== 0) {
         // Send new files from client to server
         let newMedias = await collectNewMediaFiles();
@@ -354,9 +377,9 @@ async function syncMedia() {
                 });
 
                 if (!response.ok) {
-                    console.error(`Failed to sync media file ${mediaFilename}:`, response.statusText);
+                    console.error(`Failed to sync media file ${mediaFilename}:`, response.statusText, response, await response.text());
                 } else {
-                    serverFiles['media'][mediaFilename] = {
+                    server['media'][mediaFilename] = {
                         lastModified: 0, // We don't track binary files modifications.
                     };
                     saveServerFiles();
@@ -391,7 +414,7 @@ async function syncMedia() {
             console.log(`Downloading media file: ${filename}`);
 
             try {
-                // Fetch the binary file
+                // Fetch binary file
                 const response = await fetch(`${API_HOST}/syncMedia`, {
                     method: 'POST',
                     headers: {
@@ -437,10 +460,10 @@ async function saveMediaFile(path, blob, lastModified) {
         const file = await fileHandle.getFile();
         const fileExists = file.size > 0;
         if (fileExists) {
-            if (serverFiles['mediaTimestamp'] === undefined || lastModified > serverFiles['mediaTimestamp']) {
-                serverFiles['mediaTimestamp'] = lastModified;
+            if (server['mediaTimestamp'] === undefined || lastModified > server['mediaTimestamp']) {
+                server['mediaTimestamp'] = lastModified;
             }
-            serverFiles['media'][file.name] = {
+            server['media'][file.name] = {
                 lastModified: lastModified,
             }
             saveServerFiles();
@@ -459,21 +482,21 @@ async function saveMediaFile(path, blob, lastModified) {
         await writable.write(blob);
         await writable.close();
         console.log(`Successfully wrote media file: ${path}`);
-        if (lastModified > serverFiles['mediaTimestamp']) {
-            serverFiles['mediaTimestamp'] = lastModified;
+        if (lastModified > server['mediaTimestamp']) {
+            server['mediaTimestamp'] = lastModified;
         }
-        serverFiles['media'][filename] = {
+        server['media'][filename] = {
             lastModified: lastModified,
         }
         saveServerFiles();
 
         // Load file handle into files
-        files['media'][filename] = {handle: fileHandle};
+        files['media/'][filename] = {handle: fileHandle};
         fileHandle.getFile().then(file => {
-            files['media'][filename].lastModified = file.lastModified;
+            files['media/'][filename].lastModified = file.lastModified;
         });
         getImageUrl(fileHandle).then(imageUrl => {
-            files['media'][filename].imageUrl = imageUrl;
+            files['media/'][filename].imageUrl = imageUrl;
         });
     } catch (error) {
         console.error(`Error writing media file ${path}:`, error);
@@ -481,55 +504,104 @@ async function saveMediaFile(path, blob, lastModified) {
     }
 }
 
+// TODO rename textFiles?
 async function collectModifiedAndDeletedFiles() {
     const modifiedFiles = [];
     const existingFiles = {};
     const promises = [];
-    for (const dir in files) {
-        if (dir === 'media') continue; // Skip image directory
-
-        for (const filename in files[dir]) {
-            // TODO write tests for that?
-            if ((dir === editor.currentDir && filename === editor.currentFile)
-            || (dir === editor2.currentDir && filename === editor2.currentFile)) {
-                console.log('Skip sending current file: ' + dir + '/' + filename);
-                continue;
-            }
-
-            const promise = getFileStatus(dir, filename)
-                .then(result => {
-                    if (result.status === 'modified' || result.status === 'new') {
-                        modifiedFiles.push(result);
-                    }
-
-                    if (result.status !== 'error') {
-                        existingFiles[result.path] = true;
-                    }
-                });
-            promises.push(promise);
+    // for (const dir in files) {
+    //     if (dir === 'media') continue; // Skip image directory
+    //
+    //     for (const filename in files[dir]) {
+    //         // TODO write tests for that?
+    //         if ((dir === editor.currentDir && filename === editor.currentFile)
+    //             || (dir === editor2.currentDir && filename === editor2.currentFile)) {
+    //             console.log('Skip sending current file: ' + dir + '/' + filename);
+    //             continue;
+    //         }
+    //
+    //         const promise = getFileStatus(path)
+    //             .then(result => {
+    //                 if (result.status === 'modified' || result.status === 'new') {
+    //                     modifiedFiles.push(result);
+    //                 }
+    //
+    //                 if (result.status !== 'error') {
+    //                     existingFiles[result.path] = true;
+    //                 }
+    //             });
+    //         promises.push(promise);
+    //     }
+    // }
+    //
+    walk(files, (path, isFile) => {
+        if (!isFile) {
+            return;
         }
-    }
+
+        if (path.startsWith('/media/')) {
+            return;
+        }
+
+        // TODO write tests for that?
+        if (path === editor.path || path === editor2.path) {
+            console.log('Skip sending current file: ' + path);
+            return;
+        }
+
+        const promise = getFileStatus(path)
+            .then(result => {
+                if (result.status === 'modified' || result.status === 'new') {
+                    modifiedFiles.push(result);
+                }
+
+                if (result.status !== 'error') {
+                    existingFiles[result.path] = true;
+                }
+            });
+        promises.push(promise);
+    });
 
     await Promise.all(promises);
 
     // Find deleted files that are in server files but not in existing files.
     let deleted = [];
-    for (const dir in serverFiles.files) {
-        for (const filename in serverFiles.files[dir]) {
-            if (/[<>:'|?*\\/\x00-\x1F\x7F]/.test(filename)) {
-                continue;
-            }
-            // Skip current files.
-            if ((dir === editor.currentDir && filename === editor.currentFile)
-                || (dir === editor2.currentDir && filename === editor2.currentFile)) {
-                continue;
-            }
-            if (!existingFiles[toPath(dir, filename)]) {
-                console.log('DELETED ' + toPath(dir, filename));
-                deleted.push(toPath(dir, filename));
-            }
+    // for (const dir in serverFiles.files) {
+    //     for (const filename in serverFiles.files[dir]) {
+    //         if (/[<>:'|?*\\/\x00-\x1F\x7F]/.test(filename)) {
+    //             continue;
+    //         }
+    //         // Skip current files.
+    //         if ((dir === editor.currentDir && filename === editor.currentFile)
+    //             || (dir === editor2.currentDir && filename === editor2.currentFile)) {
+    //             continue;
+    //         }
+    //         if (!existingFiles[toPath(dir, filename)]) {
+    //             console.log('DELETED ' + toPath(dir, filename));
+    //             deleted.push(toPath(dir, filename));
+    //         }
+    //     }
+    // }
+    walk(server.files, (path, isFile) => {
+        if (!isFile) {
+            return;
         }
-    }
+
+        // Chromium doesn't support those chars on any OS
+        if (/[<>:'|?*\\/\x00-\x1F\x7F]/.test(toFilename(path))) {
+            return;
+        }
+
+        // Skip current files.
+        if (path === editor.path || path === editor2.path) {
+            return;
+        }
+
+        if (existingFiles[path] === undefined) {
+            console.log('DELETED ' + path);
+            deleted.push(path);
+        }
+    });
 
     return {
         modified: modifiedFiles,
@@ -538,15 +610,15 @@ async function collectModifiedAndDeletedFiles() {
 }
 
 async function collectNewMediaFiles() {
-    if (!files['media']) {
+    if (!files['media/']) {
         return {
             newMedia: [],
         };
     }
 
     const newMediaFiles = [];
-    for (const filename in files['media']) {
-        if (serverFiles['media'] === undefined || !(filename in serverFiles['media'])) {
+    for (const filename in files['media/']) {
+        if (server['media'] === undefined || !(filename in server['media'])) {
             newMediaFiles.push(filename);
         }
     }
@@ -556,48 +628,43 @@ async function collectNewMediaFiles() {
     return newMediaFiles;
 }
 
-function toPath(dir, file) {
-    if (dir === '') {
-        return file;
-    }
-
-    return `${dir}/${file}`;
-}
-
-async function getFileStatus(dir, filename) {
+async function getFileStatus(path) {
     let content;
     try {
-        const fileData = files[dir][filename];
-        if (!fileData?.handle) {
+        const memFile = getMemFile(path);
+        if (!memFile?.handle) {
             return {
                 status: 'error',
             }
         }
 
-        const file = await fileData.handle.getFile();
+        const file = await memFile.handle.getFile();
         content = await file.text();
     } catch (error) {
-        console.error(`Error processing ${dir}/${filename}:`, error);
+        console.error('Error processing', path, error);
         return {
             status: 'error',
         }
     }
 
     // TODO why path is stored at all?
-    const path = serverFiles?.files?.[dir]?.[filename]?.path;
-    if (!path) {
-        console.log('NEW FILE ' + dir + '/' + filename);
+    // const path = serverFiles?.files?.[dir]?.[filename]?.path;
+    let serverFile = getServerFile(path);
+    // console.log('STATUS', path, serverFile);
+    if (serverFile === null) {
+        console.log('NEW LOCAL FILE ' + path);
         return {
             status: 'new',
             content: content,
-            path: toPath(dir, filename), // WHY?
+            path: path,
             lastModified: 0 // new file
         }
     }
 
-    const serverHash = serverFiles?.files?.[dir]?.[filename]?.hash;
-    const serverTime = serverFiles?.files?.[dir]?.[filename]?.lastModified;
+    const serverHash = serverFile.hash;
+    const serverTime = serverFile.lastModified;
     if (serverHash !== hash(content)) {
+        console.log('NEW MODIFIED LOCAL FILE ' + path);
         return {
             status: 'modified',
             content: content,
@@ -647,6 +714,7 @@ async function getFileHandle(path, create = false) {
 
 // TODO split into two, sometimes we need just compare
 async function isContentEqual(path, content) {
+    console.log('checking content for', path);
     let fileHandle = await getFileHandle(path);
     if (fileHandle === null) {
         // TODO fix once Chromium fixes the bug
@@ -688,7 +756,7 @@ async function saveTextFile(path, content) {
         throw new Error('Invalid file name');
     }
 
-    const fileExists= !await exists([path]);
+    const fileExists = !await exists([path]);
     if (fileExists || !await isContentEqual(path, content)) {
         // TODO what if we're syncing first time and already have changes?
         console.log('Hashes do not match, writing file...', path);
@@ -739,7 +807,6 @@ function getImageExtension(mimeType) {
 }
 
 
-// TODO del from memory?
 async function removeFile(path) {
     let fileHandle = await getFileHandle(path);
     if (fileHandle === null) {
@@ -750,12 +817,7 @@ async function removeFile(path) {
     await fileHandle.remove()
     console.log(`File ${path} removed successfully.`);
 
-    const parts = path.split('/');
-    const filename = parts.pop();
-    const dir = parts.join('/');
-    if (files[dir] && files[dir][filename]) {
-        delete files[dir][filename];
-    }
+    removeMemFile(path);
 }
 
 // TODO can we reuse moveFile?
@@ -763,22 +825,31 @@ async function moveCurrentFile(toDir) {
     isSyncingCurrentFile = true;
 
     // TODO add prevent syncing?
-    const oldPath = toPath(editor.currentDir, editor.currentFile);
-    const newPath = toPath(toDir, editor.currentFile);
+    const oldPath = currentEditor.path;
+    const newPath = '/' + toDir + '/' + toFilename(currentEditor.path);
 
     try {
         let content = getCurrentContent();
         await saveTextFile(newPath, content);
         // TODO move to saveTextFile?
-        delete files[editor.currentDir][editor.currentFile];
+        removeMemFile(oldPath);
+        // delete files[editor.currentDir][editor.currentFile];
         console.log('MOVING to DIR:', toDir);
-        files[toDir][editor.currentFile] = {
+
+        addMemFile(newPath, {
+            isFile: true,
             content: content,
             lastModified: 0,
+            path: newPath,
             handle: await getFileHandle(newPath),
-        }
-        editor.currentDir = toDir;
-        setServerFile(newPath, content, 0);
+        });
+        // files[toDir][editor.currentFile] = {
+        //     content: content,
+        //     lastModified: 0,
+        //     handle: await getFileHandle(newPath),
+        // }
+        currentEditor.path = newPath;
+        addServerFile(newPath, content, 0);
         saveServerFiles();
 
         await removeFile(oldPath);
@@ -791,21 +862,30 @@ async function moveCurrentFile(toDir) {
 }
 
 // TODO lock on files modification?
-function addFileToMemory(dir, filename, fileData) {
-    // Ensure directory exists
-    if (!files[dir]) {
-        files[dir] = {};
+function addMemFile(path, memFile) {
+    let dirs = path.split('/');
+    dirs = dirs.filter(d => d !== '');
+    const filename = dirs.pop();
+
+    let currentDir = files;
+    for (let dir of dirs) {
+        dir += '/';
+        if (!currentDir[dir]) {
+            currentDir[dir] = {};
+        }
+        currentDir = currentDir[dir];
     }
 
-    files[dir][filename] = fileData;
+    currentDir[filename] = memFile;
 
     // Only sort the specific directory that was modified
-    const sortedFiles = {};
-    const sortedKeys = Object.keys(files[dir]).sort((a, b) => a.localeCompare(b));
-    for (const key of sortedKeys) {
-        sortedFiles[key] = files[dir][key];
-    }
-    files[dir] = sortedFiles;
+    // TODO multidir
+    // const sortedFiles = {};
+    // const sortedKeys = Object.keys(files[dir]).sort((a, b) => a.localeCompare(b));
+    // for (const key of sortedKeys) {
+    //     sortedFiles[key] = files[dir][key];
+    // }
+    // files[dir] = sortedFiles;
 
     // Remove the global re-sorting - it's messing up the natural order
     // The directory order should stay as established by loadLocalFiles
@@ -815,32 +895,34 @@ async function moveFile(oldPath, newPath) {
     if (oldPath === newPath) {
         return;
     }
-    
-    const oldParts = oldPath.split('/');
-    const oldFilename = oldParts.pop();
-    const oldDir = oldParts.join('/');
 
-    const newParts = newPath.split('/');
-    const newFilename = newParts.pop();
-    const newDir = newParts.join('/');
+    // const oldParts = oldPath.split('/');
+    // const oldFilename = oldParts.pop();
+    // const oldDir = oldParts.join('/');
+    //
+    // const newParts = newPath.split('/');
+    // const newFilename = newParts.pop();
+    // const newDir = newParts.join('/');
 
     try {
         let file = await (await getFileHandle(oldPath)).getFile();
         let content = await file.text();
         await saveTextFile(newPath, content);
 
-        console.log('saving ' + newDir + '/' + newFilename);
-        addFileToMemory(newDir, newFilename,  {
+        console.log('saving ' + newPath);
+        addMemFile(newPath, {
+            isFile: true,
             content: content,
             lastModified: 0,
+            path: newPath,
             handle: await getFileHandle(newPath),
         });
-        setServerFile(newPath, content, 0);
+        addServerFile(newPath, content, 0);
         saveServerFiles();
 
         // Server file will be removed here.
         await removeFile(oldPath);
-        delete files[oldDir][oldFilename];
+        // delete files[oldDir][oldFilename];
         await renderSidebar();
 
         console.log(`Moved ${oldPath} to ${newPath}`);
@@ -849,60 +931,108 @@ async function moveFile(oldPath, newPath) {
     }
 }
 
-function getMetadata(path) {
-    const parts = path.split('/');
-    const filename = parts.pop();
-    const dir = parts.join('/');
+// Returns server file or null if not found.
+function getServerFile(path) {
+    let dirs = path.split('/');
+    dirs = dirs.filter(d => d !== '');
+    const filename = dirs.pop();
 
-    if (serverFiles['files']?.[dir]?.[filename]) {
-        return serverFiles['files'][dir][filename];
-    } else {
-        return null;
+    let currentDir = server['files'];
+    for (let dir of dirs) {
+        dir += '/';
+        if (!currentDir[dir]) {
+            return null;
+        }
+        currentDir = currentDir[dir];
     }
+
+    return currentDir[filename] || null;
 }
 
-function setServerFile(path, content, lastModifiedAt, clientLastSynced = null) {
-    const parts = path.split('/');
-    const filename = parts.pop();
-    const dir = parts.join('/');
+function addServerFile(path, content, lastModifiedAt, clientLastSynced = null) {
+    // const parts = path.split('/');
+    // const filename = parts.pop();
+    // const dir = parts.join('/');
+    //
+    // serverFiles['files'] = serverFiles['files'] ?? {};
+    // serverFiles['files'][dir] = serverFiles['files'][dir] ?? {};
+    // serverFiles['files'][dir][filename] = {
+    //     hash: hash(content),
+    //     lastModified: lastModifiedAt,
+    //     lastSynced: clientLastSynced,
+    //     path: path,
+    // };
+    let dirs = path.split('/');
+    dirs = dirs.filter(d => d !== '');
+    const filename = dirs.pop();
 
-    serverFiles['files'] = serverFiles['files'] ?? {};
-    serverFiles['files'][dir] = serverFiles['files'][dir] ?? {};
-    serverFiles['files'][dir][filename] = {
+    let currentDir = server['files'];
+    for (let dir of dirs) {
+        dir += '/';
+        if (!currentDir[dir]) {
+            currentDir[dir] = {};
+        }
+        currentDir = currentDir[dir];
+    }
+
+    currentDir[filename] = {
+        isFile: true,
         hash: hash(content),
         lastModified: lastModifiedAt,
         lastSynced: clientLastSynced,
         path: path,
-    };
+    }
 }
 
+function removeServerFile(path) {
+    // console.log('removing info about server file', path);
+    // const parts = path.split('/');
+    // const filename = parts.pop();
+    // const dir = parts.join('/');
+    //
+    // if (serverFiles.files?.[dir]?.[filename]) {
+    //     delete serverFiles.files[dir][filename];
+    // }
+    let dirs = path.split('/');
+    dirs = dirs.filter(d => d !== '');
+    const filename = dirs.pop();
 
-function removeInfoAboutServerFile(path) {
-    console.log('removing info about server file', path);
-    const parts = path.split('/');
-    const filename = parts.pop();
-    const dir = parts.join('/');
+    let currentDir = server['files'];
+    for (let dir of dirs) {
+        dir += '/';
+        if (!currentDir[dir]) {
+            return null;
+        }
+        currentDir = currentDir[dir];
+    }
 
-    if (serverFiles.files?.[dir]?.[filename]) {
-        delete serverFiles.files[dir][filename];
+    if (currentDir[filename] !== undefined) {
+        delete currentDir[filename];
     }
 }
 
 function saveServerFiles() {
-    localStorage.setItem(SERVER_STORAGE_KEY, JSON.stringify(serverFiles));
+    localStorage.setItem(SERVER_STORAGE_KEY, JSON.stringify(server));
 }
 
 // TODO save old file
-async function openFile(dir, filename, saveToHistory = true, el = 'editor-textarea') {
+async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
+    // Why we do normalize here as well?
+    path = path.normalize('NFC');
+
     if (el === 'editor-textarea') {
         currentEditor = editor;
     } else if (el === 'editor2-textarea') {
         currentEditor = editor2;
     }
 
-    await syncCurrentFile(false);
+    // Sync previous file
+    if (currentEditor.path !== undefined) {
+        console.log('sync previous file');
+        await syncCurrentFile(false);
+    }
 
-    if (dir === '' && filename === CHAT_FILENAME) {
+    if (path === CHAT_PATH) {
         openChat();
         return;
     } else {
@@ -917,32 +1047,34 @@ async function openFile(dir, filename, saveToHistory = true, el = 'editor-textar
     closeChatModal();
 
     const start = performance.now();
-    filename = filename.normalize('NFC');
-    const fileData = files[dir][filename];
+
+    console.log('Getting mem file for ', path);
+    const memFile = getMemFile(path);
+    console.log(memFile);
 
     // Check if we're loading the same file and save cursor position
     let cursorPos = null;
-    if (currentEditor.currentDir === dir && currentEditor.currentFile === filename) {
+    if (currentEditor.path === path) {
         console.log('saving cursor');
         cursorPos = editor.getCursor();
     }
 
+    let filename = toFilename(path);
     const header = filename.replace(/\.md$/, '').replace(/^\w/, (c) => c.toUpperCase());
     let content = '';
-    if (fileData.handle !== undefined) {
-        const file = await fileData.handle.getFile();
+    if (memFile.handle !== undefined) {
+        const file = await memFile.handle.getFile();
         content = await file.text();
         content = `# ${header}\n${content}`;
     } else {
         // We use welcome's files
-        content = fileData.content;
+        content = memFile.content;
     }
 
-    currentEditor.currentDir = dir;
-    currentEditor.currentFile = filename;
     // TODO disable when syncing?
+    currentEditor.path = path;
     if (saveToHistory) {
-        const state = {dir: dir, file: filename};
+        const state = {path: path};
         history.pushState(state, '');
     }
 
@@ -956,8 +1088,7 @@ async function openFile(dir, filename, saveToHistory = true, el = 'editor-textar
         showEditor2();
     }
 
-    currentEditor.currentDir = dir;
-    currentEditor.currentFile = filename;
+    currentEditor.path = path;
     currentEditor.getDoc().setValue(content);
     currentEditor.clearHistory();
     currentEditor.markClean();
@@ -971,8 +1102,8 @@ async function openFile(dir, filename, saveToHistory = true, el = 'editor-textar
         // const contentFitsTheScreen = editorScrollHeight <= window.innerHeight;
         // console.log('FITS', contentFitsTheScreen);
         // if (contentFitsTheScreen) {
-            // let margin = 500;
-            // currentEditor.scrollIntoView(cursorPos, margin);
+        // let margin = 500;
+        // currentEditor.scrollIntoView(cursorPos, margin);
         // }
         // TODO only focus if there's no quick dialogue
         currentEditor.focus();
@@ -990,7 +1121,7 @@ async function openFile(dir, filename, saveToHistory = true, el = 'editor-textar
 // 2) Sync it with the server
 // TODO add hash of last read file comparison, merge on conflict (in which scenarious in can happen tho?)
 async function syncCurrentFile(syncWithServer = true) {
-    if (files === undefined || isWelcome || debug || currentEditor.currentFile === undefined) {
+    if (files === undefined || isWelcome || debug || currentEditor.path === undefined) {
         return;
     }
 
@@ -1010,14 +1141,14 @@ async function syncCurrentFile(syncWithServer = true) {
     }
     isSyncingCurrentFile = true;
 
-    const dir = currentEditor.currentDir;
-    let filename = currentEditor.currentFile;
+    const path = currentEditor.path;
     let isCurrentEditorSame = () => {
-        return filename === window.currentEditor.currentFile && dir === window.currentEditor.currentDir;
+        return path === window.currentEditor.path;
     }
 
     // Track in-editor renaming.
-    if (filename !== CHAT_FILENAME) {
+    if (path !== CHAT_PATH) {
+        const filename = toFilename(path);
         try {
             // TODO track if no first line?
             const firstLine = currentEditor.getValue().split('\n')[0];
@@ -1030,10 +1161,11 @@ async function syncCurrentFile(syncWithServer = true) {
                 if (hasOldName) {
                     newFilename = 'Untitled.md';
                     let counter = 1;
-                    while (files[dir][newFilename]) {
-                        newFilename = `Untitled ${counter}.md`;
-                        counter++;
-                    }
+                    // TODO multidir
+                    // while (files[dir][newFilename]) {
+                    //     newFilename = `Untitled ${counter}.md`;
+                    //     counter++;
+                    // }
                 } else {
                     // TODO add tests
                     // Already renamed to untitled
@@ -1043,37 +1175,39 @@ async function syncCurrentFile(syncWithServer = true) {
 
             const hasFilenameChanged = newFilename.toLowerCase() !== filename.toLowerCase();
             if (hasFilenameChanged) {
+                console.log('Filename has changed from ', filename, 'to', newFilename);
                 // Change the file immediately, because on further await calls it can be synced by syncTexts.
-                currentEditor.currentFile = newFilename;
+                currentEditor.path = joinPath(toDirPath(path), newFilename);
 
                 // 1. Remove file with old filename
                 // 2. Create file with new filename
 
                 let content = getCurrentContent();
                 // TODO every await means we can can have RC due to editor content change
-                await removeFile(`${dir}/${filename}`);
-                delete files[dir][filename];
-                console.log('Removed', `${dir}/${filename}`);
+                await removeFile(path);
+                console.log('Removed', path);
 
                 // Get fresher content after await.
                 // if (isCurrentEditorSame()) {
                 //     content = getCurrentContent();
                 // }
-                addFileToMemory(dir, newFilename, {
-                    content: content,
-                    lastModified: 0,
-                    handle: await getFileHandle(toPath(dir, newFilename), true),
-                });
+
                 // if (isCurrentEditorSame()) {
                 //     content = getCurrentContent();
                 //     // Change current file if the editor is unchanged.
                 // }
-                const path = `${dir}/${newFilename}`;
-                await saveTextFile(path, getCurrentContent());
-
-                setServerFile(path, content, 0);
+                const newPath = joinPath(toDirPath(path), newFilename);
+                addMemFile(newPath, {
+                    isFile: true,
+                    content: content,
+                    lastModified: 0,
+                    path: newPath,
+                    handle: await getFileHandle(newPath, true),
+                });
+                await saveTextFile(newPath, getCurrentContent());
+                addServerFile(newPath, content, 0);
                 saveServerFiles();
-                console.log('Created', `${dir}/${newFilename}`);
+                console.log('Created', newPath);
 
                 await renderSidebar();
 
@@ -1091,18 +1225,26 @@ async function syncCurrentFile(syncWithServer = true) {
         }
     }
 
-    if (filename === CHAT_FILENAME) {
+    if (path === CHAT_PATH) {
         // Try to load local changes.
         if (chatIsClean) {
             try {
-                let inMemoryLastModified = files[dir]?.[filename]?.lastModified;
-                let file = await ((await getFileHandle(CHAT_FILENAME)).getFile());
+                let inMemoryLastModified = getMemFile(path)?.lastModified;
+                let file = await ((await getFileHandle(CHAT_PATH)).getFile());
+
+                // Update last modified in memory.
+                let memFile = getMemFile(path);
+                if (memFile !== null) {
+                    memFile.lastModified = file.lastModified;
+                    addMemFile(path, memFile);
+                }
+
                 let localLastModified = file.lastModified;
                 // TODO inmemory lastmodified should be reloaded
-                files[dir][filename].lastModified = localLastModified;
+                // files[dir][filename].lastModified = localLastModified;
                 if (inMemoryLastModified !== localLastModified) {
-                    console.log('Chat was modified locally', filename);
-                    await openFile(dir, filename);
+                    console.log('Chat was modified locally', CHAT_PATH);
+                    await openFile(CHAT_PATH);
                     isSyncingCurrentFile = false;
                     return;
                 }
@@ -1115,7 +1257,7 @@ async function syncCurrentFile(syncWithServer = true) {
 
         if (syncWithServer) {
             try {
-                await syncLocalFileWithServer(dir, filename);
+                await syncLocalFileWithServer(CHAT_PATH);
             } catch (error) {
                 console.error('Error during sync with server:', error);
             }
@@ -1133,7 +1275,7 @@ async function syncCurrentFile(syncWithServer = true) {
     const content = getCurrentContent();
     let contentWasModifiedLocally = false;
     try {
-        const path = `${dir}/${filename}`;
+        // const path = `${dir}/${filename}`;
         contentWasModifiedLocally = !await isContentEqual(path, content);
     } catch (error) {
         console.error('Error checking content equality:', error);
@@ -1149,11 +1291,11 @@ async function syncCurrentFile(syncWithServer = true) {
 
     // Handling editor changes.
     if (contentWasModifiedLocally && currentEditor.isClean()) {
-        console.log('WAS MODIFIED LOCALLY, and the editor is clean', filename);
+        console.log('WAS MODIFIED LOCALLY, and the editor is clean', path);
 
         // Changes only from local system
         try {
-            await openFile(dir, filename);
+            await openFile(path);
         } catch (error) {
             console.error('Error opening file:', error);
             isSyncingCurrentFile = false;
@@ -1162,7 +1304,9 @@ async function syncCurrentFile(syncWithServer = true) {
     } else if (!currentEditor.isClean()) {
         isSaving = true;
         try {
-            const file = files[dir][filename];
+            // const file = files[dir][filename];
+            console.log('Getting', path);
+            const file = getMemFile(path);
             if (file && file.handle) {
                 const freshContent = getCurrentContent();
                 if (!currentEditor.isClean() && contentWasModifiedLocally) {
@@ -1184,7 +1328,7 @@ async function syncCurrentFile(syncWithServer = true) {
             } else {
                 // When could that happen?
                 if (file.handle) {
-                    console.error(`Cannot save ${filename}. No file handle found.`);
+                    console.error(`Cannot save ${path}. No file handle found.`);
                 }
             }
         } catch (error) {
@@ -1203,7 +1347,7 @@ async function syncCurrentFile(syncWithServer = true) {
 
     if (syncWithServer) {
         try {
-            await syncLocalFileWithServer(dir, filename);
+            await syncLocalFileWithServer(path);
         } catch (error) {
             console.error('Error during sync with server:', error);
         }
@@ -1268,6 +1412,221 @@ async function post(endpoint, data) {
         console.error('Network error occurred:', error.message);
         return null;
     }
+}
+
+// If there are files without isFile flag - we would have recursion.
+// Because walk would try to iterate over js object keys.
+function walk(obj, callback, path = '/') {
+    if (obj.isFile) {
+        callback(path, obj, true);
+        return;
+    }
+
+    const keys = Object.keys(obj);
+    const files = [];
+    const dirs = [];
+    for (const key of keys) {
+        if (obj[key].isFile) {
+            files.push(key);
+        } else {
+            dirs.push(key);
+        }
+    }
+
+    // Process files first, so that the order would be preserved
+    for (const key of files) {
+        const fullPath = path + key;
+        callback(fullPath, true);
+    }
+
+    // Then process directories
+    for (const key of dirs) {
+        const item = obj[key];
+        const fullPath = path + key;
+        callback(fullPath, false);
+        walk(item, callback, fullPath);
+    }
+}
+
+function walkFilesExcludingSystemDirs(callback) {
+    walk(files, (path, isFile) => {
+        if (!isFile) {
+            return;
+        }
+
+        const rootDir = toRootDirName(path);
+        if (SYSTEM_DIRS.includes(rootDir) && toRootDirName !== '/') {
+            return;
+        }
+
+        callback(path);
+    });
+}
+
+function toFilename(path) {
+    if (path === '/') {
+        return '/';
+    }
+
+    const {filename} = toDirPathAndFilename(path);
+
+    return filename;
+}
+
+// Dir with no slash at the end.
+// For '/' it returns '/'.
+function toDirPath(path) {
+    const {dirPath} = toDirPathAndFilename(path);
+
+    return dirPath;
+}
+
+function toRootDirName(path) {
+    const root = toRootPath(path);
+    if (root === '/') {
+        return root;
+    }
+
+    return trimPrefix(root, '/');
+}
+
+// Removes trailing slash if not the root path.
+function removeTrailingSlash(path) {
+    if (path === '/') {
+        return '/';
+    }
+    if (path.endsWith('/')) {
+        return path.slice(0, -1);
+    }
+    return path;
+}
+
+function joinPath(...parts) {
+    const joined = parts.join('/');
+    return joined.replace(/\/+/g, '/');  // Replace multiple slashes
+}
+
+// Dir with no slash at the end.
+function toDirPathAndFilename(path) {
+    let parts = path.split('/');
+    parts = parts.filter(p => p !== '');
+
+    const filename = parts.pop();
+    let dirPath = '/' + parts.join('/');
+    return {dirPath, filename};
+}
+
+function excludeDirs(excludedDirs) {
+    const filteredDirs = ['/'];
+    for (const dir in files) {
+        if (files[dir].isFile === true) {
+            continue;
+        }
+
+        const dirName = toRootDirName(dir)
+        if (!excludedDirs.includes(dirName)) {
+            filteredDirs.push(dir);
+        }
+    }
+
+    return filteredDirs;
+}
+
+
+function toRootPath(path) {
+    const parts = path.split('/').filter(p => p !== '');
+
+    if (parts.length <= 1) {
+        return '/';
+    }
+
+    return '/' + parts[0];
+}
+
+// Gets a file from memory by its path.
+function getMemFile(path) {
+    if (files === undefined) {
+        return null;
+    }
+    if (path === '/') {
+        return files;
+    }
+
+    let dirs = path.split('/');
+    dirs = dirs.filter(d => d !== '');
+    const filename = dirs.pop();
+
+    let currentDir = files;
+    for (let dir of dirs) {
+        dir += '/';
+        if (!currentDir[dir]) {
+            return null;
+        }
+        currentDir = currentDir[dir];
+    }
+
+    return currentDir[filename] || null;
+}
+
+function removeMemFile(path) {
+    if (files === undefined) {
+        return;
+    }
+    if (path === '/') {
+        console.warn('Trying to remove /');
+        return;
+    }
+
+    let dirs = path.split('/');
+    dirs = dirs.filter(d => d !== '');
+    const filename = dirs.pop();
+
+    let currentDir = files;
+    for (let dir of dirs) {
+        dir += '/';
+        if (!currentDir[dir]) {
+            return;
+        }
+        currentDir = currentDir[dir];
+    }
+
+    if (currentDir[filename] !== undefined) {
+        delete currentDir[filename];
+    }
+}
+
+// Returns nextPath for sibling or null
+function findSiblingPath(path) {
+    const allFiles = [];
+    let foundDesiredPath = false;
+    let nextPath = null;
+    walk(files, (filePath, isFile) => {
+        if (filePath === CONFIG_PATH || filePath === CHAT_PATH) {
+            return;
+        }
+
+        if (filePath.startsWith('/media')) {
+            return;
+        }
+
+        if (!isFile) {
+            return;
+        }
+
+        // TODO we may wanna break from walk
+        if (foundDesiredPath && nextPath === null) {
+            console.log('NEXT path', filePath);
+            nextPath = filePath;
+            return ;
+        }
+
+        if (filePath === path) {
+            console.log('FOUND desired', filePath);
+            foundDesiredPath = true;
+        }
+    });
+
+    return nextPath;
 }
 
 window.addEventListener('beforeunload', function () {

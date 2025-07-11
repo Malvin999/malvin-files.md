@@ -48,7 +48,7 @@ func MoveDueTasks(
 	for _, userDir := range userDirs {
 		userID, err := strconv.ParseInt(userDir.Name, 10, 64)
 		if err != nil {
-			slog.Error("schedule worker: can't parse user ID", "err", err)
+			slog.Error("schedule worker: can't parse user ID", "dir", userDir.Name, "err", err)
 			continue
 		}
 		userPath := path.Join(storagePath, txt.I64(userID))

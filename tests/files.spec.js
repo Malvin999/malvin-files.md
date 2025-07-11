@@ -316,7 +316,7 @@ test('rename should not create multiply files', async ({ page }) => {
     await page.waitForTimeout(1000);
     await page.keyboard.type('le');
     await page.waitForTimeout(500);
-    await page.keyboard.press('Enter')
+    await page.keyboard.press('ArrowDown')
     await page.keyboard.type('content');
     await page.waitForTimeout(700);
 
@@ -330,27 +330,18 @@ test('rename should not create multiply files', async ({ page }) => {
         const cm = document.querySelector('.CodeMirror').CodeMirror;
         return cm.getValue();
     });
-    expect(codeMirrorContent).toBe("# New file\ncontent\n");
+    expect(codeMirrorContent).toBe("# New file\ncontent");
 
-    const debug = await page.evaluate(() => {
-        return {
-            filesExists: typeof window.files !== 'undefined',
-            filesValue: window.files,
-            emptyKeyExists: window.files && ('' in window.files),
-            emptyKeyValue: window.files && window.files[''],
-            allKeys: window.files && Object.keys(window.files)
-        };
-    });
     const clientFiles = await page.evaluate(() => {
-        return Object.keys(files['']);
+        return Object.keys(files);
     })
 
     expect(clientFiles).toBeDefined();
-    expect(clientFiles.length).toBe(5);
+    expect(clientFiles.length).toBe(7);
     expect(clientFiles).toContain('New file.md');
 });
 
-test('create dirs and move', async ({ page }) => {
+test('create new file, move to new dir, create new file is subdir, move to root', async ({ page }) => {
     await page.evaluate(() => {
         window.getRootDirHandle = async function() {
             const root = await navigator.storage.getDirectory();
@@ -370,32 +361,31 @@ test('create dirs and move', async ({ page }) => {
     await page.click('#new-file');
     await page.waitForTimeout(100);
     await page.keyboard.press('ArrowUp');
+    await page.waitForTimeout(100);
     await page.keyboard.press('Meta+a');
     await page.keyboard.type('file1');
     // await page.waitForTimeout(500); // TODO shoudln't be rc, maybe save file on focus out or something
-    await page.keyboard.press('Enter');
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.type('content');
-    // await page.waitForTimeout(300);
+    await page.waitForTimeout(300);
 
     await page.click('#new-folder');
     await page.waitForTimeout(100);
-    // await page.keyboard.type('dir1');
-    // await page.waitForTimeout(100);
-    // await page.keyboard.press('Enter');
-
 
     await page.keyboard.press('Meta+m');
     await page.waitForTimeout(100);
     await page.click('#move-results >> text=dir1');
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(100);
 
+    // Create second file in same subdir
     await page.click('#new-file');
     await page.waitForTimeout(100);
     await page.keyboard.press('ArrowUp');
+    await page.waitForTimeout(200);
     await page.keyboard.press('Meta+a');
     await page.keyboard.type('file2');
     await page.waitForTimeout(100);
-    await page.keyboard.press('Enter');
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.type('content');
     await page.waitForTimeout(300);
 
@@ -404,10 +394,8 @@ test('create dirs and move', async ({ page }) => {
     await page.click('#move-results >> text=/');
     await page.waitForTimeout(500);
 
-
     // await page.click('#sidebar-tree li:has-text("dir1")');
     await page.click('#sidebar-tree li:has-text("dir1") ul li:has-text("File1")')
-
     await page.click('#sidebar-tree li:has-text("File2")');
 
 });
@@ -471,7 +459,6 @@ test("create new in root with empty name so that it won't remove previous file",
         return cm.getValue();
     });
     expect(codeMirrorContent).toBe("# New file\nMy actual new file\ncontent");
-    await page.pause();
 });
 
 test('create new lower case', async ({ page }) => {
@@ -713,7 +700,7 @@ test('create file in selected folder', async ({ page }) => {
         window.getRootDirHandle = async function() {
             const root = await navigator.storage.getDirectory();
             const testDir = await root.getDirectoryHandle('files', { create: true });
-            await testDir.getDirectoryHandle('projects', { create: true });
+            await root.getDirectoryHandle('projects', { create: true });
             const rootFiles = [
                 { name: 'README.md', content: 'Hello world' }
             ];
@@ -750,12 +737,14 @@ test('create file in selected folder', async ({ page }) => {
 
     await page.keyboard.type('Project file');
     await page.waitForTimeout(100);
-    await page.keyboard.press('Enter');
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.type('File created in projects folder');
     await page.waitForTimeout(200);
 
+    // close projects dir
     await page.click('#sidebar >> text=projects');
     await page.waitForTimeout(200);
+
 
     await page.click('#sidebar >> text=files');
     await page.waitForTimeout(100);
@@ -773,7 +762,7 @@ test('create file in selected folder', async ({ page }) => {
         const cm = document.querySelector('.CodeMirror').CodeMirror;
         return cm.getValue();
     });
-    expect(codeMirrorContent).toBe("# Project file\nFile created in projects folder\n");
+    expect(codeMirrorContent).toBe("# Project file\nFile created in projects folder");
 
     const projectFiles = await page.locator('#sidebar >> text=projects').locator('..').locator('text=Project file');
     expect(await projectFiles.count()).toBe(1);
@@ -781,8 +770,8 @@ test('create file in selected folder', async ({ page }) => {
 
 async function clickAndExpectContent(page, filePath, expectedContent) {
     const parts = filePath.split('/');
-    const dirs = parts.slice(0, -1);
-    const file = parts[parts.length - 1];
+    const file = parts.pop();
+    const dirs = parts;
 
     for (const dir of dirs) {
         const isSelected = await page.locator(`#sidebar-tree .tj_description:has-text('${dir}')`).evaluate(el => el.classList.contains('expanded'));

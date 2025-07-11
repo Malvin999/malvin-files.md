@@ -65,7 +65,7 @@ const (
 // backends, like an in-memory backend, which we use for testing.
 // Check out types implementing afero.Fs for all available backends.
 type FS struct {
-	rootPath string // TODO make it private
+	rootPath string
 	backend  afero.Fs
 }
 
@@ -163,7 +163,7 @@ func (fs FS) Exists(dir, filename string) (bool, error) {
 func (fs FS) Read(dir, filename string) (string, error) {
 	filePath, err := fs.SafePath(dir, filename)
 	if err != nil {
-		return "", fmt.Errorf("fs read: unsafe filePath '%s': %w", filePath, errUnsafePath)
+		return "", fmt.Errorf("fs read: unsafe filePath dir: '%s', filename: '%s': %w", dir, filename, errUnsafePath)
 	}
 
 	content, err := ReadFile(fs.backend, filePath)
@@ -504,12 +504,12 @@ func (fs FS) Ctime(dir, filename string) (int64, error) {
 func (fs FS) Mtime(dir, filename string) (int64, error) {
 	filePath, err := fs.SafePath(dir, filename)
 	if err != nil {
-		return 0, fmt.Errorf("fs file: unsafe filePath '%s': %w", filePath, errUnsafePath)
+		return 0, fmt.Errorf("fs mtime: unsafe filePath '%s': %w", filePath, errUnsafePath)
 	}
 
 	info, err := fs.backend.Stat(filePath)
 	if err != nil {
-		return 0, fmt.Errorf("fs file: can't stat file '%s': %w", filePath, err)
+		return 0, fmt.Errorf("fs mtime: can't stat file '%s': %w", filePath, err)
 	}
 
 	return Mtime(info), nil
