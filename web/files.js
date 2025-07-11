@@ -534,6 +534,10 @@ async function collectModifiedAndDeletedFiles() {
     //     }
     // }
     //
+
+    // Freeze paths to prevent RC. Current file can change during collecting.
+    const editorPath = editor.path;
+    const editor2Path = editor2.path;
     walk(files, (path, isFile) => {
         if (!isFile) {
             return;
@@ -544,7 +548,7 @@ async function collectModifiedAndDeletedFiles() {
         }
 
         // TODO write tests for that?
-        if (path === editor.path || path === editor2.path) {
+        if (path === editorPath || path === editor2Path) {
             console.log('Skip sending current file: ' + path);
             return;
         }
@@ -593,7 +597,7 @@ async function collectModifiedAndDeletedFiles() {
         }
 
         // Skip current files.
-        if (path === editor.path || path === editor2.path) {
+        if (path === editorPath || path === editor2Path) {
             return;
         }
 
@@ -1443,6 +1447,7 @@ function walk(obj, callback, path = '/') {
     for (const key of dirs) {
         const item = obj[key];
         const fullPath = path + key;
+        // Once stack exceeeded
         callback(fullPath, false);
         walk(item, callback, fullPath);
     }

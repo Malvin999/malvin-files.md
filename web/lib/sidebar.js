@@ -72,6 +72,7 @@ function renderSidebar(focusDir = '') {
     let dirNodes = {'/': root};
 
     // First pass: create all directories
+    // Once got maximum call exceeded here
     walk(files, (path, isFile) => {
         if (path === '/media' || path.startsWith('/media/')) {
             return;
