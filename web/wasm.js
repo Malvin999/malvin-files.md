@@ -381,7 +381,7 @@ function clearInput() {
     input.innerHTML = '';
 }
 
-async function saveFile(fileName, file) {
+async function writeMediaFile(fileName, file) {
     try {
         const rootHandle = await getRootDirHandle();
 
@@ -396,6 +396,13 @@ async function saveFile(fileName, file) {
         const writable = await fileHandle.createWritable();
         await writable.write(file);
         await writable.close();
+
+        const path = '/media/' + fileName;
+        addMemFile(path, {
+            isFile: true,
+            path: path,
+            imageUrl: await getImageUrl(fileHandle),
+        });
 
         return fileHandle;
     } catch (error) {

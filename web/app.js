@@ -81,6 +81,7 @@ async function init(el) {
     }
 
     let rootDirHandle = await getRootDirHandle();
+    console.log(rootDirHandle);
 
     let perf = performance.now();
     files = await loadLocalFiles(rootDirHandle);
@@ -944,7 +945,7 @@ async function removeSavedRootDirHandle() {
 
 async function getRootDirHandle() {
     const savedDirHandle = await getSavedRootDirHandle();
-    if (savedDirHandle === undefined) {
+    if (!(savedDirHandle instanceof FileSystemDirectoryHandle)) {
         return await getOPFSDirHandle();
     }
 

@@ -791,7 +791,7 @@ chatInput.addEventListener('paste', async (e) => {
             const file = item.getAsFile();
             const fileName = generateSafeFileName(file.name);
 
-            const saved = await saveFile(fileName, file);
+            const saved = await writeMediaFile(fileName, file);
             if (saved) {
                 const imageMarkdown = `![${fileName}](media/${fileName})\n`;
 
