@@ -37,6 +37,7 @@ test('send message to chat', async ({ page }) => {
     await page.keyboard.press('Enter');
 
 
+    console.log(consoleMessages);
     await page.waitForSelector('.message');
     let content = await page.textContent('.message-content')
     expect(content).toBe('My message');
