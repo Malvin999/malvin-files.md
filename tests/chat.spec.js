@@ -50,7 +50,7 @@ test('send to chat and move to recent file', async ({ page }) => {
     await page.evaluate(() => {
         init(document.getElementById("editor"));
     });
-    
+
     await page.waitForSelector('#chat');
     await page.keyboard.type('My message');
     await page.waitForTimeout(300);

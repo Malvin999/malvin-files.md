@@ -314,7 +314,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 			// TODO for resilience add merge here, because we had case when server saved latest TS but no conent.
 			// Also, if for some reason timestamps would change on server migration and such.
 			// Server clientFile hasn't changed since client's last sync
-			logSync(fmt.Sprintf("Writing only one clientFile: '%s'", path), r)
+			logSync(fmt.Sprintf("Modified only on client, writing to server: '%s'", path), r)
 			content = clientFile.Content
 		}
 	}
