@@ -1053,6 +1053,10 @@ function saveServerFiles() {
 async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
     // Why we do normalize here as well?
     path = path.normalize('NFC');
+    const memFile = getMemFile(path);
+    if (memFile === null) {
+        return;
+    }
 
     if (el === 'editor-textarea') {
         currentEditor = editor;
@@ -1082,10 +1086,6 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
     closeChatModal();
 
     const start = performance.now();
-
-    console.log('Getting mem file for ', path);
-    const memFile = getMemFile(path);
-    console.log(memFile);
 
     // Check if we're loading the same file and save cursor position
     let cursorPos = null;
