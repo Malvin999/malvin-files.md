@@ -27,7 +27,7 @@ async function openChat() {
 
     chatInput.focus();
     isChat = true;
-    await loadData();
+    await loadMessages();
     renderMessages();
     scrollToBottom();
 }
@@ -42,7 +42,7 @@ async function openChatModal() {
     chatInput.style.display = 'block';
 
     chatInput.focus();
-    await loadData();
+    await loadMessages();
     renderMessages();
     scrollToBottom();
 }
@@ -175,7 +175,7 @@ function formatFileContent(messages) {
     return content;
 }
 
-async function loadData() {
+async function loadMessages() {
     try {
         const file = await ((await getFileHandle(CHAT_PATH, true)).getFile());
         const content = await file.text();
@@ -199,29 +199,53 @@ function initChat() {
     // chat = document.getElementById('chat');
     // chatInput = document.getElementById('chat-input');
 
-    chatInput.addEventListener('keydown', function (e) {
+    chatInput.addEventListener('keydown', async function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            send();
+            await send();
             autoResize();
         }
-    });
-
-    loadData().then(() => {
-        renderMessages();
     });
 }
 
 async function send() {
     const text = chatInput.value.trim();
     if (!text) return;
+    console.log('Wasm: sending', text);
 
     chatInput.value = '';
     chatIsClean = false;
-    reply(text);
-    await loadData();
+    console.log('Wasm: waiting for reply');
+    await reply(text);
+    console.log('Wasm: reply is fullfilled');
+    await loadMessages();
     renderMessages();
     scrollToBottom();
+}
+
+async function initWasm() {
+    console.log('Init wasm chat');
+    let wasmReadyPromise = new Promise(resolve => {
+        window.addEventListener('wasmReady', () => {
+            console.log('Wasm is ready!');
+            resolve();
+        }, { once: true });
+    });
+    window.reply = async (msg) => {
+        await wasmReadyPromise;
+        wasmReply(msg);
+    };
+
+    const go = new Go();
+    const wasmFile = await fetch(`chat.wasm${window.COMMIT_HASH}`);
+    const wasmModule = await WebAssembly.instantiateStreaming(wasmFile, go.importObject);
+    go.run(wasmModule.instance);
+
+    window.wasmReplyCmd = wasmReplyCmd
+}
+
+async function logWasm(val) {
+    console.log(val);
 }
 
 async function receive(val) {
@@ -231,7 +255,7 @@ async function receive(val) {
         return;
     }
 
-    await loadData();
+    await loadMessages();
     renderMessages();
     scrollToBottom();
 
@@ -745,7 +769,7 @@ function sendCmd(cmd, params) {
         t: "cmd",
         p: params.map(p => p.toString()),
     }
-    replyCmd(JSON.stringify(cmdObj));
+    wasmReplyCmd(JSON.stringify(cmdObj));
 }
 
 function getRecentlyModifiedFiles() {

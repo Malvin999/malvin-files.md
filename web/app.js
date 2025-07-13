@@ -457,22 +457,6 @@ function initEditor(el) {
     return newEditor;
 }
 
-async function initWasm() {
-    console.log('INIT CHAT');
-    const go = new Go();
-    const wasmFile = await fetch(`chat.wasm${window.COMMIT_HASH}`);
-    const wasmModule = await WebAssembly.instantiateStreaming(wasmFile, go.importObject);
-    go.run(wasmModule.instance);
-    // let cmd = {
-    //     n: 'today',
-    //     t: 'cmd'
-    // }
-    // replyCmd(JSON.stringify(cmd));
-
-    window.reply = reply
-    window.replyCmd = replyCmd
-}
-
 // Logic for click-handling is in click.js => isWikiLink
 function createAutocompleteDict() {
     const entries = [];
@@ -757,7 +741,7 @@ function openBot() {
         n: 'today',
         t: 'cmd'
     }
-    replyCmd(JSON.stringify(cmd));
+    wasmReplyCmd(JSON.stringify(cmd));
 
     window.resizeTo(520, 530);
     const left = (screen.availWidth - 500) / 2;

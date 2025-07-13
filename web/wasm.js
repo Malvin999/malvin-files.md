@@ -16,7 +16,7 @@ function sendMessage() {
             n: msg.substring(1),
             t: "cmd"
         }
-        replyCmd(JSON.stringify(cmd));
+        wasmReplyCmd(JSON.stringify(cmd));
     } else {
         reply(msg);
         // let update = await window.newUpdate(msg, null)
@@ -67,7 +67,7 @@ function attachKeyboard(buttons) {
                     }
                     // let update = await window.newUpdate('', btn.Cmd)
                     // processResponse(await window.send(update));
-                    replyCmd(JSON.stringify(btn.Cmd))
+                    wasmReplyCmd(JSON.stringify(btn.Cmd))
                 };
                 rowContainer.appendChild(button);
             });
@@ -80,7 +80,7 @@ function attachKeyboard(buttons) {
             button.innerText = row.Name;
             button.classList.add('button'); // Add a class for styling
             button.onclick = async () => {
-                replyCmd(JSON.stringify(row.Cmd))
+                wasmReplyCmd(JSON.stringify(row.Cmd))
                 // let update = await window.newUpdate('', row.Cmd)
                 // processResponse(await window.send(update));
             };
@@ -518,7 +518,7 @@ function showCommandPopup() {
         cmdItem.setAttribute('data-index', index);
 
         cmdItem.onclick = () => {
-            replyCmd(JSON.stringify({n: cmd.command.substring(1), t: "cmd"}))
+            wasmReplyCmd(JSON.stringify({n: cmd.command.substring(1), t: "cmd"}))
             clearInput();
             hideCommandPopup();
         };
@@ -569,7 +569,7 @@ function insertFocusedCommand() {
         const commandText = focusedCommand.textContent.trim();
         const selectedCommand = commands.find(cmd => cmd.display === commandText);
         if (selectedCommand) {
-            replyCmd(JSON.stringify({n: selectedCommand.command.substring(1), t: "cmd"}));
+            wasmReplyCmd(JSON.stringify({n: selectedCommand.command.substring(1), t: "cmd"}));
             clearInput();
             hideCommandPopup();
         }

@@ -32,6 +32,7 @@ type Response struct {
 }
 
 func Reply(_ js.Value, args []js.Value) any {
+	logToJS("Wasm: called reply")
 	//callAsync("hi", func(result js.Value, err error) {
 	//	if err != nil {
 	//		sendToJS(fmt.Sprintf("Error: %v\n", err))
@@ -60,13 +61,14 @@ func ReplyCmd(_ js.Value, args []js.Value) any {
 }
 
 func main() {
+	js.Global().Set("wasmReply", js.FuncOf(Reply))
+	js.Global().Set("wasmReplyCmd", js.FuncOf(ReplyCmd))
+	js.Global().Call("dispatchEvent", js.Global().Get("CustomEvent").New("wasmReady"))
 	fs.Exists = exists
 	fs.ReadFile = readFile
 	fs.WriteFile = writeFile
 	fs.ReadDir = readDir
 	initBot()
-	js.Global().Set("reply", js.FuncOf(Reply))
-	js.Global().Set("replyCmd", js.FuncOf(ReplyCmd))
 
 	select {}
 }
@@ -112,6 +114,10 @@ func sendDueResponsesToJS() {
 
 func sendToJS(vals ...any) {
 	js.Global().Call("receive", vals...)
+}
+
+func logToJS(vals ...any) {
+	js.Global().Call("logWasm", vals...)
 }
 
 func initBot() {

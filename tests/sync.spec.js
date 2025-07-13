@@ -278,7 +278,7 @@ test('delete files on client will propagate to server as well', async ({ page })
 
     await page.waitForTimeout(500);
 
-    await page.pause();
+    // await page.pause();
 
     expectFileOnServer(page, 'file.md', 'test content');
     expectNoFileOnServer(page, 'another.md');
@@ -328,7 +328,6 @@ test('files exist on both client and server, serverFiles contains proper server 
     await clickAndExpectContent(page, 'another', '# Another\n*italic*');
 
     // Trigger syncTexts
-    await page.waitForTimeout(300);
     await page.evaluate(() => {
         window.dispatchEvent(new Event('focus'));
     });
@@ -367,7 +366,7 @@ test('files exist on both client and server, serverFiles contains proper server 
             hash: expect.any(Number),
             isFile: true,
             lastModified: expect.any(Number),
-            lastClientModified: expect.any(Object) || null,
+            lastClientModified: null,
             path: '/another.md'
         },
         'config.json': {
