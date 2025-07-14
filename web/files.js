@@ -1057,7 +1057,6 @@ function saveServerFiles() {
 
 // TODO save old file
 async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
-    console.log('OPENEING', path);
     // Why we do normalize here as well?
     path = path.normalize('NFC');
     const memFile = getMemFile(path);
@@ -1122,17 +1121,17 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
         };
         history.pushState(state, '');
     }
-
-    if (el === 'editor-textarea') {
-        editor = initEditor(document.getElementById(el));
-        currentEditor = editor;
-        hideEditor2();
-    } else if (el === 'editor2-textarea') {
-        editor2 = initEditor(document.getElementById(el));
-        currentEditor = editor2;
-        showEditor2();
-    }
-
+    //
+    // if (el === 'editor-textarea') {
+    //     editor = initEditor(document.getElementById(el));
+    //     currentEditor = editor;
+    //     hideEditor2();
+    // } else if (el === 'editor2-textarea') {
+    //     editor2 = initEditor(document.getElementById(el));
+    //     currentEditor = editor2;
+    //     showEditor2();
+    // }
+    //
     currentEditor.path = path;
     currentEditor.getDoc().setValue(content);
     currentEditor.clearHistory();
