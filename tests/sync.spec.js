@@ -430,12 +430,12 @@ test('files exist on both client and server, serverFiles contains proper server 
             lastClientModified: null,
             path: '/Links.md'
         },
-        'My thoughts.md': {
+        'My project.md': {
             isFile: true,
             hash: expect.any(Number),
             lastModified: expect.any(Number),
             lastClientModified: null,
-            path: '/My thoughts.md'
+            path: '/My project.md'
         },
         'Markdown Guide.md': {
             isFile: true,
