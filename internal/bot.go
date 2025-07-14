@@ -381,17 +381,6 @@ func (b *Bot) saveFromTextMsg(u Update) error {
 		}
 	}
 
-	if b.cfg.ChatOnlyMode() {
-		err := b.createOrAdd(fs.DirRoot, fs.ChatFilename, msg)
-
-		msgID, _ := u.MsgID()
-		if err == nil {
-			_ = b.tg.SendReaction(b.userID, msgID, "👌")
-		}
-
-		return err
-	}
-
 	// Adding to an existing file
 	if replyMsgID, ok := u.ReplyToMsgID(); ok {
 		return b.addToRepliedFile(replyMsgID, msg)
@@ -419,6 +408,12 @@ func (b *Bot) saveFromTextMsg(u Update) error {
 	msgIndex, err := b.saveToChat(msg, b.cfg.Timezone())
 	if err != nil {
 		return fmt.Errorf("save to chat: %w", err)
+	}
+
+	if b.cfg.ChatOnlyMode() {
+		msgID, _ := u.MsgID()
+		_ = b.tg.SendReaction(b.userID, msgID, "👌")
+		return nil
 	}
 
 	if updateHasTime {
