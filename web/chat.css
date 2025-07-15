@@ -282,12 +282,11 @@
     white-space: nowrap;
     opacity: 0;
     transition: opacity 0.2s;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     z-index: 1000;
     border: 1px solid var(--col-border);
     color: var(--col-tx);
 }
-
 
 .action-btn .btn-submenu.show::after {
     content: '';
