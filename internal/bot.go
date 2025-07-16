@@ -142,8 +142,8 @@ func (b *Bot) Reply(u Update) error {
 	}
 
 	// Handle messages in channels
-	_, exists := u.ChannelID()
-	if exists {
+	_, isChannel := u.ChannelID()
+	if isChannel {
 		channelName, _ := u.ChannelName()
 		if len(strings.TrimSpace(channelName)) == 0 {
 			channelName = "UnknownChannel"
