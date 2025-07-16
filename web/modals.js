@@ -30,7 +30,7 @@ class SearchModal {
                 this.close();
                 event.preventDefault();
                 event.stopPropagation();
-                if (isChat) {
+                if (isInbox) {
                     chatInput.focus();
                 } else {
                     currentEditor.focus();
@@ -280,7 +280,7 @@ class SearchModal {
             if (path === CONFIG_PATH) {
                 return;
             }
-            if (this.messageIndex !== null && path === CHAT_PATH) {
+            if (this.messageIndex !== null && path === INBOX_PATH) {
                 return;
             }
 
@@ -435,7 +435,7 @@ class MoveModal {
                 this.close();
                 event.preventDefault();
                 event.stopPropagation();
-                if (isChat) {
+                if (isInbox) {
                     chatInput.focus();
                 } else {
                     currentEditor.focus();

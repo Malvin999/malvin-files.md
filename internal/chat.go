@@ -19,7 +19,7 @@ var (
 )
 
 func (b *Bot) saveToChat(content string, timezone *time.Location) (int, error) {
-	exists, err := b.fs.Exists(fs.DirRoot, fs.ChatFilename)
+	exists, err := b.fs.Exists(fs.DirRoot, fs.InboxFilename)
 	if err != nil {
 		return 0, fmt.Errorf("saveToChat: %w", err)
 	}
@@ -28,7 +28,7 @@ func (b *Bot) saveToChat(content string, timezone *time.Location) (int, error) {
 
 	var md string
 	if exists {
-		md, err = b.fs.Read(fs.DirRoot, fs.ChatFilename)
+		md, err = b.fs.Read(fs.DirRoot, fs.InboxFilename)
 		if err != nil {
 			return 0, fmt.Errorf("saveToChat: %w", err)
 		}
@@ -70,7 +70,7 @@ func (b *Bot) saveToChat(content string, timezone *time.Location) (int, error) {
 
 	md += content
 
-	if err := b.fs.Write(fs.DirRoot, fs.ChatFilename, md); err != nil {
+	if err := b.fs.Write(fs.DirRoot, fs.InboxFilename, md); err != nil {
 		return 0, fmt.Errorf("saveToChat: %w", err)
 	}
 
@@ -95,7 +95,7 @@ func (b *Bot) moveFromChat(
 	lock.Lock()
 	defer lock.Unlock()
 
-	content, err := b.fs.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := b.fs.Read(fs.DirRoot, fs.InboxFilename)
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func (b *Bot) moveFromChat(
 	}
 	modifiedContent := strings.TrimSpace(strings.Join(newBlocks, "\n"))
 
-	return b.fs.Write(fs.DirRoot, fs.ChatFilename, modifiedContent)
+	return b.fs.Write(fs.DirRoot, fs.InboxFilename, modifiedContent)
 }
 
 // readBlocks parses content into logical blocks

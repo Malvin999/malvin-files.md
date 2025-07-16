@@ -37,7 +37,7 @@ const urlsToCache = [
     '/wasm_exec.js',
     '/app.js',
     '/wasm.js',
-    '/chat.js',
+    '/inbox.js',
     '/modals.js',
 ];
 

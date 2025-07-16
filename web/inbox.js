@@ -1,8 +1,8 @@
-const CHAT_PATH = '/Inbox.txt';
+const INBOX_PATH = '/Inbox.txt';
 let messages = [];
 let chatIsClean = true; // Are there any unsaved changes?
 
-const chat = document.getElementById('chat');
+const inbox = document.getElementById('chat');
 const chatInput = document.getElementById('chat-input');
 const chatButton = document.getElementById('open-chat-modal');
 const chatContainer = document.getElementById('chat-container');
@@ -12,16 +12,16 @@ async function openChat() {
     chatContainer.style.display = 'flex';
     chatButton.classList.add('hidden');
 
-    if (editor.path !== CHAT_PATH) {
+    if (editor.path !== INBOX_PATH) {
         const state = {path: editor.path};
         history.pushState(state, '');
     }
 
-    editor.path = CHAT_PATH;
+    editor.path = INBOX_PATH;
 
     const codemirror = document.querySelector('.CodeMirror-wrap');
     codemirror.style.display = 'none';
-    chat.style.display = 'flex';
+    inbox.style.display = 'flex';
     chatInput.style.display = 'block';
     hideEditor2();
 
@@ -29,7 +29,7 @@ async function openChat() {
     if (searchModal.style.display === 'none') {
         chatInput.focus();
     }
-    isChat = true;
+    isInbox = true;
     await loadMessages();
     renderMessages();
     scrollToBottom();
@@ -39,9 +39,9 @@ async function openChatModal() {
     chatContainer.classList.add('modal');
     chatContainer.style.display = 'flex';
     chatButton.classList.add('hidden');
-    chat.style.display = 'block';
+    inbox.style.display = 'block';
     chatInput.style.display = 'block';
-    chat.style.display = 'flex';
+    inbox.style.display = 'flex';
     chatInput.style.display = 'block';
 
     chatInput.focus();
@@ -60,16 +60,16 @@ async function openChatModal() {
 
 function closeChatModal() {
     chatContainer.classList.remove('modal');
-    if (!isChat) {
+    if (!isInbox) {
         chatContainer.style.display = 'none';
-        chat.style.display = 'none';
+        inbox.style.display = 'none';
         chatInput.style.display = 'none';
         chatButton.classList.remove('hidden');
     }
 }
 
 async function toggleChat() {
-    if (isChat) {
+    if (isInbox) {
         return;
     }
 
@@ -180,13 +180,13 @@ function formatFileContent(messages) {
 
 async function loadMessages() {
     try {
-        const file = await ((await getFileHandle(CHAT_PATH, true)).getFile());
+        const file = await ((await getFileHandle(INBOX_PATH, true)).getFile());
         const content = await file.text();
 
         // Parse the content and load messages
         messages = parseFileContent(content);
 
-        console.log(`Loaded ${messages.length} messages from ${CHAT_PATH}`);
+        console.log(`Loaded ${messages.length} messages from ${INBOX_PATH}`);
     } catch (error) {
         console.error('Error loading data:', error);
         // Initialize with empty data if file doesn't exist or can't be read
@@ -254,7 +254,7 @@ async function logWasm(val) {
 async function receive(modifiedPaths) {
     console.log('Receiving:', modifiedPaths);
     let isChatModal = document.getElementById('chat-container').classList.contains('modal');
-    if (!isChatModal && currentEditor.path !== CHAT_PATH) {
+    if (!isChatModal && currentEditor.path !== INBOX_PATH) {
         return;
     }
 
@@ -262,17 +262,17 @@ async function receive(modifiedPaths) {
     renderMessages();
     scrollToBottom();
 
-    const fileHandle = await getFileHandle(CHAT_PATH);
+    const fileHandle = await getFileHandle(INBOX_PATH);
     let file = await fileHandle.getFile();
     // TODO inmemory lastmodified should be reloaded
-    if (currentEditor !== null && currentEditor.path === CHAT_PATH) {
+    if (currentEditor !== null && currentEditor.path === INBOX_PATH) {
         // Update in-memory lastModified
-        if (getMemFile(CHAT_PATH) !== null) {
-            getMemFile(CHAT_PATH).lastModified = file.lastModified;
+        if (getMemFile(INBOX_PATH) !== null) {
+            getMemFile(INBOX_PATH).lastModified = file.lastModified;
         } else {
-            addMemFile(CHAT_PATH, {
+            addMemFile(INBOX_PATH, {
                 isFile: true,
-                past: CHAT_PATH,
+                past: INBOX_PATH,
                 lastModified: file.lastModified,
                 handle: fileHandle,
             })
@@ -300,7 +300,7 @@ async function receive(modifiedPaths) {
 
 function renderMessages() {
     if (messages.length === 0) {
-        chat.innerHTML = `
+        inbox.innerHTML = `
             <div class="empty-state">
                 <div class="empty-title">Free your head</div>
                 <div class="empty-desc">Drop whatever’s on your mind here</div>
@@ -320,7 +320,7 @@ function renderMessages() {
     `).join('');
 
     // add own class every other message
-    chat.innerHTML = messages.map((message, i) => `
+    inbox.innerHTML = messages.map((message, i) => `
         <div class="message ${i % 2 === 1 ? 'own' : ''}" data-index="${message.index}">
             <div class="message-content" 
                  contenteditable="true" 
@@ -426,16 +426,16 @@ function attachEventListeners() {
             if (e.target.id !== 'chat-input') {
                 e.preventDefault();
                 // Select all messages
-                const allMessages = chat.querySelectorAll('.message');
+                const allMessages = inbox.querySelectorAll('.message');
                 allMessages.forEach(message => message.classList.add('selected'));
             }
         }
     });
 
-    chat.addEventListener('mousedown', function (e) {
+    inbox.addEventListener('mousedown', function (e) {
         // If clicking outside messages, prepare for multi-select
         if (!e.target.closest('.message')) {
-            let allMessages = Array.from(chat.querySelectorAll('.message'));
+            let allMessages = Array.from(inbox.querySelectorAll('.message'));
             let startMessage = null;
 
             function handleMouseMove(e) {
@@ -486,7 +486,7 @@ function attachEventListeners() {
         if (e.shiftKey) {
             const selectedMessages = document.querySelectorAll('.message.selected');
             if (selectedMessages.length > 0) {
-                const allMessages = Array.from(chat.querySelectorAll('.message'));
+                const allMessages = Array.from(inbox.querySelectorAll('.message'));
                 const lastSelected = selectedMessages[selectedMessages.length - 1];
                 const startIndex = allMessages.indexOf(lastSelected);
                 const endIndex = allMessages.indexOf(message);
@@ -504,7 +504,7 @@ function attachEventListeners() {
         message.classList.add('selected');
 
         let startMessage = message;
-        let allMessages = Array.from(chat.querySelectorAll('.message'));
+        let allMessages = Array.from(inbox.querySelectorAll('.message'));
 
         function handleMouseMove(e) {
             const currentMessage = e.target.closest('.message');
@@ -533,16 +533,16 @@ function attachEventListeners() {
         document.addEventListener('mouseup', handleMouseUp);
     });
 
-    chat.addEventListener('click', function (e) {
+    inbox.addEventListener('click', function (e) {
         // Only clear selection if clicking outside messages AND not dragging
         if (!e.target.closest('.message') && !e.detail > 1) {
             document.querySelectorAll('.message.selected').forEach(m => m.classList.remove('selected'));
         }
     });
 
-    chat.addEventListener('keydown', function (e) {
+    inbox.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
-            const selectedMessages = chat.querySelectorAll('.message.selected');
+            const selectedMessages = inbox.querySelectorAll('.message.selected');
             if (selectedMessages.length > 0) {
                 selectedMessages.forEach(message => message.classList.remove('selected'));
                 e.preventDefault();
@@ -575,7 +575,7 @@ function attachEventListeners() {
     // });
 
 
-    chat.querySelectorAll('.to-file-btn').forEach(btn => {
+    inbox.querySelectorAll('.to-file-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             const searchModalElement = document.getElementById('search');
@@ -587,7 +587,7 @@ function attachEventListeners() {
         });
     });
 
-    chat.querySelectorAll('.to-dir-btn').forEach(btn => {
+    inbox.querySelectorAll('.to-dir-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
 
@@ -600,7 +600,7 @@ function attachEventListeners() {
         });
     });
 
-    chat.querySelectorAll('.to-journal-btn').forEach(btn => {
+    inbox.querySelectorAll('.to-journal-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             const selectedMessages = document.querySelectorAll('.message.selected');
@@ -626,7 +626,7 @@ function attachEventListeners() {
         });
     });
 
-    chat.querySelectorAll('.to-today-btn').forEach(btn => {
+    inbox.querySelectorAll('.to-today-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             const selectedMessages = document.querySelectorAll('.message.selected');
@@ -652,7 +652,7 @@ function attachEventListeners() {
         });
     });
 
-    chat.querySelectorAll('.to-checklist-btn').forEach(btn => {
+    inbox.querySelectorAll('.to-checklist-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             const selectedMessages = document.querySelectorAll('.message.selected');
@@ -678,7 +678,7 @@ function attachEventListeners() {
         });
     });
 
-    chat.querySelectorAll('.to-archive-btn').forEach(btn => {
+    inbox.querySelectorAll('.to-archive-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             const selectedMessages = document.querySelectorAll('.message.selected');
@@ -705,7 +705,7 @@ function attachEventListeners() {
         });
     });
 
-    chat.querySelectorAll('.to-recent-btn').forEach(btn => {
+    inbox.querySelectorAll('.to-recent-btn').forEach(btn => {
         btn.addEventListener('click', function (e) {
             e.stopPropagation();
             const selectedMessages = document.querySelectorAll('.message.selected');
@@ -733,7 +733,7 @@ function attachEventListeners() {
     });
 
     // Enable editing on double-click
-    chat.querySelectorAll('.message-content').forEach(content => {
+    inbox.querySelectorAll('.message-content').forEach(content => {
         content.addEventListener('dblclick', function (e) {
             e.stopPropagation();
             this.style.pointerEvents = 'auto';
@@ -753,7 +753,7 @@ function saveEdit(noteId, newText) {
 
 function scrollToBottom() {
     setTimeout(function () {
-        chat.scrollTop = chat.scrollHeight;
+        inbox.scrollTop = inbox.scrollHeight;
     }, 100);
 }
 
@@ -798,7 +798,7 @@ function getRecentlyModifiedFiles() {
     const entries = [];
     for (const filename in files) {
         const content = files[filename];
-        if (filename && content && filename !== toFilename(CHAT_PATH) && filename !== toFilename(CONFIG_PATH)) {
+        if (filename && content && filename !== toFilename(INBOX_PATH) && filename !== toFilename(CONFIG_PATH)) {
             entries.push([filename, content]);
         }
     }

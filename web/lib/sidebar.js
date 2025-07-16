@@ -39,7 +39,7 @@ function renderSidebar(focusDir = '', modifiedPaths) {
     root.path = '/';
 
     let inbox = new TreeNode('inbox');
-    inbox.path = CHAT_PATH;
+    inbox.path = INBOX_PATH;
     if (currentEditor.path === undefined || selectedNodes.has('inbox')) {
         inbox.setSelected(true);
     }
@@ -130,7 +130,7 @@ function renderSidebar(focusDir = '', modifiedPaths) {
             return;
         }
 
-        if (path === CONFIG_PATH || path === CHAT_PATH) {
+        if (path === CONFIG_PATH || path === INBOX_PATH) {
             return;
         }
 

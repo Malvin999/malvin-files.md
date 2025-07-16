@@ -493,7 +493,7 @@ test('files exist on both client and server, serverFiles contains proper server 
 });
 
 
-test('sync changes from client, update clientLastModified & clientlastClientModified', async ({ page }) => {
+test('sync changes from client, update clientLastModified & lastClientModified', async ({ page }) => {
     await setup(page);
 
     await page.click('#new-file');
@@ -513,8 +513,6 @@ test('sync changes from client, update clientLastModified & clientlastClientModi
 
         return file.lastModified;
     });
-
-    console.log(serverFiles);
 
     expect(serverFiles['New file.md'].lastModified).not.toBeNull();
     expect(serverFiles['New file.md'].lastClientModified).toEqual(clientFileLastModified);

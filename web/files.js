@@ -1077,15 +1077,15 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
         await syncCurrentFile(false);
     }
 
-    if (path === CHAT_PATH) {
+    if (path === INBOX_PATH) {
         openChat();
         return;
     } else {
         const codemirror = document.querySelector('.CodeMirror-wrap');
         codemirror.style.display = 'block';
-        chat.style.display = 'none';
+        inbox.style.display = 'none';
         chatInput.style.display = 'none';
-        isChat = false;
+        isInbox = false;
     }
     chatButton.classList.remove('hidden');
     chatContainer.style.display = 'none';
@@ -1197,7 +1197,7 @@ async function syncCurrentFile(syncWithServer = true) {
     }
 
     // Track in-editor renaming.
-    if (path !== CHAT_PATH) {
+    if (path !== INBOX_PATH) {
         const filename = toFilename(path);
         try {
             // TODO track if no first line?
@@ -1275,12 +1275,12 @@ async function syncCurrentFile(syncWithServer = true) {
         }
     }
 
-    if (path === CHAT_PATH) {
+    if (path === INBOX_PATH) {
         // Try to load local changes.
         if (chatIsClean) {
             try {
                 let inMemoryLastModified = getMemFile(path)?.lastModified;
-                let file = await ((await getFileHandle(CHAT_PATH)).getFile());
+                let file = await ((await getFileHandle(INBOX_PATH)).getFile());
 
                 // Update last modified in memory.
                 let memFile = getMemFile(path);
@@ -1294,7 +1294,7 @@ async function syncCurrentFile(syncWithServer = true) {
                 let chatFileExists = inMemoryLastModified !== undefined;
                 if (inMemoryLastModified !== localLastModified) {
                     console.log(files);
-                    await openFile(CHAT_PATH);
+                    await openFile(INBOX_PATH);
                     isSyncingCurrentFile = false;
                     return;
                 }
@@ -1307,7 +1307,7 @@ async function syncCurrentFile(syncWithServer = true) {
 
         if (syncWithServer) {
             try {
-                await syncLocalFileWithServer(CHAT_PATH);
+                await syncLocalFileWithServer(INBOX_PATH);
             } catch (error) {
                 console.error('Error during sync with server:', error);
             }
@@ -1686,7 +1686,7 @@ function findSiblingPath(path) {
     let foundDesiredPath = false;
     let nextPath = null;
     walk(files, (filePath, isFile) => {
-        if (filePath === CONFIG_PATH || filePath === CHAT_PATH) {
+        if (filePath === CONFIG_PATH || filePath === INBOX_PATH) {
             return;
         }
 
@@ -1716,7 +1716,7 @@ function findSiblingPath(path) {
 
 async function removeCurrentFile() {
     const path = currentEditor.path;
-    if (path === CHAT_PATH) {
+    if (path === INBOX_PATH) {
         return;
     }
 

@@ -386,7 +386,7 @@ func (b *Bot) saveFromTextMsg(u Update) error {
 		if shouldCollapse {
 			// We just write at the end of our append-only chat file,
 			// that would concat the current message with the previous one.
-			err := b.createOrAdd(fs.DirRoot, fs.ChatFilename, msg)
+			err := b.createOrAdd(fs.DirRoot, fs.InboxFilename, msg)
 			if err != nil {
 				return fmt.Errorf("save collapsed: %w", err)
 			}
@@ -453,7 +453,7 @@ func (b *Bot) saveFromImage(u Update) error {
 	if updateHasTime {
 		_, shouldCollapse := collapseToMsg(b.userID, msgTime)
 		if shouldCollapse {
-			err := b.createOrAdd(fs.DirRoot, fs.ChatFilename, content)
+			err := b.createOrAdd(fs.DirRoot, fs.InboxFilename, content)
 			if err != nil {
 				return fmt.Errorf("save collapsed: %w", err)
 			}
@@ -1002,7 +1002,7 @@ func (b *Bot) ShowToday(_ []string) error {
 	}
 
 	// Adding records from chat
-	content, err := b.fs.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := b.fs.Read(fs.DirRoot, fs.InboxFilename)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("show today: can't read chat file: %w", err)
 	}

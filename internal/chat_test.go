@@ -99,7 +99,7 @@ func TestSaveToChatNewFile(t *testing.T) {
 	r.NoError(err)
 	r.Equal(0, index)
 
-	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := userFS.Read(fs.DirRoot, fs.InboxFilename)
 	r.NoError(err)
 	r.Equal("#### 27 June, Thursday\n`01:01` Test content\n", content)
 }
@@ -116,7 +116,7 @@ func TestSaveToChatExistingFile(t *testing.T) {
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 
-	err = userFS.Write(fs.DirRoot, fs.ChatFilename, "#### 27 June, Thursday\n`00:30` Existing content\n")
+	err = userFS.Write(fs.DirRoot, fs.InboxFilename, "#### 27 June, Thursday\n`00:30` Existing content\n")
 	r.NoError(err)
 
 	bot := NewBot(-1, tg.NewFakeTG(), userFS, db.NewFakeDB(), fakeConfig())
@@ -125,7 +125,7 @@ func TestSaveToChatExistingFile(t *testing.T) {
 	r.NoError(err)
 	r.Equal(1, index)
 
-	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := userFS.Read(fs.DirRoot, fs.InboxFilename)
 	r.NoError(err)
 	r.Equal("#### 27 June, Thursday\n`00:30` Existing content\n`01:01` New content\n", content)
 }
@@ -142,7 +142,7 @@ func TestSaveToChatNewDay(t *testing.T) {
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 
-	err = userFS.Write(fs.DirRoot, fs.ChatFilename, "#### 27 June, Thursday\n`00:30` Yesterday content\n")
+	err = userFS.Write(fs.DirRoot, fs.InboxFilename, "#### 27 June, Thursday\n`00:30` Yesterday content\n")
 	r.NoError(err)
 
 	bot := NewBot(-1, tg.NewFakeTG(), userFS, db.NewFakeDB(), fakeConfig())
@@ -151,7 +151,7 @@ func TestSaveToChatNewDay(t *testing.T) {
 	r.NoError(err)
 	r.Equal(1, index)
 
-	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := userFS.Read(fs.DirRoot, fs.InboxFilename)
 	r.NoError(err)
 	r.Equal("#### 27 June, Thursday\n`00:30` Yesterday content\n#### 28 June, Friday\n`01:01` Today content\n", content)
 }
@@ -174,7 +174,7 @@ func TestSaveToChatWithImage(t *testing.T) {
 	r.NoError(err)
 	r.Equal(0, index)
 
-	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := userFS.Read(fs.DirRoot, fs.InboxFilename)
 	r.NoError(err)
 	r.Equal("#### 27 June, Thursday\n`01:01` ![](image.jpg) Image description\n", content)
 }
@@ -191,7 +191,7 @@ func TestSaveToChatEmptyFile(t *testing.T) {
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
 
-	err = userFS.Write(fs.DirRoot, fs.ChatFilename, "")
+	err = userFS.Write(fs.DirRoot, fs.InboxFilename, "")
 	r.NoError(err)
 
 	bot := NewBot(-1, tg.NewFakeTG(), userFS, db.NewFakeDB(), fakeConfig())
@@ -200,7 +200,7 @@ func TestSaveToChatEmptyFile(t *testing.T) {
 	r.NoError(err)
 	r.Equal(0, index)
 
-	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := userFS.Read(fs.DirRoot, fs.InboxFilename)
 	r.NoError(err)
 	r.Equal("#### 27 June, Thursday\n`01:01` Test content\n", content)
 }
@@ -227,7 +227,7 @@ func TestSaveToChatEmptyFile(t *testing.T) {
 //	r.NoError(err)
 //	r.Equal(1, index)
 //
-//	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+//	content, err := userFS.Read(fs.DirRoot, fs.InboxFilename)
 //	r.NoError(err)
 //	// Should use EST time which is 20:01 (8:01 PM) the previous day
 //	r.Contains(content, "`20:01` Test content")
@@ -539,7 +539,7 @@ func TestMoveFromChatSingleRecord(t *testing.T) {
 #### 28 June, Friday
 ` + "`03:03`" + ` Third record`
 
-	err = userFS.Write(fs.DirRoot, fs.ChatFilename, initialContent)
+	err = userFS.Write(fs.DirRoot, fs.InboxFilename, initialContent)
 	r.NoError(err)
 
 	bot := NewBot(-1, tg.NewFakeTG(), userFS, db.NewFakeDB(), fakeConfig())
@@ -566,7 +566,7 @@ func TestMoveFromChatSingleRecord(t *testing.T) {
 	expectedTime, _ := time.Parse("2 January 15:04", "27 June 02:02")
 	r.Equal(expectedTime, callbackCalls[0].timestamp)
 
-	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := userFS.Read(fs.DirRoot, fs.InboxFilename)
 	r.NoError(err)
 
 	expectedContent := `#### 27 June, Thursday
@@ -593,7 +593,7 @@ milk, bread, eggs
 discuss project timeline
 and resource allocation`
 
-	err = userFS.Write(fs.DirRoot, fs.ChatFilename, initialContent)
+	err = userFS.Write(fs.DirRoot, fs.InboxFilename, initialContent)
 	r.NoError(err)
 
 	bot := NewBot(-1, tg.NewFakeTG(), userFS, db.NewFakeDB(), fakeConfig())
@@ -624,7 +624,7 @@ and resource allocation`
 	expectedTime2, _ := time.Parse("2 January 15:04", "2 July 09:15")
 	r.Equal(expectedTime2, callbackCalls[1].timestamp)
 
-	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := userFS.Read(fs.DirRoot, fs.InboxFilename)
 	r.NoError(err)
 
 	expectedContent := `#### 1 July, Monday
@@ -649,7 +649,7 @@ func TestMoveFromChatCollapsedSingleRecord(t *testing.T) {
 #### 28 June, Friday
 ` + "`03:03`" + ` Third record`
 
-	err = userFS.Write(fs.DirRoot, fs.ChatFilename, initialContent)
+	err = userFS.Write(fs.DirRoot, fs.InboxFilename, initialContent)
 	r.NoError(err)
 
 	bot := NewBot(-1, tg.NewFakeTG(), userFS, db.NewFakeDB(), fakeConfig())
@@ -676,7 +676,7 @@ func TestMoveFromChatCollapsedSingleRecord(t *testing.T) {
 	expectedTime, _ := time.Parse("2 January 15:04", "27 June 02:02")
 	r.Equal(expectedTime, callbackCalls[0].timestamp)
 
-	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := userFS.Read(fs.DirRoot, fs.InboxFilename)
 	r.NoError(err)
 
 	expectedContent := `#### 27 June, Thursday
@@ -703,7 +703,7 @@ milk, bread, eggs
 discuss project timeline
 and resource allocation`
 
-	err = userFS.Write(fs.DirRoot, fs.ChatFilename, initialContent)
+	err = userFS.Write(fs.DirRoot, fs.InboxFilename, initialContent)
 	r.NoError(err)
 
 	bot := NewBot(-1, tg.NewFakeTG(), userFS, db.NewFakeDB(), fakeConfig())
@@ -735,7 +735,7 @@ Morning workout`
 	expectedTime, _ := time.Parse("2 January 15:04", "1 July 10:30")
 	r.Equal(expectedTime, callbackCalls[0].timestamp)
 
-	content, err := userFS.Read(fs.DirRoot, fs.ChatFilename)
+	content, err := userFS.Read(fs.DirRoot, fs.InboxFilename)
 	r.NoError(err)
 
 	expectedContent := `#### 1 July, Monday

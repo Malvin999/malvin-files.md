@@ -1,5 +1,5 @@
 // HyperMD/Codemirror editor
-let isChat = false;
+let isInbox = false;
 let isWelcome = false;
 let debug = false;
 // let debug = {dir: '', file: 'Sim.md', loaded: false};
@@ -450,7 +450,7 @@ function createAutocompleteDict() {
 
     // Collect all files with their metadata
     walkFilesExcludingSystemDirs((path) => {
-        if (path === CONFIG_PATH || path === CHAT_PATH) {
+        if (path === CONFIG_PATH || path === INBOX_PATH) {
             return;
         }
 
@@ -481,7 +481,7 @@ function createAutocompleteDict() {
         }
 
         Object.keys(files[dir]).forEach(filename => {
-            if (filename === CONFIG_PATH || filename === CHAT_PATH) {
+            if (filename === CONFIG_PATH || filename === INBOX_PATH) {
                 return;
             }
             const key = `${filename.replace(/\.md$/, '')}`;
@@ -688,7 +688,7 @@ window.addEventListener('keydown', async (event) => {
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
         if (chatContainer.style.display !== 'none') {
-            const selectedMessages = chat.querySelectorAll('.message.selected');
+            const selectedMessages = inbox.querySelectorAll('.message.selected');
             if (selectedMessages.length > 0) {
                 selectedMessages.forEach(message => message.classList.remove('selected'));
                 event.preventDefault();
@@ -704,25 +704,25 @@ document.addEventListener('keydown', (event) => {
         hideEditor2();
         editor.focus();
 
-        const allMessages = chat.querySelectorAll('.message');
+        const allMessages = inbox.querySelectorAll('.message');
         allMessages.forEach(message => message.classList.remove('selected'));
         // If in chat, focus chat input
-        if (isChat) {
+        if (isInbox) {
             chatInput.focus();
         }
     }
 });
 
 function openBot() {
-    if (isChat) {
+    if (isInbox) {
         return;
     }
 
     sidebarContainer.style.display = 'none';
     content.style.display = 'none';
-    chat.style.display = 'flex';
+    inbox.style.display = 'flex';
     input.focus();
-    isChat = true;
+    isInbox = true;
 
     let cmd = {
         n: 'today',
@@ -745,7 +745,7 @@ async function switchChat() {
 document.addEventListener('keydown', function (event) {
     if (event.shiftKey && isMetaKey(event) && event.key === 'Enter') {
         event.preventDefault();
-        if (isChat) {
+        if (isInbox) {
             history.back();
         } else {
             openChat();
@@ -935,7 +935,7 @@ async function getRootDirHandle() {
 // Reload files once the app gains focus.
 window.addEventListener('focus', async () => {
     // We don't want to do heavy stuff when chat is open.
-    if (isChat || isWelcome) {
+    if (isInbox || isWelcome) {
         return false;
     }
 
@@ -969,7 +969,7 @@ window.addEventListener('focus', async () => {
 window.addEventListener('blur', async function () {
     console.log('Window lost focus');
     editor.refresh();
-    if (!isChat) {
+    if (!isInbox) {
         return;
     }
 
@@ -1028,7 +1028,7 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    if (isChat) {
+    if (isInbox) {
         return;
     }
 }, true);
@@ -1043,7 +1043,7 @@ function toggleSidebar() {
     } else {
         sidebar.style.display = 'none';
         openSidebar.style.display = 'block';
-        if (isChat) {
+        if (isInbox) {
             chatInput.focus();
         } else {
             currentEditor.focus();
