@@ -61,7 +61,7 @@ async function setup(page) {
                 await writable.close();
             }
 
-            await root.getFileHandle('Chat.txt', { create: true });
+            await root.getFileHandle('Inbox.txt', { create: true });
             const fileHandle =  await root.getFileHandle('config.json', { create: true });
             const writable = await fileHandle.createWritable()
             await writable.write('{}');
@@ -360,12 +360,12 @@ test('files exist on both client and server, serverFiles contains proper server 
         return server['files'];
     });
     expect(filesOnServer).toEqual({
-        'Chat.txt': {
+        'Inbox.txt': {
             hash: expect.any(Number),
             isFile: true,
             lastModified: expect.any(Number),
             lastClientModified: null,
-            path: '/Chat.txt'
+            path: '/Inbox.txt'
         },
         'Notes.md': {
             hash: expect.any(Number),

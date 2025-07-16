@@ -1,4 +1,4 @@
-const CHAT_PATH = '/Chat.txt';
+const CHAT_PATH = '/Inbox.txt';
 let messages = [];
 let chatIsClean = true; // Are there any unsaved changes?
 

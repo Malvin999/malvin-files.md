@@ -54,7 +54,7 @@ func TestSaveFromTextMsg(t *testing.T) {
 	err = bot.Reply(tg.NewUpd(-1, "New task"))
 	r.NoError(err)
 
-	chat, err := bot.fs.Read("/", "Chat.txt")
+	chat, err := bot.fs.Read("/", "Inbox.txt")
 	r.NoError(err)
 
 	r.Equal("#### 29 June, Sunday\n`12:00` New task\n", chat)
@@ -418,7 +418,7 @@ func TestSaveFromPhotoWithCaption(t *testing.T) {
 	err = bot.Reply(upd)
 	r.NoError(err)
 
-	content, err := userFS.Read("/", "Chat.txt")
+	content, err := userFS.Read("/", "Inbox.txt")
 	r.NoError(err)
 	r.Equal("#### 11 August, Sunday\n`09:54` ![](media/tg_PHOTO_ID)\nCaption\n", content)
 
@@ -461,7 +461,7 @@ func TestSaveFromPhotoWithLongCaption(t *testing.T) {
 	err = bot.Reply(upd)
 	r.NoError(err)
 
-	content, err := userFS.Read("/", "Chat.txt")
+	content, err := userFS.Read("/", "Inbox.txt")
 	r.NoError(err)
 	r.Equal("#### 11 August, Sunday\n`09:54` ![](media/tg_PHOTO_ID)\nAaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n", content)
 
@@ -498,7 +498,7 @@ func TestSaveFromPhotoWithSanitizedCaption(t *testing.T) {
 	err = bot.Reply(upd)
 	r.NoError(err)
 
-	content, err := userFS.Read("/", "Chat.txt")
+	content, err := userFS.Read("/", "Inbox.txt")
 	r.NoError(err)
 	r.Equal("#### 11 August, Sunday\n`09:54` ![](media/tg_PHOTO_ID)\nCaption/\n", content)
 
@@ -546,7 +546,7 @@ func TestSaveFromPhotoWithoutCaption(t *testing.T) {
 	err = bot.Reply(upd)
 	r.NoError(err)
 
-	content, err := userFS.Read("/", "Chat.txt")
+	content, err := userFS.Read("/", "Inbox.txt")
 	r.NoError(err)
 	r.Equal("#### 11 August, Sunday\n`09:54` ![](media/tg_PHOTO_ID)\n", content)
 
@@ -1480,7 +1480,7 @@ func TestMoveToExistingFile(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	err = userFS.Write("/", "Chat.txt", "#### 27 June, Friday\n`12:00` New message")
+	err = userFS.Write("/", "Inbox.txt", "#### 27 June, Friday\n`12:00` New message")
 	r.NoError(err)
 	err = userFS.Write("", "Existing file.md", "")
 	r.NoError(err)
@@ -1509,7 +1509,7 @@ func TestMoveToExistingFileExistingRecord(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	err = userFS.Write("/", "Chat.txt", "#### 27 June, Friday\n`12:00` New message")
+	err = userFS.Write("/", "Inbox.txt", "#### 27 June, Friday\n`12:00` New message")
 	r.NoError(err)
 	err = userFS.Write("", "Existing file.md", "### 11.08.2024 Sunday\nContent")
 	r.NoError(err)
@@ -1731,7 +1731,7 @@ func TestMoveToChecklistSplittable(t *testing.T) {
 	err = bot.Reply(tg.NewUpd(-1, "item1\nitem2"))
 	r.NoError(err)
 
-	content, err := userFS.Read("/", "Chat.txt")
+	content, err := userFS.Read("/", "Inbox.txt")
 	r.NoError(err)
 	r.Equal("#### 11 August, Sunday\n`09:54` Item1\nitem2\n", content)
 
@@ -1857,7 +1857,7 @@ func TestMoveToJournal(t *testing.T) {
 	err = userFS.CreateDirsIfNotExist()
 	r.NoError(err)
 
-	err = userFS.Write("/", "Chat.txt", "#### 27 June, Friday\n`01:01` Multiline\ncontent")
+	err = userFS.Write("/", "Inbox.txt", "#### 27 June, Friday\n`01:01` Multiline\ncontent")
 	r.NoError(err)
 
 	tgram := tg.NewFakeTG()
@@ -1874,7 +1874,7 @@ func TestMoveToJournal(t *testing.T) {
 	r.NoError(err)
 	r.Equal("#### 1 January, Thursday\n`00:00` Multiline\ncontent\n", content)
 
-	content, err = userFS.Read("/", "Chat.txt")
+	content, err = userFS.Read("/", "Inbox.txt")
 	r.NoError(err)
 	r.Equal("#### 27 June, Friday", content)
 }
@@ -2555,7 +2555,7 @@ func TestSaveToExistingFile(t *testing.T) {
 	err = userFS.CreateDirsIfNotExist()
 	r.NoError(err)
 
-	err = userFS.Write("/", "Chat.txt", "#### 27 June, Friday\n`01:01` Existing\nmessage")
+	err = userFS.Write("/", "Inbox.txt", "#### 27 June, Friday\n`01:01` Existing\nmessage")
 	r.NoError(err)
 	err = userFS.Write("", "File.md", "#### 1 January 1970, Thursday\nExisting content")
 	r.NoError(err)
@@ -2643,7 +2643,7 @@ func TestSaveToExistingFileModeTasks(t *testing.T) {
 	err = userFS.CreateDirsIfNotExist()
 	r.NoError(err)
 
-	err = userFS.Write("/", "Chat.txt", "#### 27 June, Friday\n`01:01` New\ncontent")
+	err = userFS.Write("/", "Inbox.txt", "#### 27 June, Friday\n`01:01` New\ncontent")
 	r.NoError(err)
 	err = userFS.Write("", "File.md", "#### 1 January 1970, Thursday\nExisting\ncontent")
 	r.NoError(err)
@@ -2728,7 +2728,7 @@ func TestSaveToNewFile(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	err = userFS.Write("/", "Chat.txt", "#### 1 January, Thursday\n`01:01` New\ncontent")
+	err = userFS.Write("/", "Inbox.txt", "#### 1 January, Thursday\n`01:01` New\ncontent")
 	r.NoError(err)
 	err = userFS.CreateDirsIfNotExist()
 	r.NoError(err)
@@ -2749,7 +2749,7 @@ func TestSaveToNewFile(t *testing.T) {
 	err = bot.Reply(tg.NewUpd(-1, "Text"))
 	r.NoError(err)
 
-	content, err := userFS.Read("/", "Chat.txt")
+	content, err := userFS.Read("/", "Inbox.txt")
 	r.NoError(err)
 	r.Equal("#### 1 January, Thursday\n`01:01` New\ncontent\n`00:00` Text\n", content)
 
@@ -2814,7 +2814,7 @@ func TestSaveToNewDirFull(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	err = userFS.Write("/", "Chat.txt", "#### 1 January, Thursday\n")
+	err = userFS.Write("/", "Inbox.txt", "#### 1 January, Thursday\n")
 	r.NoError(err)
 	err = userFS.CreateDirsIfNotExist()
 	r.NoError(err)
@@ -3397,7 +3397,7 @@ func TestCollapseForwardedMessages(t *testing.T) {
 	err = bot.Reply(upd)
 	r.NoError(err)
 
-	content, err := userFS.Read("/", "Chat.txt")
+	content, err := userFS.Read("/", "Inbox.txt")
 	r.NoError(err)
 	r.Equal("#### 1 January, Thursday\n`00:00` First msg\nSecond msg\nThird msg\n`00:00` Fourth msg\n", content)
 
@@ -3633,7 +3633,7 @@ func TestSaveFromImage_MultilineCaption(t *testing.T) {
 	err = bot.saveFromImage(upd)
 	r.NoError(err)
 
-	content, err := userFS.Read("/", "Chat.txt")
+	content, err := userFS.Read("/", "Inbox.txt")
 	r.NoError(err)
 	r.Equal("#### 11 August, Sunday\n`09:54` ![](media/tg_PHOTO_ID)\nAbc\ndef\n", content)
 
@@ -4142,7 +4142,7 @@ func TestJournalOnlyMode_SaveTextMessage(t *testing.T) {
 //	r.NoError(err)
 //	r.True(len(rootFiles) > 0)
 //
-//	content, err := bot.fs.Read("", "Chat.txt")
+//	content, err := bot.fs.Read("", "Inbox.txt")
 //	r.NoError(err)
 //	r.Equal("File content", content)
 //}
