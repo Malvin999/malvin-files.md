@@ -327,21 +327,22 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
                         if (!/^ {0,3}\>/.test(stream.string))
                             ans += " line-HyperMD-quote-lazy"; // ">" is omitted
                     }
-                    // if (bol && (tmp = current.match(/^\s+/))) {
-                    //     stream.pos = tmp[0].length; // rewind
-                    //     ans += " hmd-indent-in-quote";
-                    //     return ans.trim();
-                    // }
-                    // // make indentation (and potential list bullet) monospaced
-                    // if (/^>\s+$/.test(current) && stream.peek() != ">") {
-                    //     stream.pos = stream.start + 1; // rewind!
-                    //     current = ">";
-                    //     state.hmdOverride = function (stream, state) {
-                    //         stream.match(listInQuoteRE);
-                    //         state.hmdOverride = null;
-                    //         return "hmd-indent-in-quote line-HyperMD-quote line-HyperMD-quote-" + state.quote;
-                    //     };
-                    // }
+                    if (bol && (tmp = current.match(/^\s+/))) {
+                        stream.pos = tmp[0].length; // rewind
+                        ans += " hmd-indent-in-quote";
+                        return ans.trim();
+                    }
+                    // make indentation (and potential list bullet) monospaced
+                    if (/^>\s+$/.test(current) && stream.peek() != ">") {
+                        // PATCHED, bad indentation for word-wrapped lines
+                        // stream.pos = stream.start + 1; // rewind!
+                        current = ">";
+                        state.hmdOverride = function (stream, state) {
+                            stream.match(listInQuoteRE);
+                            state.hmdOverride = null;
+                            return "hmd-indent-in-quote line-HyperMD-quote line-HyperMD-quote-" + state.quote;
+                        };
+                    }
                 }
                 //#endregion
                 //#region List
