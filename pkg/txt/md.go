@@ -96,6 +96,21 @@ func RemoveChecklistItem(md, itemOrHash string) (string, string) {
 	return strings.Join(newLines, "\n"), removedItem
 }
 
+func ChecklistItem(md, itemOrHash string) string {
+	lines := strings.Split(md, "\n")
+	for _, line := range lines {
+		if len(line) < 6 {
+			continue
+		}
+
+		line = strings.TrimSpace(line)
+		if Hash(line[6:]) == itemOrHash || line[6:] == itemOrHash {
+			return line[6:]
+		}
+	}
+	return ""
+}
+
 // MarkdownToHTML naively converts user's markdown to Telegram-supported subset of HTML.
 // We don't need to implement full-blown AST parser because TG only supports a few HTML tags.
 // Telegram supports the following HTML tags:

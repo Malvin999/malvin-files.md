@@ -248,6 +248,7 @@ func (b *Bot) handlers() map[string]func([]string) error {
 		// Button's commands (callbacks)
 		consts.CmdShowRenameFile:              b.showRenameFile,
 		consts.CmdShowMultilineTask:           b.showMultilineTask,
+		consts.CmdShowLongItem:                b.showLongItem,
 		consts.CmdShowFile:                    b.showFile,
 		consts.CmdShowChecklist:               b.showChecklist,
 		consts.CmdCompleteListItem:            b.completeListItem,
@@ -978,15 +979,21 @@ func (b *Bot) ShowToday(_ []string) error {
 		return fmt.Errorf("show today: can't read today file: %w", err)
 	}
 	if len(todayChecklistMD) != 0 {
-		items := txt.ChecklistItems(todayChecklistMD)
-		for item, isCompleted := range items {
+		tasks := txt.ChecklistItems(todayChecklistMD)
+		for task, isCompleted := range tasks {
 			if isCompleted {
 				continue
 			}
 
-			cmd := tg.NewCmd(consts.CmdCompleteChecklistItem, []string{fs.Hash(fs.TodayFilename), fs.Hash(item)})
-			btn := tg.NewBtn(i18n.AddEmoji(item), cmd)
-			kb.AddRow(btn)
+			if len(task) >= maxTitleLengthForMobile {
+				cmd := tg.NewCmd(consts.CmdShowLongItem, []string{fs.Hash(fs.TodayFilename), fs.Hash(task)})
+				btn := tg.NewBtn(i18n.AddEmoji("eyes"), cmd)
+				kb.AddRow(btn)
+			} else {
+				cmd := tg.NewCmd(consts.CmdCompleteChecklistItem, []string{fs.Hash(fs.TodayFilename), fs.Hash(task)})
+				btn := tg.NewBtn(i18n.AddEmoji(task), cmd)
+				kb.AddRow(btn)
+			}
 		}
 	}
 
@@ -1490,6 +1497,63 @@ func (b *Bot) showMultilineTask(params []string) error {
 		b.db.SetRecentFilenameByMsgID(msgID, filename)
 		b.db.SetRecentDirByMsgID(msgID, dir)
 	}
+
+	return nil
+}
+
+func (b *Bot) showLongItem(params []string) error {
+	checklistHash := params[0]
+	itemHash := params[1]
+
+	checklist, err := b.fs.Unhash(fs.DirRoot, checklistHash)
+	if err != nil {
+		return fmt.Errorf("complete checklist item: can't unhash checklist %s: %w", checklistHash, err)
+	}
+
+	checklistMD, err := b.fs.Read(fs.DirRoot, checklist)
+	if err != nil {
+		return fmt.Errorf("complete checklist item: can't read checklist %s: %w", checklist, err)
+	}
+
+	item := txt.ChecklistItem(checklistMD, itemHash)
+
+	//var moveToLaterBtn tg.Btn
+	//btnLabel := i18n.StrMoveToLaterLong
+	//toDir := fs.DirLater
+	//if dir == fs.DirLater {
+	//	btnLabel = i18n.StrToToday
+	//	toDir = fs.DirToday
+	//}
+	//moveToLaterBtn = tg.NewBtn(btnLabel, tg.NewCmd(consts.CmdMoveToExistingDirFromToday, []string{toDir, dir, filenameHash}))
+
+	//moveBtn := tg.NewBtn(
+	//	txt.Emoji(i18n.Emoji("right arrow"), b.tr("Move to")),
+	//	tg.NewCmd(consts.CmdShowMoveToFromToday, []string{filenameHash}),
+	//)
+
+	cmd := consts.CmdShowToday
+	if checklist == fs.LaterFilename {
+		cmd = consts.CmdShowLater
+	}
+
+	kb := tg.NewKeyboard([]tg.Row{
+		//tg.NewRow(moveToLaterBtn, moveBtn),
+		tg.NewRow(
+			tg.NewBtn(i18n.StrBack, tg.NewCmd(cmd, []string{})),
+			tg.NewBtn(i18n.StrComplete, tg.NewCmd(consts.CmdCompleteChecklistItem, []string{checklistHash, itemHash})),
+		),
+	})
+
+	err = b.showMD(item, kb)
+	if err != nil {
+		return fmt.Errorf("show task: %w", err)
+	}
+
+	//msgID, hasLastKeyboard := b.db.LastKeyboardMsgID()
+	//if hasLastKeyboard {
+	//	b.db.SetRecentFilenameByMsgID(msgID, filename)
+	//	b.db.SetRecentDirByMsgID(msgID, dir)
+	//}
 
 	return nil
 }

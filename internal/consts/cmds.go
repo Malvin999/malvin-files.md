@@ -23,6 +23,7 @@ const (
 	CmdCompleteFromChat            = "c_ch"
 	CmdPostpone                    = "post"
 	CmdShowMultilineTask           = "task"
+	CmdShowLongItem                = "item"
 	CmdShowFile                    = "file"
 	CmdShowChecklist               = "checklist"
 	CmdShowChecklistItem           = "check_show"
