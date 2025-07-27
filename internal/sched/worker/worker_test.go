@@ -32,7 +32,7 @@ func init() {
 //	b := b2
 //
 //	pomodoroIn := func(dirName string) bool {
-//		hasPomodoroInDir, err := b.fs.Exists(dirName, fs.PomodoroFilename)
+//		hasPomodoroInDir, err := b.fs.Exists(dirName, fs.PomodoroTask)
 //		r.NoError(err)
 //		return hasPomodoroInDir
 //	}
@@ -49,7 +49,7 @@ func init() {
 //	r.Nil(b.togglePomodoro(nil))
 //	r.True(pomodoroIn(fs.DirToday) && !pomodoroIn(fs.DirArchive))
 //	// complete it
-//	r.Nil(b.complete([]string{fs.DirToday, fs.PomodoroFilename}))
+//	r.Nil(b.complete([]string{fs.DirToday, fs.PomodoroTask}))
 //	r.True(!pomodoroIn(fs.DirToday) && pomodoroIn(fs.DirArchive))
 //	// and remove pomodoro from trash
 //	r.Nil(b.togglePomodoro(nil))
@@ -79,7 +79,7 @@ func init() {
 // 	}()
 
 // 	pomodoroIn := func(dirName string) bool {
-// 		hasPomodoroInDir, err := b.fs.Exists(dirName, fs.PomodoroFilename)
+// 		hasPomodoroInDir, err := b.fs.Exists(dirName, fs.PomodoroTask)
 // 		r.NoError(err)
 // 		return hasPomodoroInDir
 // 	}
@@ -91,7 +91,7 @@ func init() {
 // 	// set pomodoro duration to 1us
 // 	r.NoError(b.conf.SetPomodoroDuration(time.Nanosecond))
 // 	// complete it
-// 	r.NoError(b.complete([]string{fs.DirToday, fs.PomodoroFilename}))
+// 	r.NoError(b.complete([]string{fs.DirToday, fs.PomodoroTask}))
 // 	r.True(!pomodoroIn(fs.DirToday) && pomodoroIn(fs.DirArchive))
 // 	// "wait" until it gets back to today
 // 	r.NoError(worker.MoveDueTasksToToday("", "conf", fsBackend))
@@ -116,7 +116,7 @@ func init() {
 //	}()
 //
 //	pomodoroIn := func(dirName string) bool {
-//		hasPomodoroInDir, err := b.fs.Exists(dirName, fs.PomodoroFilename)
+//		hasPomodoroInDir, err := b.fs.Exists(dirName, fs.PomodoroTask)
 //		r.NoError(err)
 //		return hasPomodoroInDir
 //	}
@@ -125,7 +125,7 @@ func init() {
 //	r.NoError(b.togglePomodoro(nil))
 //	r.True(pomodoroIn(fs.DirToday) && !pomodoroIn(fs.DirArchive))
 //	r.NoError(b.conf.SetPomodoroDuration(2 * time.Second))
-//	r.NoError(b.complete([]string{fs.DirToday, fs.PomodoroFilename}))
+//	r.NoError(b.complete([]string{fs.DirToday, fs.PomodoroTask}))
 //	r.True(!pomodoroIn(fs.DirToday) && pomodoroIn(fs.DirArchive))
 //	// trigger due tasks processing
 //	r.NoError(worker.MoveDueTasksToToday("", "conf", fsBackend))

@@ -53,11 +53,12 @@ const (
 	DirWatch    = "_watch_"
 	DirShop     = "_shop_"
 
-	TodayFilename    = "Today.txt"
-	LaterFilename    = "Later.txt"
-	DoneFilename     = "Done.txt"
-	InboxFilename    = "Inbox.txt"
-	PomodoroFilename = "Finished a break.md"
+	TodayFilename = "Today.txt"
+	LaterFilename = "Later.txt"
+	DoneFilename  = "Done.txt"
+	InboxFilename = "Inbox.txt"
+
+	PomodoroTask = "Finished a break"
 
 	MDExt = ".md"
 

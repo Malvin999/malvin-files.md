@@ -401,25 +401,6 @@ func (b *Bot) saveFromTextMsg(u Update) error {
 		return b.addToRepliedFile(replyMsgID, msg)
 	}
 
-	//if b.cfg.TasksOnlyMode() {
-	//	sanitizedTitle, content, err := b.extractTitleAndContent(msg)
-	//	if err != nil {
-	//		return fmt.Errorf("save: %w", err)
-	//	}
-	//
-	//	filename := fs.Filename(sanitizedTitle)
-	//	err = b.createOrAdd(fs.DirToday, filename, content)
-	//	if err != nil {
-	//		return fmt.Errorf("save: %w", err)
-	//	}
-	//
-	//	msgID, _ := u.MsgID()
-	//	b.db.SetRecentDirByMsgID(msgID, fs.DirToday)
-	//	b.db.SetRecentFilenameByMsgID(msgID, filename)
-	//
-	//	return b.showMoveTo([]string{fs.Hash(filename)})
-	//}
-
 	msgIndex, err := b.saveToChat(msg, b.cfg.Timezone())
 	if err != nil {
 		return fmt.Errorf("save to chat: %w", err)
@@ -472,22 +453,6 @@ func (b *Bot) saveFromImage(u Update) error {
 	if err != nil {
 		return fmt.Errorf("save from image: %w", err)
 	}
-
-	//title := strings.SplitN(strings.TrimSpace(u.Caption()), "\n", 2)[0]
-	//title = strings.TrimSpace(title)
-	//if utf8.RuneCountInString(title) > maxTitleLength {
-	//	title = txt.Substr(title, 0, maxTitleLength) + "..."
-	//}
-	//if title == "" {
-	//	title = fmt.Sprintf("Img %s", now().Format("02.01.06 15:04"))
-	//}
-	//sanitizedTitle := fs.SanitizeFilename(title)
-	//
-	//filename := fs.Filename(sanitizedTitle)
-	//err = b.createOrAdd(fs.DirToday, filename, content)
-	//if err != nil {
-	//	return fmt.Errorf("save from image: %w", err)
-	//}
 
 	if b.cfg.ChatOnlyMode() {
 		msgID, _ := u.MsgID()
@@ -1143,14 +1108,29 @@ func (b *Bot) showLaterTasks(_ []string) error {
 func (b *Bot) todayLabel(msgsCount ...int) string {
 	var statusBar string
 
-	hasPomodoroInToday, _ := b.fs.Exists(fs.DirToday, fs.PomodoroFilename)
+	hasPomodoroInToday := false
+	todayMD, err := b.fs.Read(fs.DirRoot, fs.TodayFilename)
+	if err == nil {
+		items := txt.ChecklistItems(todayMD)
+		checked, exists := items[fs.PomodoroTask]
+		hasPomodoroInToday = exists && !checked
+	}
 	if hasPomodoroInToday {
-		statusBar = i18n.Emoji(fs.Title(fs.PomodoroFilename))
+		statusBar = i18n.Emoji(fs.Title(fs.PomodoroTask))
 	}
 
-	filesAndDirs, _ := b.fs.FilesAndDirs(fs.DirToday)
-	todayTasks := fs.ExcludePomodoro(fs.OnlyMDFiles(filesAndDirs))
-	tasksCount := len(todayTasks)
+	items := txt.ChecklistItems(todayMD)
+	tasksCount := 0
+	for task, completed := range items {
+		if completed {
+			continue
+		}
+		if task == fs.PomodoroTask {
+			continue
+		}
+
+		tasksCount++
+	}
 
 	if len(msgsCount) > 0 && msgsCount[0] > 0 {
 		tasksCount += msgsCount[0]
@@ -1693,7 +1673,7 @@ func (b *Bot) moveToDir(params []string) error {
 	}
 
 	toDir, err := b.fs.Unhash(fs.DirRoot, toDirHash)
-	canCreateMissingDir := slices.Contains([]string{fs.DirArchive, fs.DirToday, fs.DirLater, fs.DirHabits}, toDirHash)
+	canCreateMissingDir := slices.Contains([]string{fs.DirArchive, fs.DirHabits}, toDirHash)
 	if err != nil {
 		if canCreateMissingDir {
 			// It will be created later in createOrAdd.
@@ -1971,11 +1951,6 @@ func (b *Bot) moveToDirChecklist(params []string) error {
 	}
 	checklistDirHash := params[1]
 
-	//filename, err := b.fs.Unhash(fs.DirToday, msgIndex)
-	//if err != nil {
-	//	return fmt.Errorf("move to checkilst: %w", err)
-	//}
-
 	checklistDir, err := b.fs.Unhash(fs.DirRoot, checklistDirHash)
 	// Default directories can be created later
 	canCreateMissingDir := slices.Contains([]string{fs.DirWatch, fs.DirShop, fs.DirRead}, checklistDirHash)
@@ -1991,11 +1966,6 @@ func (b *Bot) moveToDirChecklist(params []string) error {
 		isMultiline := txt.IsMultiline(content)
 
 		if isMultiline && b.cfg.ShouldSplitChecklist(checklistDir) {
-			//content, err := b.fs.Read(fs.DirToday, filename)
-			//if err != nil {
-			//	return fmt.Errorf("move to checklistDir: %w", err)
-			//}
-
 			content = strings.TrimSpace(txt.NormNewLines(content))
 			lines := strings.Split(content, "\n")
 			for _, line := range lines {
@@ -2019,9 +1989,6 @@ func (b *Bot) moveToDirChecklist(params []string) error {
 	if err != nil {
 		return fmt.Errorf("move to checklistDir: can't read content from chat: %w", err)
 	}
-
-	//// We can tolerate this
-	//_ = b.fs.Del(fs.DirToday, filename)
 
 	return b.ShowToday(nil)
 }
@@ -2134,11 +2101,6 @@ func (b *Bot) moveToJournal(params []string) error {
 		return fmt.Errorf("failed to move to journal: can't add record: %w", err)
 	}
 
-	//err = b.fs.Del(fs.DirToday, fromFilename)
-	//if err != nil {
-	//	return fmt.Errorf("failed to move to journal: can't delete note: %w", err)
-	//}
-
 	b.delAllKeyboards()
 	msg := txt.Emoji(i18n.Emoji("journal"), i18n.Tr("Saved to <b>journal</b>"))
 	_, _ = b.tg.Send(b.userID, msg, nil, tg.MarkupHTML)
@@ -2232,7 +2194,7 @@ func (b *Bot) complete(params []string) error {
 		return fmt.Errorf("complete: can't complete %s: %w", filename, err)
 	}
 
-	if dir == fs.DirToday && filename == fs.PomodoroFilename {
+	if dir == fs.DirToday && filename == fs.PomodoroTask {
 		err = b.cfg.AddToSchedule(filename, time.Now().Unix()+int64(b.cfg.PomodoroDuration().Seconds()), "")
 		if err != nil {
 			return fmt.Errorf("complete: can't add to schedule: %w", err)
@@ -2269,7 +2231,7 @@ func (b *Bot) completeFromChat(params []string) error {
 		return fmt.Errorf("complete: can't read content from chat: %w", err)
 	}
 
-	//if dir == fs.DirToday && filename == fs.PomodoroFilename {
+	//if dir == fs.DirToday && filename == fs.PomodoroTask {
 	//	err = b.cfg.AddToSchedule(filename, time.Now().Unix()+int64(b.cfg.PomodoroDuration().Seconds()), "")
 	//	if err != nil {
 	//		return fmt.Errorf("complete: can't add to schedule: %w", err)
@@ -2501,31 +2463,10 @@ func (b *Bot) showMoveToFileOrDir(params []string) error {
 	}
 	maxRecentBtns := maxGroupedBtnsInMoveTo
 
-	//filename := ""
-	//_ = filename
-	// If there's a second param that we want to show all the buttons (user clicked More...)
 	userWantedAllBtns := len(params) > 1
 	if userWantedAllBtns {
 		maxRecentBtns = maxBtns
-		//var err error
-		//// TODO fix unhash
-		//filename, err = b.fs.Unhash(fs.DirRoot, msgIndex)
-		//if err != nil {
-		//	return fmt.Errorf("to file dialog: %w", err)
-		//}
 	} else {
-		// For the first time we have to move file to the root directory, as this is not a task anymore
-		//var err error
-		//filename, err = b.fs.Unhash(fs.DirToday, msgIndex)
-		//if err != nil {
-		//	return fmt.Errorf("to file dialog: %w", err)
-		//}
-		//
-		//err = b.fs.Rename(fs.DirToday, filename, fs.DirRoot, filename)
-		//if err != nil {
-		//	return fmt.Errorf("to file dialog: %w", err)
-		//}
-
 		//b.db.SetRecentCommand(consts.CmdMoveToExistingFile)
 		//b.db.SetRecentCommandParams([]string{fs.ShortHash(filename), fs.ShortHash(fs.DirToday)})
 	}
@@ -2677,39 +2618,42 @@ func (b *Bot) toChecklistKeyboard(filenameHash string) (*tg.Keyboard, error) {
 
 func (b *Bot) togglePomodoro(_ []string) error {
 	// Check if Pomodoro is already running
-	hasPomodoroInToday, err := b.fs.Exists(fs.DirToday, fs.PomodoroFilename)
-	if err != nil {
-		return fmt.Errorf("toggle pomodoro: failed to check if pomodoro is already running %w", err)
+	hasPomodoroInToday := false
+	todayMD, err := b.fs.Read(fs.DirRoot, fs.TodayFilename)
+	if err == nil {
+		_, hasPomodoroInToday = txt.ChecklistItems(todayMD)[fs.PomodoroTask]
 	}
-	hasPomodoroInTrash, err := b.fs.Exists(fs.DirArchive, fs.PomodoroFilename)
-	if err != nil {
-		return fmt.Errorf("toggle pomodoro: failed to check if pomodoro is already running %w", err)
+
+	hasPomodoroInArchive := false
+	doneMD, err := b.fs.Read(fs.DirArchive, fs.DoneFilename)
+	if err == nil {
+		_, hasPomodoroInArchive = txt.ChecklistItems(doneMD)[fs.PomodoroTask]
 	}
 
 	if hasPomodoroInToday {
-		err = b.fs.Del(fs.DirToday, fs.PomodoroFilename)
+		err = b.fs.Del(fs.DirToday, fs.PomodoroTask)
 		if err != nil {
 			return fmt.Errorf("toggle pomodoro: failed to delete pomodoro file: %w", err)
 		}
 	}
-	if hasPomodoroInTrash {
-		err = b.fs.Del(fs.DirArchive, fs.PomodoroFilename)
+	if hasPomodoroInArchive {
+		err = b.fs.Del(fs.DirArchive, fs.PomodoroTask)
 		if err != nil {
 			return fmt.Errorf("toggle pomodoro: failed to delete pomodoro file: %w", err)
 		}
 	}
 
-	if hasPomodoroInToday || hasPomodoroInTrash {
-		// Just an informative messages
+	if hasPomodoroInToday || hasPomodoroInArchive {
 		_, _ = b.tg.Send(b.userID, "Pomodoro is stopped", nil, tg.MarkupHTML)
 		return b.ShowToday(nil)
 	}
 
+	//todayMD, err = b.fs.Read(fs.DirRoot, fs.TodayFilename)
+	//if err != nil {
+	//	return fmt.Errorf("toggle pomodoro: failed to show pomodoro hint message %w", err)
+	//}
 	// Create Pomodoro task
-	err = b.fs.Touch(fs.DirToday, fs.PomodoroFilename)
-	if err != nil {
-		return fmt.Errorf("toggle pomodoro: failed to show pomodoro hint message %w", err)
-	}
+	err = b.fs.Write(fs.DirRoot, fs.TodayFilename, txt.AddChecklistItem(todayMD, fs.PomodoroTask, false))
 
 	_, err = b.tg.Send(b.userID, i18n.PomodoroStarted, nil, tg.MarkupHTML)
 	if err != nil {
