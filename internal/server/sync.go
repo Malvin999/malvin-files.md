@@ -306,7 +306,7 @@ func SyncText(w http.ResponseWriter, r *http.Request) {
 			logSync(fmt.Sprintf("Modified only on server, sending server copy to client: '%s'", path), r)
 			content = serverContent
 		} else if fileWasModifiedOnServer { // Modified on both server and client
-			logSync(fmt.Sprintf("File '%s' was modified on server at %d, but on client at %d", path, serverLastModified, clientFile.LastModified), r)
+			logSync(fmt.Sprintf("File '%s' was modified on server at %d, but on client at %d", path, serverLastModified, clientFile.ClientLastModified), r)
 			logSync(fmt.Sprintf("Merging and writing one clientFile: '%s'", path), r)
 			content = Merge(serverContent, clientFile.Content)
 			status = StatusMerged

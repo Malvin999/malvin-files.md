@@ -955,6 +955,12 @@ async function moveFile(oldPath, newPath) {
 }
 
 // Returns server file or null if not found.
+// {
+//     hash,
+//     lastModified,
+//     lastClientModified,
+//     path,
+// }
 function getServerFile(path) {
     let dirs = path.split('/');
     dirs = dirs.filter(d => d !== '');
@@ -1751,4 +1757,8 @@ window.addEventListener('beforeunload', function () {
 
 
 // Worker to process the saving queue
-window.saver = setInterval(syncCurrentFile, CURRENT_FILE_SYNC_INTERVAL);
+window.saver = setInterval(() => {
+    if (document.hasFocus()) {
+        syncCurrentFile();
+    }
+}, CURRENT_FILE_SYNC_INTERVAL);
