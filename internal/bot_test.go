@@ -1064,7 +1064,7 @@ func TestSettingsMainPanel(t *testing.T) {
 		tg.NewBtn("-", tg.NewCmd("nothing", nil)),
 		tg.NewBtn("⚡️ Quick buttons", tg.NewCmd("c_quick_btns", nil)),
 		tg.NewBtn("➡️ Move to buttons", tg.NewCmd("c_move_btns", nil)),
-		tg.NewBtn("🌍 Timezone", tg.NewCmd("timezone", nil)),
+		tg.NewBtn("🌎 Timezone", tg.NewCmd("timezone", nil)),
 		tg.NewBtn("🏠 Today", tg.NewCmd("today", nil)),
 	},
 	), tgram.LastSentKeyboard)
