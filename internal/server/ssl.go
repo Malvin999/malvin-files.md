@@ -9,7 +9,7 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-func ssl(logger *log.Logger, certDir string, hosts ...string) *http.Server {
+func jsl(logger *log.Logger, certDir string, hosts ...string) *http.Server {
 	autocertManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(hosts...),
@@ -24,9 +24,9 @@ func ssl(logger *log.Logger, certDir string, hosts ...string) *http.Server {
 		srv := &http.Server{
 			Addr:         ":80",
 			Handler:      autocertManager.HTTPHandler(nil),
-			IdleTimeout:  30 * time.Second,
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
+			IdleTimeout:  1 * time.Minute,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 1 * time.Minute, // Otherwise we get net::ERR_HTTP2_PROTOCOL_ERROR (RST_STREAM) errors on slow clients (I personally experienced it in South America)
 			ErrorLog:     logger,
 		}
 

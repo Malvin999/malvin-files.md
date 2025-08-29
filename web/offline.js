@@ -115,6 +115,7 @@ async function handleRequest(request) {
                 return new Response('Network failed', { status: 503 });
             }
 
+            console.warn(`Fetch failed (attempt ${i + 1}), retrying...`, error);
             await new Promise(resolve => setTimeout(resolve, 500));
         }
     }
