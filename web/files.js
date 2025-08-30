@@ -333,8 +333,10 @@ async function syncLocalFileWithServer(path) {
     setServerFile(path, serverFile.content, serverFile.lastModified, lastClientModified);
     console.log(`Saved server file for ${path} with timestamp ${serverFile.lastModified}`);
     saveServerFiles();
-    console.log('Opening file after sync');
-    await openFile(path);
+    if (path === editor.path) {
+        console.log('Opening file after sync');
+        await openFile(path);
+    }
     console.log('File synced with server');
 }
 
@@ -1186,8 +1188,7 @@ async function openFile(path, saveToHistory = true, el = 'editor-textarea') {
     }
 
     const end = performance.now();
-    console.log(`File opened in: ${(end - start).toFixed(3)} milliseconds`);
-    // Get the editor instance
+    console.log(`File ${path} opened in: ${(end - start).toFixed(3)} milliseconds`);
 
     // Once we spent enough time in file, set viewportMargin to infinity to prevent artefacts.
     // Artefacts can be observed during text selection (cmd+a).
