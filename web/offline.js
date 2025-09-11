@@ -74,7 +74,7 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener("activate", (event) => {
-    log("Service worker is activated");
+    console.log("Service worker is activated");
 
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -119,7 +119,7 @@ async function handleRequest(request) {
 
         } catch (error) {
             if (i === 2) {
-                log(`Using cache`, error);
+                console.log(`Using cache`, error);
                 return await caches.match(request);
             }
 

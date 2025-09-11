@@ -561,7 +561,7 @@ async function collectModifiedAndDeletedFiles() {
             return;
         }
 
-        if (path.startsWith('/media/')) {
+        if (path.startsWith('/media/') || path === LOG_PATH) {
             return;
         }
 
@@ -810,9 +810,6 @@ async function addToTextFile(path, content) {
         // TODO fix once Chromium fixes the bug
         throw new Error('Invalid file name');
     }
-
-    // We don't use log to cause recursion
-    console.log('Appending to file...', path);
 
     const writable = await fileHandle.createWritable({ keepExistingData: true });
     await writable.seek(await fileHandle.getFile().then(file => file.size));
