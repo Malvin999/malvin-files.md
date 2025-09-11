@@ -2828,12 +2828,16 @@ func (b *Bot) showToADayRecurring(params []string) error {
 // addToFile adds content at the top of the file.
 // Creates a file if not exists.
 func (b *Bot) addToFile(dir, filename, content string) error {
-	existingContent, _ := b.fs.Read(dir, filename)
+	existingContent, err := b.fs.Read(dir, filename)
+	// Ignore if file is missing, it would be created.
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("add to file: can't read existing file: %w", err)
+	}
 
 	header := fmt.Sprintf("#### %d %s %d, %s", now().Day(), now().Format("January"), now().Year(), now().Weekday())
 	newContent := txt.InsertTextAfterHeader(existingContent, header, content)
 
-	err := b.fs.Write(dir, filename, newContent)
+	err = b.fs.Write(dir, filename, newContent)
 	if err != nil {
 		return fmt.Errorf("add to file: can't save file: %w", err)
 	}

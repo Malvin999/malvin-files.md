@@ -123,6 +123,7 @@ func (b *Bot) moveFromInbox(
 	copy(sortedMsgIndices, msgIndices)
 	sort.Ints(sortedMsgIndices)
 
+	// Collect specified messages from inbox.
 	var msgs []struct {
 		content   string
 		timestamp time.Time
