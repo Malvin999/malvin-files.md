@@ -789,7 +789,7 @@ async function saveTextFile(path, content) {
         throw new Error('Invalid file name');
     }
 
-    const fileExists = !await exists([path]);
+    const fileExists = !await exists(path);
     if (fileExists || !await isContentEqual(path, content)) {
         // TODO what if we're syncing first time and already have changes?
         log('Hashes do not match, writing file...', path);
