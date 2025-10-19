@@ -1571,7 +1571,6 @@ func TestShowMoveTo(t *testing.T) {
 			{Name: "💚 To Journal", Cmd: tg.Cmd{Name: "mv_to_journal", Params: []string{"0"}, Type: "cmd"}},
 			{Name: "✅ To Today", Cmd: tg.Cmd{Name: "add_item", Params: []string{"92199fc4b0c", "0"}, Type: "cmd"}},
 		},
-		[]tg.Btn{{Name: "👌", Cmd: tg.Cmd{Name: "today", Params: []string{}, Type: "cmd"}}},
 	},
 	)
 	r.Equal(kb, tgram.LastSentKeyboard)
@@ -2494,7 +2493,7 @@ func TestSaveToNewTask(t *testing.T) {
 	}
 
 	mode := userconfig.DefaultConfig.Mode
-	userconfig.DefaultConfig.Mode = userconfig.ModeTasks
+	userconfig.DefaultConfig.Mode = userconfig.ModeFull
 	defer func() {
 		userconfig.DefaultConfig.Mode = mode
 	}()
@@ -2654,7 +2653,7 @@ func TestSaveToExistingFileModeTasks(t *testing.T) {
 	}
 
 	mode := userconfig.DefaultConfig.Mode
-	userconfig.DefaultConfig.Mode = userconfig.ModeTasks
+	userconfig.DefaultConfig.Mode = userconfig.ModeFull
 	defer func() {
 		userconfig.DefaultConfig.Mode = mode
 	}()
@@ -2926,7 +2925,7 @@ func TestSaveToNewDir(t *testing.T) {
 	}
 
 	mode := userconfig.DefaultConfig.Mode
-	userconfig.DefaultConfig.Mode = userconfig.ModeTasks
+	userconfig.DefaultConfig.Mode = userconfig.ModeFull
 	defer func() {
 		userconfig.DefaultConfig.Mode = mode
 	}()
@@ -3187,7 +3186,7 @@ func TestSaveToRecentFile(t *testing.T) {
 	}
 
 	mode := userconfig.DefaultConfig.Mode
-	userconfig.DefaultConfig.Mode = userconfig.ModeTasks
+	userconfig.DefaultConfig.Mode = userconfig.ModeFull
 	defer func() {
 		userconfig.DefaultConfig.Mode = mode
 	}()
