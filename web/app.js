@@ -388,6 +388,9 @@ document.addEventListener('keydown', function (event) {
     if (isMetaKey(event) && event.key === '\\') {
         toggleSidebar();
     }
+    if (isMetaKey(event) && event.key === '.') {
+        toggleSidebar();
+    }
     if (isMetaKey(event) && event.key === 'Enter') {
         openInbox();
     }
