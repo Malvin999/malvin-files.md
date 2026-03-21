@@ -77,7 +77,7 @@ const (
 	CmdInlineQuerySearchInDir          = "search_dir"
 	CmdWebAppHabits                    = "habits"
 	CmdAddToJournalShortcut            = "j"
-	CmdAddToJournalAndContinueShortcut = "jd"
+	CmdAddToJournalAndContinueShortcut = "ja"
 	CmdAddToRecentFileShortcut         = "+"
 	CmdCompleteHabit                   = "ch"
 	CmdShare                           = "share"
@@ -85,6 +85,6 @@ const (
 
 var Shortcuts = map[string][]string{
 	CmdAddToJournalShortcut:            {"/ж", "jj", "жж"},
-	CmdAddToJournalAndContinueShortcut: {"жд", "ja"},
+	CmdAddToJournalAndContinueShortcut: {"жд", "jd", "ja"},
 	CmdAddToRecentFileShortcut:         {"++"},
 }
