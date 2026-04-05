@@ -6,10 +6,10 @@ import (
 
 	"github.com/zakirullin/files.md/config"
 	"github.com/zakirullin/files.md/i18n"
-	"github.com/zakirullin/files.md/server/consts"
-	"github.com/zakirullin/files.md/server/userconfig"
 	"github.com/zakirullin/files.md/pkg/tg"
 	"github.com/zakirullin/files.md/pkg/txt"
+	"github.com/zakirullin/files.md/server/consts"
+	"github.com/zakirullin/files.md/server/userconfig"
 )
 
 const (

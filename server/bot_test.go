@@ -12,14 +12,14 @@ import (
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 
+	"github.com/zakirullin/files.md/pkg/tg"
+	"github.com/zakirullin/files.md/pkg/txt"
 	"github.com/zakirullin/files.md/server/consts"
 	"github.com/zakirullin/files.md/server/db"
 	"github.com/zakirullin/files.md/server/fs"
 	"github.com/zakirullin/files.md/server/journal"
 	"github.com/zakirullin/files.md/server/sched"
 	"github.com/zakirullin/files.md/server/userconfig"
-	"github.com/zakirullin/files.md/pkg/tg"
-	"github.com/zakirullin/files.md/pkg/txt"
 )
 
 func init() {

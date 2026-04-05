@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/zakirullin/files.md/i18n"
-	"github.com/zakirullin/files.md/server/consts"
 	"github.com/zakirullin/files.md/pkg/tg"
+	"github.com/zakirullin/files.md/server/consts"
 )
 
 var AvailableMoveToBtns = []tg.Btn{

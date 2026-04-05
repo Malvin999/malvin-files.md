@@ -11,8 +11,8 @@ import (
 	"github.com/rivo/uniseg"
 
 	"github.com/zakirullin/files.md/i18n"
-	"github.com/zakirullin/files.md/server/fs"
 	"github.com/zakirullin/files.md/pkg/txt"
+	"github.com/zakirullin/files.md/server/fs"
 )
 
 // [1 => false, <year day> => 0, 1...]

@@ -91,13 +91,15 @@ init_server: # create directories and configuration files on the service
 		mkdir -p /app/storage && \
 		mkdir -p /var/log/files.md && \
 		mkdir -p /opt/files.md && \
+		mkdir -p /opt/files.md/tokens && \
 		chown -R www-data:www-data /app && \
 		chown -R www-data:www-data /var/log/files.md && \
 		chown -R www-data:www-data /opt/files.md && \
 		echo 'BOT_API_TOKEN=' > /app/.env && \
 		echo 'STORAGE_DIR=/app/storage' >> /app/.env && \
-		echo 'SERVER_CERT_DIR=/opt/files.md' >> /app/.env && \
-		echo 'SERVER_LOG_FILE=/var/log/files.md/server.log' >> /app/.env && \
+		echo 'CERT_DIR=/opt/files.md' >> /app/.env && \
+		echo 'TOKENS_DIR=/opt/files.md/tokens' >> /app/.env && \
+		echo 'LOG_FILE=/var/log/files.md/server.log' >> /app/.env && \
 		chown www-data:www-data /app/.env && \
 		( \
 			echo '[Unit]' > /etc/systemd/system/server.service && \
