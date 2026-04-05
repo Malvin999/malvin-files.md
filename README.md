@@ -1,4 +1,4 @@
-<img src="https://github.com/zakirullin/files.md/raw/main/web/icon.png" alt="Files.md Bot logo" title="Files.md Bot" align="right" height="76" />
+<img src="https://github.com/zakirullin/files.md/raw/main/web/icon.png" alt="Files.md logo" title="Files.md" align="right" height="76" />
 
 # What is it?
 A radically simple application for your personal knowledge base.
@@ -7,6 +7,8 @@ You can store whole your life in `.md` files:
 - 📝 Notes, Projects
 - ✅ Tasks, Checklists
 - 💚 Journal, Habits
+
+<img src="https://github.com/zakirullin/files.md/raw/main/web/files.md.png" alt="Files.md screenshot" title="Files.md"/>
 
 ## Why?
 I'll give you a concrete example.
