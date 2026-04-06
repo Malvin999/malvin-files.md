@@ -19,25 +19,26 @@ All in plain `.md` files, locally.
 4) I spend time travelling through notes and thinking it through.
 5) Software development and brain-related notes suddenly appeared to be very related.
 6) I got the insight.
-7) I wrote an article about [Cogitnive Load in Software Development](https://github.com/zakirullin/cognitive).
+7) I wrote an article about [Cogitnive Load in Software Development](https://github.com/zakirullin/cognitive-load).
 
 Many considered it a great write-up.  
 
-The app helped me to:
+All this activity helped me to:
 - **Think deeply**  
 - **Write insightful texts**
 - **Connect knowledge across domains**  
 
 To achieve all that, **you'll have to use your brain**. Not advanced workflows or AI automations.  
 
-## How? 
-<img src="https://github.com/zakirullin/files.md/raw/main/web/bot.png" alt="Telegram Bot screenshot" title="Telegram Bot"/>
-
+## How?
 I reuse long-learned pattern - messaging with a friend.  
 
 Only now I send notes and ideas to the bot.  
 
+And it saves everything to `.md` files nicely.  
+
 ## Telegram Bot 🤖
+<img src="https://github.com/zakirullin/files.md/raw/main/web/bot.jpg" alt="Telegram Bot screenshot" title="Telegram Bot"/>
 
 When we are focused and distracting information comes in, we want to get rid of it as quickly as possible. To do that, just send whatever is distracting you to the bot. Then choose how you want to save it - as a task, a note, or a journal entry. By default, it will be saved as today's task.
 
