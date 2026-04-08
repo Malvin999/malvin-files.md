@@ -94,13 +94,13 @@ deploy_systemd: # deploy as systemd service, TODO make timestamps hussle in sepa
 	ssh $(host) "mv /app/server.new /app/server && systemctl daemon-reload && systemctl restart server.service" && \
 	rm /tmp/server && \
 	printf "$${YELLOW}Versioning current files with commit: $${COMMIT_HASH}$${RESET}\n" && \
-	find . -name "*.html" -exec grep -l "?v=" {} \; | xargs sed -i '' 's/?v=/?v='"$${COMMIT_HASH}"'/g' && \
-	tar --no-xattrs --disable-copyfile --no-fflags -czf web.tar.gz web && \
-	scp web.tar.gz files:/app/ && \
+	TMPWEB=$$(mktemp -d) && \
+	cp -r web "$${TMPWEB}/web" && \
+	find "$${TMPWEB}/web" -name "*.html" -exec grep -l "?v=" {} \; | xargs sed -i '' 's/?v=/?v='"$${COMMIT_HASH}"'/g' && \
+	tar --no-xattrs --disable-copyfile --no-fflags -czf "$${TMPWEB}/web.tar.gz" -C "$${TMPWEB}" web && \
+	scp "$${TMPWEB}/web.tar.gz" files:/app/ && \
 	ssh files "cd /app && tar -xzf web.tar.gz && rm web.tar.gz" && \
-	rm web.tar.gz && \
-	printf "$${GREEN}Removing versioning$${RESET}\n" && \
-	find . -name "*.html" -exec grep -l "?v=$${COMMIT_HASH}" {} \; | xargs sed -i '' 's/?v='"$${COMMIT_HASH}"'/?v=/g' && \
+	rm -rf "$${TMPWEB}" && \
 	printf "$${GREEN}Successfully deployed!$${RESET}\n"
 
 deploy_binary: # deploy as regular binary, kinda deprecated, but ok for simple setup
