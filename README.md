@@ -24,11 +24,12 @@ Maybe. But this time:
 - Radically simple code. **Easy for one person or an LLM to understand**
 - Portable, no build systems, just open `web/index.html` 
 - Out of the box synchronization
-- The server is just one binary
+- The server is just one binary 
 - You can set up the server inside your protected network in seconds
+- You can also use iCloud/Dropbox/Google Drive for sync
 - Telegram Bot as an on-the-go entry point to your files
 
-## Are there enough features?
+## Are there enough features and plugins?
 Enough to do the real work.  
 
 1) I used `files.md` to grow my knowledge about Software Development and Brain.
