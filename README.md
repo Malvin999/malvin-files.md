@@ -14,7 +14,22 @@ All in plain `.md` files, locally.
 
 You can try it out: [app.files.md](https://app.files.md)
 
-## Why?
+## Another note-taking app?
+Maybe. But this time: 
+- Only necessary features, **restrictions foster creativity**
+- No need to install anything, all you need is a browser
+- Works offline, Progressive Web Application
+- Local first
+- No telemetry or whatsoever - truly Open Source
+- Radically simple code
+- Portable, no build systems, just open `web/index.html` 
+- The server is just one binary
+- Out of the box synchronization
+- Telegram Bot as an on-the-go entry point to your files
+
+
+## Are there enough features?
+Enough to do the real work.  
 
 1) I used `files.md` to grow my knowledge about Software Development and Brain.
 2) I added new notes to the base. One idea per note.
@@ -48,14 +63,6 @@ To do that, just send whatever is distracting you to the bot. Then choose how yo
 
 It works like a regular chat, so it's easier to use because there's less resistance.  
 We're used to sending messages to friends, now we're going to send stuff to the bot.
-
-## Another note-taking app?
-Maybe. What could set it apart, is the simplicity.  
-The whole project should fit into one person's head.  
-
-1) Client app is located at `web/`. Offline-first PWA application, with no build systems whatsoever, just open `web/index.html` file.
-2) Server is located at `server/`. It 
-
 
 
 ## Run your own Bot
