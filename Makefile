@@ -46,6 +46,8 @@ report:
 
 define ENV_FILE
 BOT_API_TOKEN=
+API_HOST=$(apihost)
+APP_HOST=app.files.md
 STORAGE_DIR=/app/storage
 CERT_DIR=/opt/files.md
 TOKENS_DIR=/opt/files.md/tokens
@@ -72,7 +74,7 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 WantedBy=multi-user.target
 endef
 
-# make init_server host=root@1.2.3.4 salt=my-secret-salt
+# make init_server host=root@1.2.3.4 salt=my-secret-salt apihost=api.example.com
 export ENV_FILE SERVICE_FILE
 init_server: # create directories and configuration files on the server
 	ssh $(host) 'sudo mkdir -p /app/storage /var/log/files.md /opt/files.md /opt/files.md/tokens && \
