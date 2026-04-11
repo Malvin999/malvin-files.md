@@ -2,7 +2,8 @@
 // Scans all .md files in a directory first to resolve link targets by filename.
 //
 // Usage: go run ./cmd/tomdlinks <dir>
-//        go run ./cmd/tomdlinks --dry-run <dir>
+//
+//	go run ./cmd/tomdlinks --dry-run <dir>
 package main
 
 import (

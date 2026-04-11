@@ -69,12 +69,11 @@ To do that, just send whatever is distracting you to the bot. Then choose how yo
 It works like a regular chat, so it's easier to use because there's less resistance.  
 We're used to sending messages to friends, now we're going to send stuff to the bot.
 
-## Scripts
-All scripts are in `cmd/` and can be run on your knowledge base directory:
+## Useful scripts for your files ✨ 
+All scripts are in `cmd/` and can be run **inside your files directory**:
 ```bash
-
-# Parse Whoop CSV export and print 10-day journal summary
-go run /abs/path/to/files.md/cmd/whoop/whoop.go ./path-to-whoop-export
+# Parse Whoop CSV export and print 10-day journal summary. Put your whoop csvs files into whoop folder
+go run /abs/path/to/files.md/cmd/whoop/whoop.go 
 
 # Convert [[wikilinks]] to standard markdown links [Name](/path.md)
 go run /abs/path/to/files.md/cmd/tomdlinks/tomdlinks.go --dry-run .
@@ -89,55 +88,7 @@ go run /abs/path/to/files.md/cmd/shifttime/shifttime.go
 
 ```
 
-
-## Run your own Bot
-1) Install [Go](https://go.dev/doc/install)
-2) Register new telegram bot via [@BotFather](https://t.me/BotFather)
-3) Copy your bot token to `.env` file (see `.env.example`)
-4) Run the bot:
-```bash
-$ go run ./cmd/tgbot
-```
-
-Bot's artifacts can be seen in `./storage/<USER_ID>` folder
-
-## Init Server
-```bash
-$ make init_server host=<YOUR_SSH_HOST> salt=<YOUR_SECRET_SALT>
-```
-
-## Transfer knowledge base to another server
-0) Be sure that all client app fully synced with the server (bring the app in the focus)
-1) Stop bot on old server, so no new files would be created.
-2) Compress all the files on one server: `tar -czvf storage.tar.gz storage`
-3) scp the file to your host machine: `scp SSH_HOST:/app/storage.tar.gz .`
-4) scp the file to your target machine
-
-Synchronization is relying on `mtime`, so after compressing/decompressing the flag wouldn't be lost. 
-
-1) `cd /opt/files.md`
-2) `tar -czvf tokens.tar.gz tokens`
-3) scp to same dir on target machine
-
-We don't need to transfer fslog (renames), if we're certain that all clients read the log.
-
-1) Extract all files on new server
-2) Transfer bot_token
-3) Launch server
-4) Execute `localStorage.setItem('ApiHost', 'YOUR_NEW_API_HOST');` in your PWA applications
-5) Make sure that all files are available
-6) Shutdown an old server
-...
-
-
-
-## Repository structure
-`/cmd/server` - entrypoint for telegram bot (stable release)  
-`/cmd/bot` - entrypoint for local standalone bot (beta version)  
-`/internal` - bot's code (reused for both telegram/local bots)  
-`/pkg` - various packages   
-`/web` - standalone web application for viewing/editing files (alpha version, Chrome only)   
-
+Install [Go](https://go.dev/doc/install) for scripts to run.
 
 ## App 📝
 [app.files.md](https://app.files.md), is a standalone application for viewing/editing files, alpha version. Works offline. See `/web/index.html` for more details.
@@ -148,7 +99,7 @@ We don't need to transfer fslog (renames), if we're certain that all clients rea
 `[` to create a link.  
 `ctrl + cmd + space` to show emoji dialog.  
 
-## Storage file structure
+## Files structure
 We differentiate the following types of files (with `/` denoting your root folder):
 - Inbox: `/Inbox.md` — incoming messages, append-only chat log
 - Tasks: `/Today.md`, `/Later.md` — checklist-based task lists
@@ -161,6 +112,25 @@ We differentiate the following types of files (with `/` denoting your root folde
 - Media: `/media/*` — images (png, jpg, webp, gif)
 - Archive: `/archive/*`, `/archive/Done.md` — completed items
 - Config: `/config.json` — per-user settings
+
+## Deploy on your own server
+Prepare server (tested on Debian-based systems):
+```bash
+$ make init_server host=<YOUR_SSH_HOST> salt=<YOUR_SECRET_SALT>
+```
+
+Deploy a systemd service:
+```bash
+$ make deploy_systemd host=<YOUR_SSH_HOST>
+```
+
+## Run your own Telegram Bot
+1) Install [Go](https://go.dev/doc/install)
+2) Register new telegram bot via [@BotFather](https://t.me/BotFather)
+3) Add `BOT_API_TOKEN=<YOUR_TELEGRAM_API_TOKEN>` line to `.env` file
+4) Redeploy/relaunch the server
+
+Bot's artifacts can be seen in `/app/storage/<USER_ID>` folder
 
 ## How we contribute
 - No long-lived branches except `main`
@@ -233,9 +203,35 @@ Read 4K randomly from SSD = 150,000 ns
 - Package db.go doesn't store userID (we often use it separately...) Do we? Maybe we gonna use it without userID (like global bot stats?). Added: moved userID to class. Maybe in later we'll need this class outside of user's scope, but let's stay in the future :)
 - We can't ucfist filename in fs.Put - what if that was user-created file (outside the bot), i.e. it comes with lowercase
 
-## Notes about Dropbox
-- Symlink created on server will be synced on client as is (without resolving)
-- To prevent symlinks attack our storage path should be mounted via `nosymfollow` flag
+## Transfer files to another server
+0) Be sure that all client app fully synced with the server (bring the app in the focus)
+1) Stop bot on old server, so no new files would be created.
+2) Compress all the files on one server: `tar -czvf storage.tar.gz storage`
+3) scp the file to your host machine: `scp SSH_HOST:/app/storage.tar.gz .`
+4) scp the file to your target machine
+
+Synchronization is relying on `mtime`, so after compressing/decompressing the flag wouldn't be lost.
+
+1) `cd /opt/files.md`
+2) `tar -czvf tokens.tar.gz tokens`
+3) scp to same dir on target machine
+
+We don't need to transfer fslog (renames), if we're certain that all clients read the log.
+
+1) Extract all files on new server
+2) Transfer `BOT_API_TOKEN`
+3) Launch server
+4) Execute `localStorage.setItem('ApiHost', 'YOUR_NEW_API_HOST');` in your PWA applications
+5) Make sure that all files are available
+6) Shutdown an old server
+TBD
+
+## Repository structure
+`/cmd/server` - entrypoint for telegram bot (stable release)  
+`/cmd/bot` - entrypoint for local standalone bot (beta version)  
+`/internal` - bot's code (reused for both telegram/local bots)  
+`/pkg` - various packages   
+`/web` - standalone web application for viewing/editing files (alpha version, Chrome only)
 
 ## Overarching design principles
 - `Clarity`: The code’s purpose and rationale is clear to the reader.
@@ -258,5 +254,5 @@ Refer to [the following document](https://github.com/zakirullin/cognitive-load) 
 - We prefer real implementations or at least fakes over mocks and stubs
 - Imports should only be renamed to avoid a name collision with other imports
 
-## Front
+## Frontend
 - Use PATCHED keyword if you modify assets in-place
