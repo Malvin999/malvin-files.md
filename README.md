@@ -106,6 +106,31 @@ Bot's artifacts can be seen in `./storage/<USER_ID>` folder
 $ make init_server host=<YOUR_SSH_HOST> salt=<YOUR_SECRET_SALT>
 ```
 
+## Transfer knowledge base to another server
+0) Be sure that all client app fully synced with the server (bring the app in the focus)
+1) Stop bot on old server, so no new files would be created.
+2) Compress all the files on one server: `tar -czvf storage.tar.gz storage`
+3) scp the file to your host machine: `scp SSH_HOST:/app/storage.tar.gz .`
+4) scp the file to your target machine
+
+Synchronization is relying on `mtime`, so after compressing/decompressing the flag wouldn't be lost. 
+
+1) `cd /opt/files.md`
+2) `tar -czvf tokens.tar.gz tokens`
+3) scp to same dir on target machine
+
+We don't need to transfer fslog (renames), if we're certain that all clients read the log.
+
+1) Extract all files on new server
+2) Transfer bot_token
+3) Launch server
+4) Execute `localStorage.setItem('ApiHost', 'YOUR_NEW_API_HOST');` in your PWA applications
+5) Make sure that all files are available
+6) Shutdown an old server
+...
+
+
+
 ## Repository structure
 `/cmd/server` - entrypoint for telegram bot (stable release)  
 `/cmd/bot` - entrypoint for local standalone bot (beta version)  
@@ -178,7 +203,7 @@ Read 4K randomly from SSD = 150,000 ns
 - Removed WASM. I had a bug when a message was removed from Inbox.txt, and was not added to a file (I pressed "move to file" button). I wasn't able to reproduce the issue, but what I found is a lot of complexity. JS -> Go (writeFile) -> Go awaiting a promise from JS -> JS Golang runtime somewhere in between -> JS (writeFile) -> Go (returning from promise) -> Sending results back to JS. And it has to be done in a separate goroutine, because both WASM and JS are running in the same thread. Also, Golang's WASM is still experimental. We have too many components and a lot of uncertainty involved. I didn't want to implement same functionality in JS back then, at the solution served for some time. Now it's time to reimplement the functionality in JS and give up all this complexity. Also, inbox.wasm is ~8MB and I wanted the application to be really small.  
 - Decided to use OPFS as an initial driver for file system. Better browsers support, less hustle for users. The app starts with OPFS driver by default, if needed, user can replace the driver with Local FileSystem API by opening a local dir. DirHandle would be saved to IndexedDB in such scenario and reused every time.
 - Root folder is now '/', not ''. All files in webapp are identified by path, not by 'dir' + 'filename', restricting to 1 level of nesting.
-- Dropbox is changing some metadata for newfly created files, thus ctime is changed. I was thinking about moving to mtime for sync, but that wouldn't allow us detect renames (though, we detect them through a separate mechanism anyway), so mtime can be more reliable. Also sync won't be triggered by permission/ownership change etc. Migrated to mtime. Mtime is used for content-based sync, ctime is used for append-only sync log (renames/del).
+- Dropbox is changing some metadata for newfly created files, thus ctime is changed. I was thinking about moving to mtime for sync, but that wouldn't allow us detect renames (though, we detect them through a separate mechanism anyway), so mtime can be more reliable. Also sync won't be triggered by permission/ownership change etc. Migrated to mtime. Mtime is used for content-based sync, ctime is used for append-only sync log (renames/del). Also we can restore mtime from .git/archive, unlike ctime.
 - Decided to migrate every flow to Chat.md, even todo lists. Added - we can't work with multiline tasks with this flow, we may want support both files and indices. We have two ways of doing so - encode params in a uniform way, and use same command handlers with IFs. Or we can use different command handlers to handle chat/file movements. I decided to go for different command handlers. Added, if we go for different commands - move to buttons config would be complicated. Added, maybe we can move files back to Chat.md on "file move", and reuse the existing flow? Added, so far seems good. Our chat.md log acts as an append-only log. As a bonus, if we don't finish some flow (like schedule/move), the content would be saved in log and we can continue scheduling/moving from the app.
 - All incoming messages go to Chat.md now by default. Before that they got moved to `/today` (and become tasks), which was good for a simple todo list, but not as convenient for other use cases. I realized that during meetings, all I needed was a simple input field where I can dump whatever stuff from my head with no further immediate action. With a possibility to review and organize it later. It can be tasks, it can be journal records, or it can be files. Also, it's better to have a really simple easy to understand default flow - we dump all the messages into one file, and that's it.  
 - Default mode for chat is "One big file" now, i.e. the only thing it does is dumps all the messages into one file. Again, let's start with the simplest flow, not to overwhelm users. Added later. If we choose full mode, we'll have to create dirs upfront so that "to habits", "to read/shop" etc. would work. If users don't need it, he removes the dirs, and we don't recreate them (as we would do in "on-the-fly mode"). So, we can't use on-the-fly strategy everywhere.
