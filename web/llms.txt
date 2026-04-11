@@ -7,17 +7,16 @@ All files are plain Markdown (.md) or plain text (.txt), stored locally.
 
 ```
 /
+├── <any_dir>/            # Note directories (brain/, happiness/, ...)
+│   └── *.md              # e.g. brain/Memory.md
+├── *.md                  # Important notes, index notes
+│
 ├── Inbox.md              # Incoming messages, append-only log
 ├── Today.md              # Today's tasks (checklist format)
 ├── Later.md              # Postponed tasks (checklist format)
 ├── Read.md               # Reading list (checklist)
 ├── Watch.md              # Watch list (checklist)
 ├── Shop.md               # Shopping list (checklist)
-├── config.json           # User settings
-├── *.md                  # Root-level files (projects, standalone notes)
-│
-├── archive/              # Completed/archived items
-│   └── Done.md           # Log of completed tasks
 │
 ├── journal/              # Daily journal
 │   └── YYYY.MM Month.md  # e.g. 2024.08 August.md
@@ -27,9 +26,9 @@ All files are plain Markdown (.md) or plain text (.txt), stored locally.
 │   └── YYYY Habits.md    # e.g. 2024 Habits.md
 │
 ├── media/                # Images (png, jpg, webp, gif)
-│
-└── <custom_dir>/         # User-created note directories
-    └── *.md              # e.g. brain/Memory.md
+├── archive/              # Completed/archived items
+│   └── Done.md           # Log of completed tasks
+└── config.json           # User settings
 ```
 
 ## File Types

@@ -10,7 +10,7 @@ You can store whole your life:
 - ✅ Tasks, Checklists
 - 💚 Journal, Habits
 
-All in plain `.md` files, locally. LLM-friendly. 
+All in plain `.md` files, locally. LLM-friendly ([files.md/llms.txt](files.md/llms.txt)).
 
 You can try it out: [app.files.md](https://app.files.md)
 
@@ -106,8 +106,8 @@ $ make init_server host=<YOUR_SSH_HOST> salt=<YOUR_SECRET_SALT>
 We differentiate the following types of files (with `/` denoting your root folder):
 - Inbox: `/Inbox.md` — incoming messages, append-only chat log
 - Tasks: `/Today.md`, `/Later.md` — checklist-based task lists
-- Notes: `/brain/Brain is the most complex object.md` (`/<custom_dir>/*.md`)
-- Files: `/My project.md` (`/*.md`)
+- Notes: `/brain/Brain is the most complex object.md` (`/<any_dir>/*.md`)
+- Projects: `/My project.md` (`/*.md`) — project, important or index notes
 - Checklists: `/Read.md`, `/Watch.md`, `/Shop.md` — built-in checklists
 - Journal: `/journal/2024.08 August.md` (`/journal/<YYYY>.<MM> <Month>.md`)
 - Habits: `/habits/Morning workout.md` (`/habits/*.md`)
