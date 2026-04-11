@@ -232,14 +232,14 @@ Read 4K randomly from SSD = 150,000 ns
 0) Be sure that all client app fully synced with the server (bring the app in the focus)
 1) Stop bot on old server, so no new files would be created.
 2) Compress all the files on one server: `tar -czvf storage.tar.gz storage`
-3) scp the file to your host machine: `scp SSH_HOST:/app/storage.tar.gz .`
-4) scp the file to your target machine
+3) `scp` the file to your host machine: `scp SSH_HOST:/app/storage.tar.gz .`
+4) `scp` the file to your target machine
 
 Synchronization is relying on `mtime`, so after compressing/decompressing the flag wouldn't be lost.
 
 1) `cd /opt/files.md`
 2) `tar -czvf tokens.tar.gz tokens`
-3) scp to same dir on target machine
+3) `scp` to same dir on target machine
 
 We don't need to transfer fslog (renames), if we're certain that all clients read the log.
 
