@@ -56,12 +56,14 @@ I'll quote [I Deleted My Second Brain](https://www.joanwestenberg.com/i-deleted-
 > 
 > **Eventually, I realized I had created a new problem: deferral. The more my system grew, the more I deferred the work of thought to some future self who would sort, tag, distill, and extract the gold.**
 
-_The "Second Brain" is exciting. It sounds fancy. It is thrilling.  
-You invest a lot in structure, guru templates, AI-workflows, plugins, tweaking.    
-You are very motivated to scrape the wisdom of the whole internet into your second brain.  
-You get dopamine spikes every time **your second brain becomes smarter and bigger**.  
-There's some beauty in your system and neatly organized notes. You feel good.    
-However, **your first brain never actually gets smarter**. The actual job is postponed._  
+The “Second Brain” is exciting. It sounds fancy. _It is thrilling._
+
+You invest a lot in structure, guru templates, AI workflows, plugins, tweaking.
+You are very motivated to scrape the wisdom of the whole internet into your second brain.
+You get dopamine spikes every time your second brain becomes smarter and bigger.
+There’s some beauty in your system and neatly organized notes. _You feel good._
+
+However, your first brain never actually gets smarter. _The actual job is postponed._
 
 There's another path.  
 
@@ -119,9 +121,10 @@ I was reading `Atomic Habits` the other day, and I stumbled upon an insight:
 
 > Progress is not about strong willpower, is the result of smart environment that avoid resistance in the first place.
 
-_Wow! That's a great insight.  
+_Wow! That's a great insight._
+
 I feel the urge to save it in my knowledge base.  
-Instead, I take time and reflect..._  
+Instead, I take time and reflect...
 
 I had an issue with the gym. I like working out. What I don't like was the preparation and changing clothes at the gym.
 The preparation and changing clothes at the gym were a resistance for me. My resistance to those things.
