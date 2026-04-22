@@ -943,10 +943,6 @@ func (b *Bot) showMoveTo(params []string) error {
 		return b.ShowToday(nil)
 	}
 
-	toTodayCmd := tg.NewCmd(CmdMoveToChecklist, []string{fs.Hash(fs.TodayFilename), msgIndexStr})
-	toTodayLabel := txt.Emoji(i18n.Emoji("tasks"), i18n.Tr("To Today"))
-	userMoveToBtns = append(userMoveToBtns, tg.NewBtn(toTodayLabel, toTodayCmd))
-
 	// Add recent command if any
 	recentBtn := b.recentCmdBtn(msgIndex)
 	if recentBtn != nil {
@@ -967,10 +963,7 @@ func (b *Bot) showMoveTo(params []string) error {
 
 	b.delAllKeyboards()
 
-	msg := b.tr("Saved to <b>inbox</b>!")
-	if b.cfg.TasksOnlyMode() {
-		msg = b.tr("Saved to <b>today</b>!")
-	}
+	msg := b.tr("Saved to <b>today</b>!")
 	err = b.showHTML(msg, &kb)
 	if err != nil {
 		return fmt.Errorf("move: %w", err)
