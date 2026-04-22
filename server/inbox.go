@@ -19,7 +19,14 @@ var (
 
 	inboxMarkerPrefix = regexp.MustCompile(`^- \[[ xX]\] `)
 	inboxHeaderRegex  = regexp.MustCompile(`^#### `)
+	inboxEntryPrefix  = regexp.MustCompile(`^(?:- \[[ xX]\] )?` + "`" + `\d{2}:\d{2}` + "`" + ` `)
 )
+
+// stripInboxEntryPrefix removes the optional `- [ ]` / `- [x] ` task marker
+// and the `` `HH:MM` `` timestamp so only the entry body remains.
+func stripInboxEntryPrefix(block string) string {
+	return inboxEntryPrefix.ReplaceAllString(block, "")
+}
 
 // inboxBlockHash returns a stable identifier for an inbox block. The optional
 // `- [ ]` / `- [x] ` task-marker prefix is stripped before hashing so the hash

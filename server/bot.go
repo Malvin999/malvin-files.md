@@ -1349,13 +1349,32 @@ func (b *Bot) showChecklists(_ []string) error {
 }
 
 func (b *Bot) showPostpone(_ []string) error {
-	todayMD, err := b.fs.Read(fs.DirUserRoot, fs.TodayFilename)
+	todayMD, _ := b.fs.Read(fs.DirUserRoot, fs.TodayFilename)
 	tasks, _ := txt.ChecklistItems(todayMD)
 
 	var kb tg.Keyboard
 	for _, task := range tasks {
 		cmd := tg.NewCmd(CmdPostpone, []string{fs.Hash(task)})
 		kb.AddRow(tg.NewBtn(task, cmd))
+	}
+
+	// Inbox items also show in /postpone so the user can send them to Later.md.
+	inboxMD, err := b.fs.Read(fs.DirUserRoot, fs.InboxFilename)
+	if err == nil {
+		for _, block := range readBlocks(inboxMD) {
+			if inboxHeaderRegex.MatchString(block) {
+				continue
+			}
+			if strings.HasPrefix(block, "- [x] ") || strings.HasPrefix(block, "- [X] ") {
+				continue
+			}
+			preview := strings.SplitN(stripInboxEntryPrefix(block), "\n", 2)[0]
+			if len([]rune(preview)) > maxHeaderLengthForMobile {
+				preview = string([]rune(preview)[:maxHeaderLengthForMobile]) + "…"
+			}
+			cmd := tg.NewCmd(CmdPostpone, []string{inboxBlockHash(block)})
+			kb.AddRow(tg.NewBtn("💬 "+preview, cmd))
+		}
 	}
 
 	kb.AddRow(tg.NewRow(
@@ -1392,24 +1411,20 @@ func (b *Bot) showMoveFromTodayAndInbox(_ []string) error {
 	inboxContent, err := b.fs.Read(fs.DirUserRoot, fs.InboxFilename)
 	if err == nil {
 		blocks := readBlocks(inboxContent)
-		headerRegex := regexp.MustCompile(`^#### `)
-		timestampRegex := regexp.MustCompile(`^` + "`" + `\d{2}:\d{2}` + "`" + ` `)
-		msgIndex := 0
 		for _, block := range blocks {
-			if headerRegex.MatchString(block) {
+			if inboxHeaderRegex.MatchString(block) {
 				continue
 			}
-			preview := block
-			if timestampRegex.MatchString(preview) {
-				preview = timestampRegex.ReplaceAllString(preview, "")
+			// Skip already-completed entries — they're about to be swept anyway.
+			if strings.HasPrefix(block, "- [x] ") || strings.HasPrefix(block, "- [X] ") {
+				continue
 			}
-			preview = strings.SplitN(preview, "\n", 2)[0]
+			preview := strings.SplitN(stripInboxEntryPrefix(block), "\n", 2)[0]
 			if len([]rune(preview)) > maxHeaderLengthForMobile {
 				preview = string([]rune(preview)[:maxHeaderLengthForMobile]) + "…"
 			}
-			cmd := tg.NewCmd(CmdShowMoveTo, []string{strconv.Itoa(msgIndex)})
+			cmd := tg.NewCmd(CmdShowMoveTo, []string{inboxBlockHash(block)})
 			kb.AddRow(tg.NewBtn("💬 "+preview, cmd))
-			msgIndex++
 		}
 	}
 
@@ -1426,30 +1441,41 @@ func (b *Bot) showMoveFromTodayAndInbox(_ []string) error {
 	return nil
 }
 
-// TODO today.md
 func (b *Bot) postpone(params []string) error {
-	// TODO Remove input expectations if dir is not today (?)
-	taskHash := params[0]
+	hash := params[0]
 
 	todayMD, err := b.fs.Read(fs.DirUserRoot, fs.TodayFilename)
-	if err != nil {
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("postpone: can't read today file: %w", err)
 	}
 
-	todayMD, task := txt.RemoveChecklistItem(todayMD, taskHash)
-
-	laterMD, err := b.fs.Read(fs.DirUserRoot, fs.LaterFilename)
-	if err != nil {
-		return fmt.Errorf("postpone: can't read later file: %w", err)
+	todayMD, task := txt.RemoveChecklistItem(todayMD, hash)
+	if task != "" {
+		laterMD, err := b.fs.Read(fs.DirUserRoot, fs.LaterFilename)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("postpone: can't read later file: %w", err)
+		}
+		err = b.fs.Write(fs.DirUserRoot, fs.LaterFilename, txt.AddChecklistItem(laterMD, task, false))
+		if err != nil {
+			return fmt.Errorf("postpone: can't write later file: %w", err)
+		}
+		err = b.fs.Write(fs.DirUserRoot, fs.TodayFilename, todayMD)
+		if err != nil {
+			return fmt.Errorf("postpone: can't write today file: %w", err)
+		}
+		return b.showPostpone(nil)
 	}
-	err = b.fs.Write(fs.DirUserRoot, fs.LaterFilename, txt.AddChecklistItem(laterMD, task, false))
-	if err != nil {
-		return fmt.Errorf("postpone: can't write later file: %w", err)
-	}
 
-	err = b.fs.Write(fs.DirUserRoot, fs.TodayFilename, todayMD)
+	// Not in Today.md — try Inbox.md.
+	err = b.moveFromInbox(func(content string, _ time.Time) error {
+		laterMD, rerr := b.fs.Read(fs.DirUserRoot, fs.LaterFilename)
+		if rerr != nil && !errors.Is(rerr, os.ErrNotExist) {
+			return fmt.Errorf("postpone: can't read later file: %w", rerr)
+		}
+		return b.fs.Write(fs.DirUserRoot, fs.LaterFilename, txt.AddChecklistItem(laterMD, content, false))
+	}, false, hash)
 	if err != nil {
-		return fmt.Errorf("postpone: can't write today file: %w", err)
+		return fmt.Errorf("postpone: can't move inbox entry to later: %w", err)
 	}
 
 	return b.showPostpone(nil)
