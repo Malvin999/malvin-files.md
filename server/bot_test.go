@@ -4302,6 +4302,69 @@ func TestShowToday_NormalModeWithTasks(t *testing.T) {
 	r.Len(tgram.LastSentKeyboard.Btns, 1)
 }
 
+// TestShowToday_InboxMixedFormat confirms ShowToday renders inbox entries in
+// both the legacy `HH:MM` format and the new `- [ ] HH:MM` task format, and
+// hides completed `- [x]` entries while keeping the on-disk index stable so
+// callback params (Complete, MoveTo, ...) still point at the right line.
+func TestShowToday_InboxMixedFormat(t *testing.T) {
+	r := require.New(t)
+
+	savedCtime := fs.Ctime
+	defer func() { fs.Ctime = savedCtime }()
+	fs.Ctime = func(fi os.FileInfo) int64 { return 0 }
+
+	savedNow := now
+	defer func() { now = savedNow }()
+	now = func() time.Time {
+		return time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+	}
+
+	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
+	r.NoError(err)
+	err = userFS.CreateDirsIfNotExist()
+	r.NoError(err)
+
+	// Inbox has three entries at on-disk positions 0, 1, 2:
+	//   0: legacy format (no checkbox)        -> shown
+	//   1: new format, not done `- [ ]`       -> shown
+	//   2: new format, completed `- [x]`      -> hidden
+	inbox := "#### 1 January, Thursday\n" +
+		"`09:00` Legacy msg\n" +
+		"- [ ] `09:05` New msg\n" +
+		"- [x] `09:10` Done msg\n"
+	err = userFS.Write(fs.DirUserRoot, fs.InboxFilename, inbox)
+	r.NoError(err)
+
+	tgram := tg.NewFakeTG()
+
+	cfg := fakeConfig()
+	err = cfg.SetMode(userconfig.ModeFull)
+	r.NoError(err)
+
+	bot := NewBot(-1, tgram, userFS, db.NewFakeDB(), cfg)
+	err = bot.ShowToday(nil)
+	r.NoError(err)
+
+	// Label: 2 tasks left (legacy + new unchecked); completed one excluded.
+	r.Equal("<b>2</b> left"+wideSpacer, tgram.LastSentText)
+
+	// Two rows, each with one button. Button params carry the on-disk index
+	// (0 for "Legacy msg", 1 for "New msg"). The completed entry (disk
+	// position 2) is not rendered but its slot is preserved — the next fresh
+	// entry added to the inbox would be position 3, not 2.
+	r.Len(tgram.LastSentKeyboard.Btns, 2)
+
+	firstBtn, ok := tgram.LastSentKeyboard.Btns[0].(tg.Btn)
+	r.True(ok)
+	r.Equal(tg.Cmd{Name: CmdCompleteFromInbox, Params: []string{"0"}, Type: "cmd"}, firstBtn.Cmd)
+	r.Contains(firstBtn.Name, "Legacy msg")
+
+	secondBtn, ok := tgram.LastSentKeyboard.Btns[1].(tg.Btn)
+	r.True(ok)
+	r.Equal(tg.Cmd{Name: CmdCompleteFromInbox, Params: []string{"1"}, Type: "cmd"}, secondBtn.Cmd)
+	r.Contains(secondBtn.Name, "New msg")
+}
+
 func TestShowToday_TodayCommandModeJournal(t *testing.T) {
 	r := require.New(t)
 

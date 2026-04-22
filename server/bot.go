@@ -1089,16 +1089,28 @@ func (b *Bot) ShowToday(_ []string) error {
 		return fmt.Errorf("show today: can't read chat file: %w", err)
 	}
 	blocks := readBlocks(content)
+	// Match both legacy `HH:MM` and new `- [ ] HH:MM` / `- [x] HH:MM` prefixes.
+	// Capture group 1 holds the checkbox marker (empty for legacy).
+	inboxEntryRegex := regexp.MustCompile(`^(?:- \[([ xX])\] )?` + "`" + `\d{2}:\d{2}` + "`" + ` `)
 	msgIndex := 0
+	shownCount := 0
 	for _, block := range blocks {
-		if !strings.HasPrefix(block, "`") {
+		m := inboxEntryRegex.FindStringSubmatch(block)
+		if m == nil {
 			continue
 		}
-		// Trim `xx:yy` timestamp from begging
-		// TODO make it not as dirty
-		if len(block) > 8 {
-			block = strings.TrimSpace(block[8:])
+		// Preserve on-disk ordering for button params (so CompleteFromInbox
+		// resolves back to the right line), but skip already-completed entries
+		// from the visible list.
+		currentIndex := msgIndex
+		msgIndex++
+		if m[1] == "x" || m[1] == "X" {
+			continue
 		}
+		shownCount++
+
+		// Strip the matched prefix (optional checkbox + timestamp + space).
+		block = strings.TrimSpace(block[len(m[0]):])
 
 		// Skip image link if any.
 		parts := strings.Split(block, "\n")
@@ -1114,16 +1126,14 @@ func (b *Bot) ShowToday(_ []string) error {
 		}
 
 		if len([]rune(title)) >= maxHeaderLengthForMobile || txt.HasImage(block) {
-			cmd := tg.NewCmd(CmdShowLongItemFromInbox, []string{strconv.Itoa(msgIndex)})
+			cmd := tg.NewCmd(CmdShowLongItemFromInbox, []string{strconv.Itoa(currentIndex)})
 			btn := tg.NewBtn(txt.Emoji(i18n.Emoji("eyes"), title), cmd)
 			kb.AddRow(btn)
 		} else {
-			cmd := tg.NewCmd(CmdCompleteFromInbox, []string{strconv.Itoa(msgIndex)})
+			cmd := tg.NewCmd(CmdCompleteFromInbox, []string{strconv.Itoa(currentIndex)})
 			btn := tg.NewBtn(txt.Emoji(i18n.Emoji(title), title), cmd)
 			kb.AddRow(btn)
 		}
-
-		msgIndex++
 	}
 
 	// Adding habits
@@ -1158,7 +1168,7 @@ func (b *Bot) ShowToday(_ []string) error {
 		}
 	}
 
-	msg := b.todayLabel(msgIndex)
+	msg := b.todayLabel(shownCount)
 	err = b.showHTML(msg, &kb)
 	if err != nil {
 		return fmt.Errorf("show list: %w", err)
