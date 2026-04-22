@@ -69,7 +69,6 @@
 
 .complete-btn:hover {
     opacity: 1;
-    color: var(--col-link);
     background: var(--col-bg);
 }
 
