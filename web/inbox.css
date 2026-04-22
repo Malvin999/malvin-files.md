@@ -45,11 +45,10 @@
 
 .complete-btn {
     position: absolute;
-    left: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 24px;
-    height: 24px;
+    left: 5px;
+    top: 5px;
+    bottom: 5px;
+    width: 30px;
     padding: 0;
     border: none;
     background: transparent;
