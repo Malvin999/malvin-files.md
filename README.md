@@ -48,6 +48,46 @@ All this activity helped me to:
 
 To achieve all that, **you'll have to use your brain**, not advanced templates or AI workflows.  
 
+## How to take notes 🗒️
+Leonardo da Vinci, Charles Darwin, Jules Verne and many others took notes using just pen and paper.
+
+You don't need to learn anything new to start taking notes.    
+We'll reuse a well familiar pattern: chatter with friends.
+
+Only this time, we are going to messages to the bot:
+
+<div align="center">
+    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/bot.gif" alt="Telegram Bot" title="Telegram Bot" width="350"/>
+</div>
+
+That's it, the `.md` note is saved in the `brain` directory.
+
+Later you can open [app.files.md](https://app.files.md) and make some connections between new and old notes.
+
+- You can start with no structure at all, 0 folders
+- One idea per note
+- A note should be understood without context
+- Related notes should be linked between each other
+- **Notes should be revisited and thought through**
+
+That's all you need to take notes.
+
+My friends and I have been using this setup for five years and it works well.
+
+Telegram bot: [@FilesMDBot](https://t.me/FilesMDBot) (other messengers will follow).
+
+## Taking notes in the web app
+Open `today`, type in a note:
+<div align="center">
+    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/note1.png" alt="Taking notes" title="Taking notes" width="350"/>
+</div>
+Press `Enter`.  
+Then hover over the note (can be done later):  
+<div align="center">
+    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/note2.png" alt="Taking notes" title="Taking notes" width="350"/>
+</div>
+Click "To File", then select "brain" directory.  
+
 ## Second Brain?
 I'll quote [I Deleted My Second Brain](https://www.joanwestenberg.com/i-deleted-my-second-brain-692aa40d59d5f06dd5131e43/):
 
@@ -64,48 +104,6 @@ There's some beauty in this neat system. Every new note brings dopamine.
 _Second Brain gets better and better._  
 
 However, the first brain never actually gets smarter. _The actual job is postponed._  
-
-There is another path.  
-
-## How to take notes 🗒️
-Leonardo da Vinci, Charles Darwin, Jules Verne and many others took notes using just pen and paper.  
-
-You don't need to learn anything new to start taking notes.    
-We'll reuse a well familiar pattern: chatter with friends.  
-
-Only this time, we are going to messages to the bot:  
-
-<div align="center">
-    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/bot.gif" alt="Telegram Bot" title="Telegram Bot" width="350"/>
-</div>
-
-That's it, the `.md` note is saved in the `brain` directory.  
-
-Later you can open [app.files.md](https://app.files.md) and make some connections between new and old notes.  
-
-- You can start with no structure at all, 0 folders
-- One idea per note
-- A note should be understood without context
-- Related notes should be linked between each other
-- **Notes should be revisited and thought through**
-
-That's all you need to take notes.  
-
-My friends and I have been using this setup for five years and it works well.  
-
-Telegram bot: [@FilesMDBot](https://t.me/FilesMDBot) (other messengers will follow).  
-
-## Taking notes in the web app
-Open `today`, type in a note:  
-<div align="center">
-    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/note1.png" alt="Taking notes" title="Taking notes" width="350"/>
-</div>
-Press `Enter`.  
-Then hover over the note (can be done later):  
-<div align="center">
-    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/note2.png" alt="Taking notes" title="Taking notes" width="350"/>
-</div>
-Click "To File", then select "brain" directory.  
 
 ## Self-help through reading and taking notes?
 **Harm caused at the emotional level must be healed at the emotional level.**  

@@ -5,8 +5,8 @@
 const urlsToCache = [
     '/',
     '/favicon.ico',
-    '/icon.png',
-    '/icon_small.png',
+    '/img/icon.png',
+    '/img/icon_small.png',
     '/manifest.json',
     '/app.css',
     '/lib/normalize.css',
@@ -64,7 +64,8 @@ self.addEventListener('install', event => {
         }
 
         for (let url of urlsToCache) {
-            if (url !== "/" && url !== 'favicon.ico' && url !== 'small_icon.png' && url !== 'icon.png') {
+            const shouldAddRevisionHash = url !== "/" && url !== 'favicon.ico' && !url.startsWith('/img/');
+            if (shouldAddRevisionHash) {
                 url = url + COMMIT_HASH;
             }
 
