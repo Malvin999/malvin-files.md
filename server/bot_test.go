@@ -725,7 +725,7 @@ func TestToday(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	err = userFS.Write("/", "Today.md", "- [ ] First task\n- [ ] Second task")
+	err = userFS.Write("/", "Today.md", "- [ ] `00:00` First task\n- [ ] `00:00` Second task")
 	r.NoError(err)
 
 	tgram := tg.NewFakeTG()
@@ -736,8 +736,8 @@ func TestToday(t *testing.T) {
 
 	r.Equal("<b>2</b> left"+wideSpacer, tgram.LastSentText)
 	r.Equal(tg.NewKeyboard([]tg.Row{
-		tg.NewBtn("First task", tg.NewCmd("check_item", []string{"db0a776589b", "832a6c2a713"})),
-		tg.NewBtn("🥈 Second task", tg.NewCmd("check_item", []string{"db0a776589b", "2940ad40402"})),
+		tg.NewBtn("First task", tg.NewCmd("c_ch", []string{"060f6b7c9c8"})),
+		tg.NewBtn("🥈 Second task", tg.NewCmd("c_ch", []string{"083d6c37d07"})),
 	},
 	), tgram.LastSentKeyboard)
 }
@@ -772,9 +772,8 @@ func TestTodayQuickMenuFilled(t *testing.T) {
 	bot, tgram, r := makeBot(t, cfg)
 	err := bot.Reply(tg.NewUpdCmd(-1, tg.NewCmd("today", nil)))
 	r.NoError(err)
-	r.Equal("<b>1</b> left"+wideSpacer, tgram.LastSentText)
+	r.Equal("🌴 You don't have any tasks!", tgram.LastSentText)
 	r.Equal(tg.NewKeyboard([]tg.Row{
-		tg.NewBtn("First task", tg.NewCmd("check_item", []string{"db0a776589b", "832a6c2a713"})),
 		tg.NewRow(
 			tg.NewBtn("📄", tg.NewCmd("files", nil)),
 			tg.NewBtn("☑️", tg.NewCmd("checklists", nil)),
@@ -1659,7 +1658,6 @@ func TestShowPostpone_WithInbox(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	r.NoError(userFS.Write(fs.DirUserRoot, fs.TodayFilename, "- [ ] Today task"))
 	r.NoError(userFS.Write(
 		fs.DirUserRoot, fs.InboxFilename,
 		"#### 29 June, Sunday\n- [ ] `09:00` Inbox body\n- [x] `09:05` Completed body\n",
@@ -1672,7 +1670,6 @@ func TestShowPostpone_WithInbox(t *testing.T) {
 
 	inboxHash := inboxMsgHash(t, userFS, 0)
 	r.Equal(tg.NewKeyboard([]tg.Row{
-		tg.NewBtn("Today task", tg.NewCmd("post", []string{fs.Hash("Today task")})),
 		tg.NewBtn("💬 Inbox body", tg.NewCmd("post", []string{inboxHash})),
 		tg.NewRow(
 			tg.NewBtn("Rename", tg.NewCmd("rename", []string{})),
@@ -1741,7 +1738,6 @@ func TestShowRename_WithInbox(t *testing.T) {
 
 	userFS, err := fs.NewFS("/", afero.NewMemMapFs())
 	r.NoError(err)
-	r.NoError(userFS.Write(fs.DirUserRoot, fs.TodayFilename, "- [ ] Today task"))
 	r.NoError(userFS.Write(
 		fs.DirUserRoot, fs.InboxFilename,
 		"#### 29 June, Sunday\n- [ ] `09:00` Inbox body\n- [x] `09:05` Completed body\n",
@@ -1753,7 +1749,6 @@ func TestShowRename_WithInbox(t *testing.T) {
 
 	inboxHash := inboxMsgHash(t, userFS, 0)
 	r.Equal(tg.NewKeyboard([]tg.Row{
-		tg.NewBtn("👀 Today task", tg.NewCmd("rename_file", []string{fs.TodayFilename, fs.Hash("Today task")})),
 		tg.NewBtn("💬 Inbox body", tg.NewCmd("rename_file", []string{fs.InboxFilename, inboxHash})),
 		tg.NewBtn("🏠 Today", tg.NewCmd("today", nil)),
 	}), tgram.LastSentKeyboard)

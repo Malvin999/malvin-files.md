@@ -1040,40 +1040,7 @@ func (b *Bot) ShowToday(_ []string) error {
 
 	var kb tg.Keyboard
 
-	// Adding tasks from Today.md
-	todayChecklistMD, err := b.fs.Read(fs.DirUserRoot, fs.TodayFilename)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("show today: can't read today file: %w", err)
-	}
-	if len(todayChecklistMD) != 0 {
-		tasks := txt.IncompleteChecklistItems(todayChecklistMD)
-		for _, task := range tasks {
-			// Skip image link if any.
-			parts := strings.Split(task, "\n")
-			title := txt.Ucfirst(strings.TrimSpace(parts[0]))
-			if txt.HasImage(title) {
-				if len(parts) > 1 {
-					title = txt.Ucfirst(strings.TrimSpace(parts[1]))
-				}
-
-				if title == "" || len(parts) == 1 {
-					title = fmt.Sprintf("Img %s", now().Format("02.01.06 15:04"))
-				}
-			}
-
-			if len([]rune(title)) >= maxHeaderLengthForMobile || txt.HasImage(task) {
-				cmd := tg.NewCmd(CmdShowLongItem, []string{fs.Hash(fs.TodayFilename), fs.Hash(task)})
-				btn := tg.NewBtn(txt.Emoji(i18n.Emoji("eyes"), title), cmd)
-				kb.AddRow(btn)
-			} else {
-				cmd := tg.NewCmd(CmdCompleteChecklistItem, []string{fs.Hash(fs.TodayFilename), fs.Hash(task)})
-				btn := tg.NewBtn(i18n.AddEmoji(title), cmd)
-				kb.AddRow(btn)
-			}
-		}
-	}
-
-	// Adding records from chat
+	// Adding records from inbox
 	content, err := b.fs.Read(fs.DirUserRoot, fs.InboxFilename)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("show today: can't read chat file: %w", err)
@@ -1208,16 +1175,7 @@ func (b *Bot) todayLabel(msgsCount ...int) string {
 		statusBar = i18n.Emoji(fs.DisplayName(fs.PomodoroTask))
 	}
 
-	tasks := txt.IncompleteChecklistItems(todayMD)
 	tasksCount := 0
-	for _, task := range tasks {
-		if task == fs.PomodoroTask {
-			continue
-		}
-
-		tasksCount++
-	}
-
 	if len(msgsCount) > 0 && msgsCount[0] > 0 {
 		tasksCount += msgsCount[0]
 	}
@@ -1356,14 +1314,7 @@ func (b *Bot) showChecklists(_ []string) error {
 }
 
 func (b *Bot) showPostpone(_ []string) error {
-	todayMD, _ := b.fs.Read(fs.DirUserRoot, fs.TodayFilename)
-	tasks, _ := txt.ChecklistItems(todayMD)
-
 	var kb tg.Keyboard
-	for _, task := range tasks {
-		cmd := tg.NewCmd(CmdPostpone, []string{fs.Hash(task)})
-		kb.AddRow(tg.NewBtn(task, cmd))
-	}
 
 	// Inbox items also show in /postpone so the user can send them to Later.md.
 	inboxMD, err := b.fs.Read(fs.DirUserRoot, fs.InboxFilename)
@@ -1451,30 +1402,7 @@ func (b *Bot) showMoveFromTodayAndInbox(_ []string) error {
 func (b *Bot) postpone(params []string) error {
 	hash := params[0]
 
-	todayMD, err := b.fs.Read(fs.DirUserRoot, fs.TodayFilename)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("postpone: can't read today file: %w", err)
-	}
-
-	todayMD, task := txt.RemoveChecklistItem(todayMD, hash)
-	if task != "" {
-		laterMD, err := b.fs.Read(fs.DirUserRoot, fs.LaterFilename)
-		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("postpone: can't read later file: %w", err)
-		}
-		err = b.fs.Write(fs.DirUserRoot, fs.LaterFilename, txt.AddChecklistItem(laterMD, task, false))
-		if err != nil {
-			return fmt.Errorf("postpone: can't write later file: %w", err)
-		}
-		err = b.fs.Write(fs.DirUserRoot, fs.TodayFilename, todayMD)
-		if err != nil {
-			return fmt.Errorf("postpone: can't write today file: %w", err)
-		}
-		return b.showPostpone(nil)
-	}
-
-	// Not in Today.md — try Inbox.md.
-	err = b.moveFromInbox(func(content string, _ time.Time) error {
+	err := b.moveFromInbox(func(content string, _ time.Time) error {
 		laterMD, rerr := b.fs.Read(fs.DirUserRoot, fs.LaterFilename)
 		if rerr != nil && !errors.Is(rerr, os.ErrNotExist) {
 			return fmt.Errorf("postpone: can't read later file: %w", rerr)
@@ -1489,17 +1417,7 @@ func (b *Bot) postpone(params []string) error {
 }
 
 func (b *Bot) showRename(_ []string) error {
-	todayMD, err := b.fs.Read(fs.DirUserRoot, fs.TodayFilename)
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("rename: can't read today file: %w", err)
-	}
-
-	tasks, _ := txt.ChecklistItems(todayMD)
 	var kb tg.Keyboard
-	for _, task := range tasks {
-		cmd := tg.NewCmd(CmdShowRenameFile, []string{fs.TodayFilename, fs.Hash(task)})
-		kb.AddRow(tg.NewBtn(txt.Emoji(i18n.Emoji("eyes"), task), cmd))
-	}
 
 	inboxMD, err := b.fs.Read(fs.DirUserRoot, fs.InboxFilename)
 	if err == nil {
