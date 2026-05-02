@@ -1,4 +1,4 @@
-const INBOX_PATH = '/Inbox.md';
+const INBOX_PATH = '/Today.md';
 let chatIsClean = true; // Are there any unsaved changes?
 
 const inbox = document.getElementById('inbox');

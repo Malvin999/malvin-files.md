@@ -109,7 +109,7 @@ flowchart TD
     subgraph txt [saveFromTextMsg]
         T1([message text]) --> T2[extractMarkdown]
         T2 --> T3{recent forward<br/>within collapse window?}
-        T3 -->|yes| T4[createOrAdd to Inbox.md] --> TEnd([return])
+        T3 -->|yes| T4[createOrAdd to Today.md] --> TEnd([return])
         T3 -->|no| T5{reply to a<br/>previous bot msg?}
         T5 -->|yes| T6[addToRepliedFile<br/>append to that note] --> TEnd
         T5 -->|no| T7[saveToInbox]

@@ -136,6 +136,10 @@ However, when it comes to real personal changes, collecting too many notes **can
 
 Having good knowledge about something can create a false sense of competence or accomplishment, leading people to believe they understand or can perform a task even if they haven't practically applied that knowledge.  
 
+> People may have a declarative representation of the instruction - they can state it, remember it, explain it.
+>
+> But that does not mean the instruction has become procedural memory - something they can reliably act on.
+
 The worst thing is that **we don’t let new experiences emerge because we already have knowledge**. It's a knowledge barrier. Life gives us opportunities to live through new experiences, but we refuse, because "we already know".
 
 When you read or listen, there is a small chance to turn an insight into experience.  
@@ -150,11 +154,11 @@ I was reading `Atomic Habits` the other day, and I stumbled upon an insight:
 _Wow! That's a great insight._
 
 I feel the urge to take a note.   
-Instead, I used this impulse to think through and reflect...  
+Instead, I used this impulse to stop and think it through. How I can apply this knowledge right now?    
 
-I had an issue with the gym. I like working out. What I don't like was the preparation and changing clothes at the gym.  
-The preparation and changing clothes at the gym were a resistance for me. My resistance to those things.  
-What I could change, is the environment. I reduced my equipment to the bare minimum and started getting dressed in my workout clothes at home.  
+*I had an issue with the gym. I like working out. What I don't like was the preparation and changing clothes at the gym.  
+The preparation and changing clothes at the gym were a resistance for me. My resistance to those things can't be changed.  
+What I could change, is the environment. I reduced my equipment to the bare minimum and started getting dressed in my workout clothes at home.*
 
 After a few weeks, the habit stuck. I got feedback from reality. _I experienced it._  
 
@@ -200,13 +204,13 @@ You don't have to think about the structure, it is predefined.
 
 - Notes: `brain/Note.md` (`<category>/*.md`)
 - Projects: `My project.md` (`/*.md`) - projects, important notes
+- Unsorted: `Today.md` - incoming messages, append-only chat log
 - Tasks: `Today.md`, `Later.md` - checklist-based task lists
 - Checklists: `Read.md`, `Watch.md`, `Shop.md` - built-in checklists
 - Journal: `journal/2024.08 August.md` (`journal/<YYYY>.<MM> <Month>.md`)
 - Habits: `habits/Ate consciously.md` (`habits/*.md`)
 - Media: `media/*` - images (png, jpg, webp, gif)
 - Archive: `archive/*`, `archive/Done.md` - completed items
-- Inbox: `Inbox.md` - incoming messages, append-only chat log
 - Config: `config.json` - per-user settings
 
 Scheme is also available at [files.md/llms.txt](https://files.md/llms.txt).  
