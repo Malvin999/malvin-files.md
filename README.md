@@ -219,14 +219,6 @@ You can copy-paste it into `CLAUDE.md` or `AGENTS.md`, so that your AI agent wou
 ## Telegram Bot 🤖
 Use `/app` to link your bot the the web app.  
 
-<img src="https://github.com/zakirullin/files.md/raw/main/web/img/bot.png" alt="Telegram Bot screenshot" title="Telegram Bot"/>
-
-When we are focused and distracting information comes in, we want to get rid of it as quickly as possible.  
-To do that, just send whatever is distracting you to the bot. Then choose how you want to save it - as a task, a note, or a journal entry.  
-
-It works like a regular chat, so it's easier to use because there's less resistance.  
-We're used to sending messages to friends, now we're going to send stuff to the bot.
-
 ## Hotkeys
 
 | Hotkey                     | Action                         |
