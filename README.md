@@ -38,13 +38,13 @@ Just drop your note into the chat-like input and press `Enter`.
 That's it. Nothing to learn or setup.  
 
 ## Web Application
-1) Open [app.files.md](https://app.files.md) in Chrome browser
-2) Click "Install Files.md" on the right side of the address bar:
+- Open [app.files.md](https://app.files.md) in Chrome browser
+- Click "Install Files.md" on the right side of the address bar:
 <div align="center">
     <img src="https://github.com/zakirullin/files.md/raw/main/web/img/install.png" alt="Install" title="Install" width="350"/>
 </div>
-
-Open a local folder to persist changes.    
+- Open a local folder to persist changes  
+- That's it
 
 ## Telegram bot 
 1) Open [@FilesMDBot](https://t.me/FilesMDBot)
@@ -287,10 +287,10 @@ go run /abs/path/to/files.md/cmd/shifttime/shifttime.go
 ```
 
 ## Documentation
-[Deploy on your own server](docs/your-own-server.md).
-[Bot](docs/bot.md).
-[Integration tests](docs/integration-tests.md)
-[Sync flow](docs/sync-flow.md)
+[Deploy on your own server](docs/your-own-server.md)    
+[Bot](docs/bot.md)    
+[Integration tests](docs/integration-tests.md)  
+[Sync flow](docs/sync-flow.md)  
 
 ## Repository structure
 - `web` - web app (PWA), `index.html` is an entrypoint
