@@ -586,7 +586,12 @@ function attachEventListeners() {
             if (searchModalElement.style.display !== 'none' && searchModalElement.style.display !== '') {
                 searchModal.close();
             } else {
-                const text = btn.closest('.message').querySelector('.message-content').textContent;
+                const message = btn.closest('.message');
+                const text = message.querySelector('.message-content').textContent;
+                // Keep this message's action row visible while the picker is
+                // open - mouse leaves the bubble as soon as the modal grabs
+                // focus, otherwise the buttons fade out under the user.
+                message.classList.add('actions-pinned');
                 searchModal.open('', text, e.target);
             }
         });

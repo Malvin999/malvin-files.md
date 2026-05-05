@@ -250,6 +250,9 @@ class SearchModal {
     close() {
         document.getElementById('search').style.display = 'none';
         document.getElementById('search').classList.remove('modal-reversed');
+        // Drop the keep-actions-visible flag set by to-file-btn (today.js).
+        document.querySelectorAll('.message.actions-pinned')
+            .forEach(m => m.classList.remove('actions-pinned'));
         this.selectedMsgText = null;
     }
 
