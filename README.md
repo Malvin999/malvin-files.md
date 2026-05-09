@@ -66,7 +66,11 @@ Open the chat and send a message:
     <img src="https://github.com/zakirullin/files.md/raw/main/web/img/note1.png" alt="Telegram Bot" title="Telegram Bot" width="350"/>
 </div>
 
-Move it anywhere later.  
+Move it anywhere later:  
+<div align="center">
+    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/actions.png" alt="Telegram Bot" title="Telegram Bot" width="350"/>
+</div>
+
 With this flow you can save anything.  
 
 ## How to take notes
