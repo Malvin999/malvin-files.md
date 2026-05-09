@@ -258,9 +258,9 @@ go run /abs/path/to/files.md/cmd/shifttime/shifttime.go
 
 ## Documentation
 [Deploy on your own server](docs/your-own-server.md)    
-[Bot](docs/bot.md)    
-[Integration tests](docs/integration-tests.md)  
+[Chatbot](docs/bot.md)    
 [Sync flow](docs/sync-flow.md)  
+[Integration tests](docs/integration-tests.md)  
 
 ## Repository structure
 - `web` - web app (PWA), `index.html` is an entrypoint

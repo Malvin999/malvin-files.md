@@ -7558,7 +7558,8 @@
     "electricity",
     "idea",
     "идея",
-    "идеи"
+    "идеи",
+    "thought"
   ],
   "🔦": [
     "flashlight",
@@ -8001,7 +8002,8 @@
     "stationery",
     "mark",
     "here",
-    "notes"
+    "notes",
+    "note"
   ],
   "📍": [
     "round_pushpin",
@@ -9387,7 +9389,6 @@
     "input_symbols",
     "blue-square",
     "music",
-    "note",
     "ampersand",
     "percent",
     "glyphs",

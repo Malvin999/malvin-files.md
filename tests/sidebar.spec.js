@@ -102,6 +102,35 @@ test('file ctx menu: rename', async ({page}) => {
     await expect(page.locator('#tree .tree-item:text-is("README")')).toHaveCount(0);
 });
 
+// Regression: renaming a file that is currently open in the editor used to
+// be silently undone. The editor still showed `# README` while the path was
+// already `/Renamed.md`, so the rename-from-header watcher in
+// syncCurrentText (files.js:1198) saw a "filename change" back to README.md
+// on its next tick and reverted the rename.
+test('file ctx menu: rename of open file is not reverted by header watcher', async ({page}) => {
+    test.setTimeout(15000);
+    await setupSidebar(page);
+
+    await page.click('#tree .tree-item:text-is("README")');
+    await page.waitForTimeout(200);
+    expect(await page.evaluate(() => document.querySelector('.CodeMirror').CodeMirror.getValue()))
+        .toBe('# README\nHello world');
+
+    page.once('dialog', d => d.accept('Renamed'));
+    await rightClickNode(page, 'README');
+    await clickMenuItem(page, 'Rename');
+
+    // Wait past CURRENT_FILE_SYNC_INTERVAL (1000ms) so the periodic sync,
+    // which is what used to revert the rename, has had a chance to fire.
+    await page.waitForTimeout(2500);
+
+    await expect(page.locator('#tree .tree-item:text-is("Renamed")')).toBeVisible();
+    await expect(page.locator('#tree .tree-item:text-is("README")')).toHaveCount(0);
+
+    expect(await page.evaluate(() => document.querySelector('.CodeMirror').CodeMirror.getValue()))
+        .toBe('# Renamed\nHello world');
+});
+
 test('file ctx menu: move opens the move modal', async ({page}) => {
     await setupSidebar(page);
 

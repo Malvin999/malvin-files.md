@@ -1462,7 +1462,22 @@ function buildFileMenu(item, filePath) {
         const newPath = (parentDir === '/' ? '' : parentDir) + '/' + finalName;
         try {
             await moveFile(filePath, newPath);
-            if (isCurrent) currentEditor.path = newPath;
+            if (isCurrent) {
+                currentEditor.path = newPath;
+                // Editor still shows the old `# OldName` heading. The
+                // rename-from-header watcher in syncCurrentText will see
+                // the heading disagree with the new path and rename the
+                // file back, so rewrite line 0 to the new header.
+                const newHeader = toHeader(toFilename(newPath));
+                const firstLine = currentEditor.getLine(0) || '';
+                if (firstLine !== newHeader) {
+                    currentEditor.replaceRange(
+                        newHeader,
+                        { line: 0, ch: 0 },
+                        { line: 0, ch: firstLine.length }
+                    );
+                }
+            }
             await renderSidebar();
         } catch (err) {
             console.error('rename failed', err);
