@@ -198,8 +198,13 @@ function renderSidebar(focusDir = '', modifiedPaths) {
         }
     }
 
-    // Move all other nodes down
-    for (const dir in dirNodes) {
+    // Move all other nodes down, in alphabetical order. Iterating
+    // dirNodes' insertion order would render them in walk() order, which
+    // is the reverse of files' insertion order - so a freshly-created
+    // folder would land at one end, then jump to its sorted slot only
+    // after the next loadLocalFiles re-reads OPFS.
+    const dirsAlpha = Object.keys(dirNodes).sort((a, b) => a.localeCompare(b));
+    for (const dir of dirsAlpha) {
         if (dir === '/' || groupedDirs.has(toFilename(dir))) continue;
 
         const dirNode = dirNodes[dir];
@@ -218,7 +223,11 @@ function renderSidebar(focusDir = '', modifiedPaths) {
         root.addChild(archiveLastNode);
     }
 
-    // Second pass: add all files
+    // Second pass: collect, sort alphabetically, then add. walk() pops
+    // its stack so files would otherwise be appended in reverse order
+    // and a freshly-created file would land at one end then jump on the
+    // next render.
+    const fileEntries = [];
     walk(files, (path, isFile) => {
         if (path === '/media' || path.startsWith('/media/')) {
             return;
@@ -236,6 +245,11 @@ function renderSidebar(focusDir = '', modifiedPaths) {
             return;
         }
 
+        fileEntries.push(path);
+    });
+    fileEntries.sort((a, b) => a.localeCompare(b));
+
+    for (const path of fileEntries) {
         const {dirPath, filename} = toDirPathAndFilename(path);
 
         let fileNode = new TreeNode(filename.replace(/\.md$/, '').replace(/\.txt$/, ''), {expanded: false});
@@ -254,7 +268,7 @@ function renderSidebar(focusDir = '', modifiedPaths) {
         if (modifiedPaths !== undefined && modifiedPaths.includes(path)) {
             fileNode.shouldBlink = true;
         }
-    });
+    }
 
     tree = new TreeView(root, '#tree', {
         show_root: false,
