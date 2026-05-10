@@ -72,6 +72,47 @@ Move it anywhere later:
 
 With this flow you can save anything.  
 
+## No productivity, no complexity. Relax
+The only thing that matters is your calmness.  
+**We reuse same well-familiar messaging pattern for everything.**
+
+## Journal 💚
+Are you feeling good about something? Send a message.  
+
+<div align="center">
+    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/journal.png" title="Journaling" width="350"/>
+</div>
+
+Then click "Move To Journal".  
+Or just add ` jj` or ` жж` at the end of your message.   
+
+Your record is gonna be saved nicely in the `journal/Year Month.md` file.
+
+## Tasks ✅
+You're in the flow.  
+A colleague comes in and asks you to send the report.  
+You don't hold this task in your head, it takes energy.
+You drop a message and continue being in the flow.
+
+<div align="center">
+    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/task.png" title="Adding a task" width="350"/>
+</div>
+
+No energy is spent, no flow is interrupted.
+
+Add only small, actionable items.  
+Not things like `Plan a vacation`.  
+Add the first tiny step of what should be done anyway.     
+Not what you wish to be done, but don't have motivation just yet.  
+**Your task list should not create a feeling of guilt**.  
+It should clear your head.
+
+## Checklists 🛒
+A friend recommends a book.  
+You're out of butter and cheese.  
+Small things like these drain mental energy.  
+Drop them in chat, then sort into matching checklists.
+
 ## How to take notes
 1) I used [files.md](https://files.md) to grow my knowledge about brain and software development
 2) I added new notes to either `brain` or `dev` folders. One idea per note
@@ -152,45 +193,6 @@ You loved an idea.
 You can use the initial impulse and actually try it.    
 Or, you can spend your energy on writing it down.   
 In the hope that **one day, you'll actually try it**.   
-
-## No productivity, no complexity. Relax
-The only thing that matters is your calmness.  
-**We reuse same well-familiar messaging pattern for everything.**    
-
-## Tasks ✅
-You're in the flow.  
-A colleague comes in and asks you to send the report.  
-You don't hold this task in your head, it takes energy.
-You drop a message and continue being in the flow.  
-
-<div align="center">
-    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/task.png" title="Adding a task" width="350"/>
-</div>
-
-No energy is spent, no flow is interrupted.   
-
-Add only small, actionable items.  
-Not things like `Plan a vacation`.  
-Add the first tiny step of what should be done anyway.     
-Not what you wish to be done, but don't have motivation just yet.  
-**Your task list should not create a feeling of guilt**.  
-It should clear your head.  
-
-## Journal 💚
-Are you feeling good about something? Send a message.  
-Hover over a bubble and press "To Journal".  
-
-<div align="center">
-    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/journal.png" title="Journaling" width="350"/>
-</div>
-
-Or just add ` jj` or ` жж` at the end of your message.   
-Your record is gonna be saved nicely at `journal/Year Month.md` file.   
-
-## Checklists 🛒
-A good friend of yours recommends you a book.  
-You've run out of butter and cheese.  
-Things like these are easy to remember, but again they drain your mental energy.  
 
 ## Files structure 🗂
 You don't have to think about the structure, it is predefined.  
