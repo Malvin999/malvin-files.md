@@ -133,7 +133,7 @@ async function rename(oldpath, newpath) {
 
 // removeDir deletes a directory and everything under it. Files are deleted
 // one-by-one so the in-memory file tree and server-sync bookkeeping stay in
-// sync; the empty parent entry is then pruned from OPFS.
+// sync.
 async function removeDir(dirPath) {
     const filePaths = collectFilePathsInDir(dirPath);
     for (const p of filePaths) {
@@ -146,7 +146,6 @@ async function removeDir(dirPath) {
 
     const parts = trimPrefix(dirPath, '/').split('/').filter(Boolean);
     const dirName = parts.pop();
-    const parentPath = '/' + parts.join('/');
 
     const rootHandle = await getRootDirHandle();
     let parentHandle = rootHandle;
@@ -163,47 +162,66 @@ async function removeDir(dirPath) {
     log(`Dir ${dirPath} removed.`);
 }
 
-// renameDir moves every file under oldDirPath into a sibling directory called
-// newName. Per-file moves keep server-sync bookkeeping intact; afterwards the
-// empty old directory entry is removed from OPFS.
-async function renameDir(oldDirPath, newName) {
-    const parts = trimPrefix(oldDirPath, '/').split('/').filter(Boolean);
-    parts.pop();
-    const parentPath = '/' + parts.join('/');
-    const newDirPath = joinPath(parentPath, newName);
-
+// moveDir moves every file under oldDirPath into newDirPath, which can be in
+// any parent (including a different one). Per-file moves keep server-sync
+// bookkeeping intact; afterwards the empty old directory entry is removed.
+async function moveDir(oldDirPath, newDirPath) {
     if (newDirPath === oldDirPath) return;
+    // Disallow moving a folder into itself or any of its own descendants -
+    // we'd otherwise loop forever copying the dir into a subpath of itself.
+    if (newDirPath === oldDirPath + '/' || newDirPath.startsWith(oldDirPath + '/')) {
+        logError('moveDir: refusing to move dir into itself', oldDirPath, newDirPath);
+        return;
+    }
 
     const filePaths = collectFilePathsInDir(oldDirPath);
     if (filePaths.length === 0) {
-        // Empty dir: make sure the new dir exists before we drop the old one,
-        // otherwise rename silently deletes it.
         await createDir(newDirPath);
     }
+    let allMoved = true;
     for (const oldFilePath of filePaths) {
         const rel = oldFilePath.slice(oldDirPath.length);
         const newFilePath = newDirPath + rel;
         try {
             await moveFile(oldFilePath, newFilePath);
         } catch (err) {
-            logError('renameDir: failed to move file', oldFilePath, err);
+            logError('moveDir: failed to move file', oldFilePath, err);
+            allMoved = false;
         }
     }
 
-    const rootHandle = await getRootDirHandle();
-    let parentHandle = rootHandle;
-    for (const seg of parts) {
-        parentHandle = await parentHandle.getDirectoryHandle(seg);
+    if (!allMoved) {
+        // Some file didn't make it across. A recursive remove now would
+        // silently take those leftovers with it, so leave the old dir alone.
+        logError('moveDir: not all files moved, leaving old dir in place', oldDirPath);
+        return;
     }
-    const oldDirName = oldDirPath.split('/').filter(Boolean).pop();
+
+    const oldParts = trimPrefix(oldDirPath, '/').split('/').filter(Boolean);
+    const oldDirName = oldParts.pop();
+    const rootHandle = await getRootDirHandle();
+    let oldParentHandle = rootHandle;
+    for (const seg of oldParts) {
+        oldParentHandle = await oldParentHandle.getDirectoryHandle(seg);
+    }
     try {
-        await parentHandle.removeEntry(oldDirName, { recursive: true });
+        await oldParentHandle.removeEntry(oldDirName, { recursive: true });
     } catch (err) {
-        logError('renameDir: removeEntry old dir failed', oldDirPath, err);
+        logError('moveDir: removeEntry old dir failed', oldDirPath, err);
     }
 
     removeMemDir(oldDirPath);
-    log(`Dir ${oldDirPath} renamed to ${newDirPath}.`);
+    log(`Dir ${oldDirPath} moved to ${newDirPath}.`);
+}
+
+// renameDir moves every file under oldDirPath into a sibling directory called
+// newName.
+async function renameDir(oldDirPath, newName) {
+    const parts = trimPrefix(oldDirPath, '/').split('/').filter(Boolean);
+    parts.pop();
+    const parentPath = '/' + parts.join('/');
+    const newDirPath = joinPath(parentPath, newName);
+    await moveDir(oldDirPath, newDirPath);
 }
 
 // collectFilePathsInDir returns absolute paths of every file under dirPath,

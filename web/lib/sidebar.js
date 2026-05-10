@@ -850,7 +850,9 @@ function TreeView(root, container, options) {
             span_desc.classList.add("group-end");
         }
 
-        if (node.isLeaf() && !['later', 'watch', 'shop', 'read', 'chat'].includes(node.toString())) {
+        // Both files and folders are draggable. Only the synthetic system
+        // entries (chat, later, the global lists) stay pinned in place.
+        if (!['later', 'watch', 'shop', 'read', 'chat'].includes(node.toString())) {
             span_desc.draggable = true;
         }
 
@@ -872,8 +874,6 @@ function TreeView(root, container, options) {
         }
 
         span_desc.addEventListener("dragstart", function (e) {
-            if (!node.isLeaf()) return;
-
             draggedNode = node;
             draggedElement = span_desc;
             span_desc.classList.add("tree-dragging");
@@ -937,20 +937,18 @@ function TreeView(root, container, options) {
             const position = getDropPosition(e, span_desc);
 
             if (typeof window.handleNodeMove === 'function') {
-                const sourceDir = draggedNode.parent ? draggedNode.parent.toString() : '';
-                log(draggedNode.parent);
-                log(sourceDir);
-
-                const sourceFile = draggedNode.toString() + '.md';
+                // Use the absolute path from the dragged node (set during
+                // tree construction). For folders this is /life, for files
+                // /life/Pilaf.md - same handler covers both.
+                const sourcePath = draggedNode.path;
                 let targetDir;
                 if (position === 'inside' && !node.isLeaf()) {
-                    // TODO handle multiple subdirs?
-                    targetDir = node.toString();
+                    targetDir = node.path;
                 } else {
-                    targetDir = node.parent ? node.parent.toString() : '/';
+                    targetDir = node.parent && node.parent.path ? node.parent.path : '/';
                 }
 
-                window.handleNodeMove(sourceDir, sourceFile, targetDir);
+                window.handleNodeMove(sourcePath, targetDir);
             }
 
             if (dropIndicator) {
@@ -1206,14 +1204,31 @@ function isChecklist(filename) {
     return filename.endsWith('_.txt') || filename.endsWith('_.md');
 }
 
-window.handleNodeMove = async function (sourceDir, sourceFile, targetDir) {
-    log(`Moving ${sourceDir}/${sourceFile} to ${targetDir}/`);
+window.handleNodeMove = async function (sourcePath, targetDir) {
+    log(`Moving ${sourcePath} to ${targetDir}/`);
 
-    log(`${sourceDir}/${sourceFile}`);
-    if (currentEditor.path === `${sourceDir}/${sourceFile}`) {
+    const memFile = getMemFile(sourcePath);
+    const isFolder = memFile === null || memFile.isFile !== true;
+
+    const parts = sourcePath.split('/').filter(Boolean);
+    const name = parts.pop();
+    const newPath = (targetDir === '/' ? '' : targetDir) + '/' + name;
+    if (newPath === sourcePath) return;
+
+    if (isFolder) {
+        try {
+            await moveDir(sourcePath, newPath);
+        } catch (err) {
+            logError('handleNodeMove: moveDir failed', err);
+        }
+        await renderSidebar();
+        return;
+    }
+
+    if (currentEditor.path === sourcePath) {
         await moveCurrentFile(targetDir);
     } else {
-        await moveFile(`${sourceDir}/${sourceFile}`, `${targetDir}/${sourceFile}`);
+        await moveFile(sourcePath, newPath);
     }
 };
 
