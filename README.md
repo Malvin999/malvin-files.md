@@ -14,7 +14,7 @@ You can store whole your life:
 All in plain `.md` files, local-first. LLM-friendly.  
 Chatbot for access from anywhere.  
 
-Try it out: [app.files.md](https://app.files.md)  
+Web app: [app.files.md](https://app.files.md)  
 Telegram bot: [@FilesMDBot](https://t.me/FilesMDBot)  
 
 **Other messengers will follow**.  
