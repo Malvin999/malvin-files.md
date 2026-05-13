@@ -153,9 +153,9 @@ However, **the first brain never actually gets smarter.**
 And that's an issue - in the AI age, your first brain is as valuable as ever.  
 Use your brain to think through the notes.  
 
-Think about how new knowledge can sharpen your judgment and expand your taxonomy of some phenomenon.  
+- How this new knowledge can sharpen your judgment or expand your taxonomy?
 - How can you see the world differently, given this new knowledge?  
-- How you can act differently?  
+- How can you act differently?  
 
 **If you don't plan to use this new knowledge right now, don't create a note**.  
 
