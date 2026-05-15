@@ -15,8 +15,16 @@ All in plain `.md` files, local-first. LLM-friendly.
 
 Try it out: [app.files.md](https://app.files.md)  
 
-## Another note-taking app?
-Maybe. But this time: 
+## Grow your knowledge base 🌱
+
+<div align="center">
+    <br/>
+    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/base.png"/>
+    <br/><br/>
+</div>
+
+Connect ideas. Let them compound. Think through.
+
 - Only necessary features, **restrictions foster creativity**
 - No need to install anything, all you need is a browser
 - Works offline
@@ -53,15 +61,7 @@ Select where to save:
 
 You can save notes, journal and checklists.
 
-## Grow your knowledge base 🌱
-Connect ideas. Let them compound. Think through.  
-
-<div align="center">
-    <br/>
-    <img src="https://github.com/zakirullin/files.md/raw/main/web/img/base.png"/>
-    <br/><br/>
-</div>
-
+## How to grow your knowledge base 
 1) I used [app.files.md](https://app.files.md) to grow my knowledge about brain and software development
 2) I added new notes to either `brain` or `dev` folders. One idea per note
 3) I made connections between the relevant notes in the web app (typed `[` and selected a relevant note)
