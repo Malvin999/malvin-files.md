@@ -270,6 +270,10 @@
     padding: 0.2em 0.5em !important;
     font-weight: 600 !important;
     font-size: 0.9em !important;
+    /* Chip rides slightly below the body baseline; nudge it up so the
+       text inside the chip lines up with the surrounding body text. */
+    position: relative;
+    top: -2px;
 }
 
 .cm-s-hypermd-light div.HyperMD-codeblock-bg {
