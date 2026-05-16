@@ -2,12 +2,11 @@
    Paper-cream background, near-black text, monospace italic blockquotes,
    marker-pen orange highlight on links, heavy bold for emphasis. Cloned
    from theme-light.css and re-skinned; structure stays identical so the
-   editor wiring is unaffected. */
-/* Palette is applied regardless of system color scheme - brutal overrides
-   both light and dark defaults. Loaded INSTEAD of theme-light.css; comment
-   out theme-dark.css too if it's still linked or it'll fight on dark OS.
-   Neo-* colors follow the reference palette from
-   https://rustamagamaliev.ru — paper bg + lime/orange/blue accents. */
+   editor wiring is unaffected.
+
+   Scoped to `prefers-color-scheme: light` — brutal is the light-mode look,
+   theme-dark.css continues to handle OS-dark systems untouched. */
+@media (prefers-color-scheme: light) {
 :root {
     --font: 'Space Mono', monospace !important;
     --font-mono-brutal: 'Space Mono', 'IBM Plex Mono', ui-monospace, 'Courier New', Courier, monospace;
@@ -338,3 +337,10 @@
 .tree-container span.tree-item.selected:hover .tree-mod_icon svg {
     stroke: #1A1A1A !important;
 }
+
+/* Editor body line-height: brutalist body text breathes more. Headers
+   keep their own explicit line-heights set above so they don't inherit. */
+.cm-s-hypermd-light .CodeMirror-line {
+    line-height: 1.9 !important;
+}
+} /* end @media (prefers-color-scheme: light) */
