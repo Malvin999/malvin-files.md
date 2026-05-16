@@ -268,6 +268,16 @@
     width: 4px !important;
 }
 
+/* `>` marker in neo-blue. No !important so hypermd.css's
+   `pre.hmd-inactive-line span.cm-formatting-quote { color: transparent }`
+   still wins on inactive lines and keeps the arrow hidden until the
+   cursor is on the quote line. */
+.cm-s-hypermd-light span.cm-formatting-quote {
+    color: var(--color-neo-blue);
+    position: relative;
+    left: 1px;
+}
+
 /* Inline code: lime-green chip with bold mono text and a thin dark
    outline. Bigger padding now that the body has 1.9 line-height to
    accommodate the taller chip without breaking flow. */
