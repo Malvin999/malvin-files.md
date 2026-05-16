@@ -234,13 +234,13 @@
     border-bottom: none !important;
 }
 
-/* Hover: keep the default blue text and add a thick orange underline.
-   No background swap and no padding so the line doesn't shift under
-   the cursor as the user mouses over links. */
+/* Hover: orange text + thick orange underline. No background swap
+   and no padding so the line doesn't shift under the cursor as the
+   user mouses over links. */
 .cm-s-hypermd-light span.cm-link:hover,
 .cm-s-hypermd-light span.cm-string.cm-url.cm-hmd-barelink:hover {
     background: transparent !important;
-    color: var(--color-neo-blue) !important;
+    color: var(--color-neo-orange) !important;
     border-bottom: 3px solid var(--color-neo-orange) !important;
 }
 
