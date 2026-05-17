@@ -381,14 +381,8 @@
     background: rgba(46, 92, 255, 0.35) !important;
 }
 
-/* Sidebar tree: brutalist palette. Mono font, blue on hover (focused),
-   orange on selected (current open file). Selectors match sidebar.css's
-   structure so they win without going nuclear with `!important`. */
-#sidebar,
-#sidebar .tree-container,
-#sidebar .tree-item {
-    font-family: 'IBM Plex Mono', monospace !important;
-}
+/* Sidebar tree: brutalist palette - blue on hover (focused),
+   orange on selected (current open file). Font inherits from body. */
 
 /* Sharp corners on every selectable row - brutalist motif. Kills the 5px
    radius set on the base tree-item in sidebar.css. */

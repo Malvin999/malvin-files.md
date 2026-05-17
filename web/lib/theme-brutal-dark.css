@@ -326,11 +326,6 @@
     background: color-mix(in srgb, var(--color-neo-blue), transparent 60%) !important;
 }
 
-#sidebar,
-#sidebar .tree-container,
-#sidebar .tree-item {
-    font-family: 'IBM Plex Mono', monospace !important;
-}
 
 .tree-container li span.tree-item {
     border-radius: 0 !important;
