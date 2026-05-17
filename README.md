@@ -39,6 +39,12 @@ Maybe. But this time:
 - Occasionally hit force-refresh (`Cmd+Shift+R`) to get new updates.  
 
 ## Dump your thoughts
+You can dump your thoughts just by sending a message to the chat.  
+
+<img src="https://github.com/zakirullin/files.md/raw/main/web/img/appdark.png" alt="Files.md screenshot" title="Files.md"/>
+
+And it will be synchronized.  
+
 Open the chat and send a message:
 <div align="center">
     <img src="https://github.com/zakirullin/files.md/raw/main/web/img/note1.png"  width="350"/>
@@ -49,7 +55,7 @@ Choose where to save (can do later):
     <img src="https://github.com/zakirullin/files.md/raw/main/web/img/note2.png" width="350"/>
 </div>
 
-You can save notes, journal and checklists.
+You can save notes, journal and checklists with this flow.  
 
 ## Save things in the chatbot
 Open the chat, write something and press `Enter`:
