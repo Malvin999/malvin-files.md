@@ -39,11 +39,11 @@ Maybe. But this time:
 - Occasionally hit force-refresh (`Cmd+Shift+R`) to get new updates.  
 
 ## Dump your thoughts
-You can dump your thoughts just by sending a message to the chat.  
+You can use chat to quickly dump your thoughts.  
 
-<img src="https://github.com/zakirullin/files.md/raw/main/web/img/appdark.png" alt="Files.md screenshot" title="Files.md"/>
+<img src="https://github.com/zakirullin/files.md/raw/main/web/img/app.png" alt="Files.md screenshot" title="Files.md"/>
 
-And it will be synchronized.  
+It will be synchronized across all devices.    
 
 Open the chat and send a message:
 <div align="center">
