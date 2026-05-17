@@ -243,15 +243,20 @@ var __assign = (this && this.__assign) || Object.assign || function(t) {
                     // PATCHED: `// ` line-comment marker. Match only when the
                     // `//` is at start-of-line (or right after whitespace) AND
                     // followed by a space, so URL schemes like `http://...`
-                    // aren't touched. Consume the rest of the line so the
-                    // whole comment (including wrap rows) is one token, and
-                    // themes can color it via `.cm-hmd-comment`.
+                    // aren't touched. Consume the rest of the line as one
+                    // `hmd-comment` token, and preserve any active markdown
+                    // context (header, quote) so font/size styling continues
+                    // through the comment - otherwise the cursor jumps
+                    // because of metric changes between styled spans.
                     if (stream.peek() === '/' &&
                         stream.string.charAt(stream.pos + 1) === '/' &&
                         stream.string.charAt(stream.pos + 2) === ' ' &&
                         (stream.pos === 0 || /\s/.test(stream.string.charAt(stream.pos - 1)))) {
                         stream.skipToEnd();
-                        return 'hmd-comment';
+                        var extra = '';
+                        if (state.header) extra += ' header header-' + state.header;
+                        if (state.quote) extra += ' quote quote-' + state.quote;
+                        return ('hmd-comment' + extra).trim();
                     }
                 }
                 //#endregion

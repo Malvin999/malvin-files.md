@@ -343,7 +343,7 @@
 }
 
 .cm-hmd-comment {
-    color: var(--color-neo-orange) !important;
+    color: #42A92C !important;
 }
 
 /* Images: no border, slightly rounded corners (matching the chat modal). */
