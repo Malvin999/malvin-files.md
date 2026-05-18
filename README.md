@@ -15,7 +15,8 @@ All in plain `.md` files, local-first. LLM-friendly.
 
 Try it out: [app.files.md](https://app.files.md)  (Beta)  
 
-Me and my friends were building this project for 5 years - you can consider [💚 sponsoring it on GitHub](https://github.com/sponsors/zakirullin).
+My friends and I have been building this project for 5 years. Hope you'll like it!
+[Sponsor on GitHub 💚] (https://github.com/sponsors/zakirullin).
 
 ## Another note taking app? 
 Maybe. But this time:
