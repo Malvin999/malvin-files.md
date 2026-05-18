@@ -1,7 +1,7 @@
 <img src="https://github.com/zakirullin/files.md/raw/main/web/img/icon.png" alt="Files.md icon" title="Files.md" align="right" height="76" />
 
 # Files.md  
-A simple application for your `.md` files.
+A simple application for your `.md` files. Private and local-first.
 
 <img src="https://github.com/zakirullin/files.md/raw/main/web/img/appdark.png" alt="Files.md screenshot" title="Files.md"/>
 
@@ -24,7 +24,7 @@ Maybe. But this time:
 - Only necessary features, **restrictions foster creativity**
 - No need to install anything, all you need is a browser
 - Works offline
-- Local first, files don't leave your device
+- **Local-first, files don't leave your device**
 - Free and open source, you can tweak it however you want
 - Extremely simple code. **One person or an LLM can fit the whole project in head**
 - Portable, no build systems, just open `web/index.html` 
