@@ -20,12 +20,11 @@ $ make deploy_systemd host=<YOUR_SSH_HOST>
 
 Bot's artifacts can be seen in `./storage/<USER_ID>` folder.  
 
-## Hosting the bot on you local computer
-You can host the bot locally, because it doesn't expose any ports to the outside world (if you don't use habits functionality).  
-It communicates with Telegram using pull API.  
-
-Create a symlink to your local folder with `.md` files for convenience:  
-`ln -s <YOUR_EXISTING_DIR_WITH_MD_FILES> storage/<USER_ID>`
+## Linking a new device
+1) Open telegram bot
+2) Open `/app`
+3) Open the link in your browser
+4) Device is now linked
 
 ### Additional bot's settings
 1) For search functionality, enable `Inline Mode` for your bot in [@BotFather](https://t.me/BotFather)
@@ -43,6 +42,13 @@ app - 🔗 Open in app
 settings - ⚙️ Settings
 help - 📕 Help
 ```
+
+## Hosting the bot on you local computer
+You can host the bot locally, because it doesn't expose any ports to the outside world (if you don't use habits functionality).  
+It communicates with Telegram using pull API.
+
+Create a symlink to your local folder with `.md` files for convenience:  
+`ln -s <YOUR_EXISTING_DIR_WITH_MD_FILES> storage/<USER_ID>`
 
 ## Transfer files to another server
 
