@@ -49,12 +49,12 @@ Maybe. But this time:
 - Occasionally hit force-refresh (`Cmd+Shift+R`) to get new updates.  
 
 ## How to sync
-| Setup                                                  | Where your files live                 | Sync across devices | Server needed         | Best for                                             |
-|--------------------------------------------------------|---------------------------------------|-------------------|-----------------------|------------------------------------------------------|
-| **Local-first**, app.files.md doesn't send any data    | A folder on your device               | No                | None                  | Maximum privacy, your data doesn't leave your device |
-| **Cloud-folder sync** (iCloud/Dropbox/Google Drive)    | Your existing cloud folder | Yes               | None (cloud provider) | Sync across devices without running a server         |
-| **[Self-hosted sync server](docs/your-own-server.md)** | Your own (or local) server | Yes               | One Go binary         | Sync between devices inside your network             |
-| **Hosted sync server**                                 | Our managed server         | Yes               | api.files.md          | Try it instantly, no setup                           |
+| Setup                                                 | Where your files live                 | Sync across devices | Server needed      | Best for                                             |
+|-------------------------------------------------------|---------------------------------------|-------------------|--------------------|------------------------------------------------------|
+| **Local-first**, `app.files.md` doesn't send any data  | A folder on your device               | No                | None               | Maximum privacy, your data doesn't leave your device |
+| **Cloud-folder sync** (iCloud/Dropbox/Google Drive)   | Your existing cloud folder | Yes               | None (cloud provider) | Sync across devices without running a server         |
+| **[Self-hosted sync server](docs/your-own-server.md)** | Your own (or local) server | Yes               | One Go binary      | Sync between devices inside your network             |
+| **Hosted sync server**                                | Our managed server         | Yes               | `api.files.md`      | Try it instantly, no setup                           |
 
 ## Dump your thoughts
 You can use chat to quickly dump your thoughts.  
