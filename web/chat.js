@@ -269,7 +269,7 @@ async function toggleChatMessage(timestamp, text, done) {
 
 function initChat() {
     chatInput.addEventListener('keydown', async function (e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
             e.preventDefault();
             await sendToChat();
             autoResize();
