@@ -22,6 +22,8 @@ Try it out: [app.files.md](https://app.files.md) (Beta). Main site: [files.md](h
 
 **I have been building this project for 5 years**. **[Sponsor it on GitHub 💚](https://github.com/sponsors/zakirullin)**.
 
+[Ways to use it](#ways-to-use-it) · [Dump your thoughts](#dump-your-thoughts) · [How to think deeply](#how-to-think-deeply) · [Second Brain?](#second-brain) · [Files structure](#files-structure) · [Hotkeys](#hotkeys) · [Self-hosting](docs/your-own-server.md)
+
 ## Another note taking app? 
 Maybe. But this time:
 - Only necessary features, **restrictions foster creativity**
