@@ -55,6 +55,9 @@ const COMMIT_HASH = urlParams.get('v') ? `?v=${urlParams.get('v')}` : '';
 
 const cacheName = `files-md-v${COMMIT_HASH}`;
 
+// Pre-fetch every file in urlsToCache so the app works offline right after the
+// first visit. Without this, *.js files would be requested before SW is ready,
+// and thus not cached and ready for offline.
 self.addEventListener('install', event => {
     event.waitUntil((async () => {
         let cache;
