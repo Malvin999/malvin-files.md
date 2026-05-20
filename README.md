@@ -331,7 +331,7 @@ Read 4K randomly from SSD = 150,000 ns
 ```
 
 ## ADRs (Architecture Decision Records)
-- `20.05.2026` Added LaTeX support, even though I wasn't happy about +20 font files. LaTeX is text-based and LLM-friendly, so it is a good fit for knowledge bases. 
+- `20.05.2026` Added LaTeX support, even though I wasn't happy about +20 font files. LaTeX is text-based and LLM-friendly. Text + Math will cover pretty much everything. 
 - `06.05.2026` Moved from Today.md to Chat.md. CustDev showed that users have trouble grasping "chat" concept. And besides, "open chat" phrase has meaning in both bot and webapp.
 - `02.05.2026` Now hide-token runs synchronously on every change, previously it had 100ms debounce which caused jitter on by word removals in links and formatted texts.
 - `06.05.2026` Merged Inbox.md and Today.md to Today.md. Inbox name is too abstract, productivity-related and GTD-ish. I want calmness and simplicity. Today is like "the page I live in chat".

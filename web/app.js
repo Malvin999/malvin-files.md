@@ -224,13 +224,15 @@ async function newFile(parentDir) {
     editor.setCursor({ line: 1, ch: 0 });
     editor.focus();
 
-    const folder = dirPath === '/' ? '/' : dirPath.replace(/^\//, '').replace(/\/$/, '');
-    const toastMsg = document.createElement('span');
-    toastMsg.append('Created at ');
-    const bold = document.createElement('b');
-    bold.textContent = folder;
-    toastMsg.appendChild(bold);
-    showToast(toastMsg);
+    if (dirPath !== '/') {
+        const toastMsg = document.createElement('span');
+        const folder = dirPath.replace(/^\//, '').replace(/\/$/, '');
+        toastMsg.append('Created at ');
+        const bold = document.createElement('b');
+        bold.textContent = folder;
+        toastMsg.appendChild(bold);
+        showToast(toastMsg);
+    }
 
     await renderSidebar();
 }
