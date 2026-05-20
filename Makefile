@@ -88,14 +88,14 @@ deploy_systemd: # deploy as systemd service
 	YELLOW='\e[33m'; \
 	RESET='\e[0m'; \
 	COMMIT_HASH=$$(git rev-parse --short HEAD); \
-	printf "$${YELLOW}Building...$${RESET}\n" && \
+	printf "$${YELLOW}Building (version=$${COMMIT_HASH})...$${RESET}\n" && \
 	make check && \
-	GOOS=linux GOARCH=amd64 go build -o /tmp/server ./cmd/server && \
+	GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=$${COMMIT_HASH}" -o /tmp/server ./cmd/server && \
 	printf "$${GREEN}Build Completed$${RESET}\n" && \
 	scp /tmp/server $(host):/tmp/server.new && printf "$${GREEN}The binary is copied on the server$${RESET}\n" && \
 	ssh $(host) "sudo mv /tmp/server.new /app/server && sudo systemctl daemon-reload && sudo systemctl restart filesmd.service" && \
 	rm /tmp/server && \
-	printf "$${YELLOW}Versioning current files with commit: $${COMMIT_HASH}$${RESET}\n" && \
+	printf "$${YELLOW}Version: $${COMMIT_HASH}$${RESET}\n" && \
 	TMPWEB=$$(mktemp -d) && \
 	cp -r web "$${TMPWEB}/web" && \
 	find "$${TMPWEB}/web" -name "*.html" -exec grep -l "?v=" {} \; | xargs sed -i '' 's/?v=/?v='"$${COMMIT_HASH}"'/g' && \
@@ -109,9 +109,10 @@ deploy_binary: # deploy as regular binary, kinda deprecated, but ok for simple s
 	@GREEN='\e[32m'; \
 	YELLOW='\e[33m'; \
 	RESET='\e[0m'; \
-	printf "$${YELLOW}Building...$${RESET}\n" && \
+	COMMIT_HASH=$$(git rev-parse --short HEAD); \
+	printf "$${YELLOW}Building (version=$${COMMIT_HASH})...$${RESET}\n" && \
 	make check && \
-	GOOS=linux GOARCH=amd64 go build -o /tmp/server ./cmd/server && \
+	GOOS=linux GOARCH=amd64 go build -ldflags "-X main.Version=$${COMMIT_HASH}" -o /tmp/server ./cmd/server && \
 	printf "$${GREEN}Build Completed$${RESET}\n" && \
 	ssh $(host) "sudo killall server || true" && \
 	scp /tmp/server $(host):/tmp/server.new && printf "$${GREEN}The binary is copied on the server$${RESET}\n" && \
