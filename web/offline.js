@@ -29,9 +29,25 @@ const urlsToCache = [
     '/lib/fold.js',
     '/lib/fold-image.js',
     '/lib/fold-link.js',
-    '/lib/fold-math.js',
-    '/lib/katex/katex.min.js',
-    '/lib/katex/katex.min.css',
+    '/lib/latex/fold-math.js',
+    '/lib/latex/katex.min.js',
+    '/lib/latex/katex.min.css',
+    '/lib/latex/KaTeX_AMS-Regular.woff2',
+    '/lib/latex/KaTeX_Caligraphic-Bold.woff2',
+    '/lib/latex/KaTeX_Caligraphic-Regular.woff2',
+    '/lib/latex/KaTeX_Fraktur-Bold.woff2',
+    '/lib/latex/KaTeX_Fraktur-Regular.woff2',
+    '/lib/latex/KaTeX_Main-Bold.woff2',
+    '/lib/latex/KaTeX_Main-BoldItalic.woff2',
+    '/lib/latex/KaTeX_Main-Italic.woff2',
+    '/lib/latex/KaTeX_Main-Regular.woff2',
+    '/lib/latex/KaTeX_Math-BoldItalic.woff2',
+    '/lib/latex/KaTeX_Math-Italic.woff2',
+    '/lib/latex/KaTeX_SansSerif-Bold.woff2',
+    '/lib/latex/KaTeX_SansSerif-Italic.woff2',
+    '/lib/latex/KaTeX_SansSerif-Regular.woff2',
+    '/lib/latex/KaTeX_Script-Regular.woff2',
+    '/lib/latex/KaTeX_Typewriter-Regular.woff2',
     '/lib/table-align.js',
     '/lib/autocomplete-link.js',
     '/lib/show-hint.js',
@@ -69,7 +85,9 @@ self.addEventListener('install', event => {
         }
 
         for (let url of urlsToCache) {
-            const shouldAddRevisionHash = url !== "/" && url !== 'favicon.ico' && !url.startsWith('/img/');
+            // KaTeX fonts are referenced by katex.min.css with no version param,
+            // so the cache key must match (no hash appended either).
+            const shouldAddRevisionHash = url !== "/" && url !== 'favicon.ico' && !url.startsWith('/img/') && !url.endsWith('.woff2');
             if (shouldAddRevisionHash) {
                 url = url + COMMIT_HASH;
             }
