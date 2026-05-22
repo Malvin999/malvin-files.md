@@ -58,13 +58,22 @@
         to: CodeMirror.Pos(cursor.line, end)
       }
 
+      // PATCHED: if the user typed `[[` (wiki-link opener), the completion
+      // should insert `name]]` so the result is `[[name]]` instead of the
+      // classical `[name](url)`. We detect by looking two chars before the
+      // word start; both must be `[`.
+      var isWiki = start >= 2
+          && line.charAt(start - 1) === '['
+          && line.charAt(start - 2) === '['
+
       var list = result.list
       for (var i = 0; i < dicts.length; i++) {
         var dict = dicts[i]
         if (!dict) continue
         for (var key in dict) {
           if (wordEmpty || key.slice(0, word.length) === word || key.toLowerCase().includes(word.toLowerCase())) {
-            list.push({text: dict[key], displayText: key})
+            var insertText = isWiki ? key + ']]' : dict[key]
+            list.push({text: insertText, displayText: key})
           }
         }
       }
