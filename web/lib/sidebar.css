@@ -137,7 +137,9 @@
 #sidebar {
 	display: flex;
 	flex-direction: column;
-	overflow: hidden;
+	overflow: visible; /* let .resize's outward hit area extend past the sidebar's right edge.
+	                       #tree handles its own vertical scroll, so removing overflow here
+	                       only affects the resize handle's clipping. */
 }
 
 #tree {
@@ -162,23 +164,19 @@
 
 .resize {
 	position: absolute;
-	right: 0;
+	right: -6px; /* 6px buffer on the outside so the handle catches early */
 	top: 0;
 	bottom: 0;
-	width: 25px;
+	width: 9px; /* 1px line + 2px inside + 6px outside */
 	cursor: col-resize;
 	background: transparent;
 	z-index: 11;
 }
 
-.resize:hover {
-	background: color-mix(in srgb, var(--col-bg-active) 50%, transparent);
-}
-
 .resize::after {
 	content: '';
 	position: absolute;
-	right: 0;
+	right: 6px; /* visible line still sits exactly at the sidebar's right edge */
 	top: 0;
 	bottom: 0;
 	width: 1px;
@@ -186,13 +184,15 @@
 }
 
 .resize:hover::after {
+	width: 5px;
+	right: 4px;
 	background: var(--col-border);
 }
 
 #close-sidebar {
 	position: absolute;
 	top: 2px;
-	right: -1px;
+	right: 12px;
 	opacity: 0;
 	cursor: pointer;
 	font-size: 27px;
