@@ -24,6 +24,39 @@ That's all :)
 
 Bot's artifacts can be seen in `./storage/<USER_ID>` folder.  
 
+## Run your own Feishu bot
+
+The Feishu integration uses Feishu's long connection mode, so the server opens
+an outbound WebSocket connection to Feishu. You do not need to expose a webhook
+endpoint for incoming bot messages.
+
+1) Create a custom Feishu app in Feishu Developer Console.
+2) Enable bot capability for the app.
+3) Subscribe to the `im.message.receive_v1` event.
+   If `FEISHU_ENABLE_CARD_ACTIONS=true`, also subscribe to
+   `card.action.trigger`.
+4) Set the event/callback subscription mode to long connection.
+5) Add the app to a Feishu chat and send the bot a direct message.
+6) Add the following variables to `.env`:
+
+```bash
+FEISHU_APP_ID=<YOUR_FEISHU_APP_ID>
+FEISHU_APP_SECRET=<YOUR_FEISHU_APP_SECRET>
+FEISHU_ALLOWED_OPEN_IDS=<YOUR_OPEN_ID>
+FEISHU_DEFAULT_USER_ID=10001
+FEISHU_ENABLE_CARD_ACTIONS=false
+```
+
+`FEISHU_DEFAULT_USER_ID` is the numeric files.md user directory to write to.
+For the example above, messages are saved under `./storage/10001`. If it is not
+set, the server derives a stable numeric ID from the Feishu sender `open_id`.
+
+For a personal setup, keep `FEISHU_ALLOWED_OPEN_IDS` set to your own `open_id`.
+If it is empty, every Feishu sender that can message the bot is accepted.
+
+The MVP saves regular text messages to `Chat.md`. The existing `jj` suffix still
+saves a message to journal.
+
 ## Linking a new device
 1) Open telegram bot
 2) Open `/app`

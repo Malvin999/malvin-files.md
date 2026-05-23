@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -15,6 +16,7 @@ import (
 	"github.com/zakirullin/files.md/server"
 	"github.com/zakirullin/files.md/server/config"
 	"github.com/zakirullin/files.md/server/db"
+	"github.com/zakirullin/files.md/server/feishu"
 	"github.com/zakirullin/files.md/server/fs"
 	"github.com/zakirullin/files.md/server/pkg/tg"
 	"github.com/zakirullin/files.md/server/sync"
@@ -45,11 +47,19 @@ func main() {
 		)
 	}
 
+	feishuCfg := feishu.ConfigFromServer(config.ServerCfg)
+	if feishuCfg.Enabled() {
+		_, err := feishu.Start(context.Background(), feishuCfg)
+		if err != nil {
+			panic(fmt.Sprintf("Error starting Feishu bot: %s\n", err))
+		}
+	}
+
 	// Telegram bot is optional - server can run as web-only.
 	api, err := tgbotapi.NewBotAPI(config.ServerCfg.BotAPIToken)
 	if err != nil {
-		fmt.Printf("No Telegram bot token found, running web server only: %s\n", err)
-		select {} // block forever
+		fmt.Printf("No Telegram bot token found: %s\n", err)
+		blockForever()
 	}
 	telegram := tg.NewTG(api)
 
@@ -123,6 +133,12 @@ func main() {
 
 			userCh <- update
 		}()
+	}
+}
+
+func blockForever() {
+	for {
+		time.Sleep(time.Hour)
 	}
 }
 

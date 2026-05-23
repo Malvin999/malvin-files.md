@@ -46,6 +46,11 @@ report:
 
 define ENV_FILE
 BOT_API_TOKEN=
+FEISHU_APP_ID=
+FEISHU_APP_SECRET=
+FEISHU_ALLOWED_OPEN_IDS=
+FEISHU_DEFAULT_USER_ID=
+FEISHU_ENABLE_CARD_ACTIONS=false
 API_HOST=$(apihost)
 APP_HOST=app.files.md
 STORAGE_DIR=/app/storage
@@ -120,4 +125,3 @@ deploy_binary: # deploy as regular binary, kinda deprecated, but ok for simple s
 	ssh $(host) "sudo su -c \"cd /app && nohup ./server >> /app/log 2>>/app/err &\" -s /bin/sh www-data" && \
 	rm /tmp/server && \
 	printf "$${GREEN}Successfully deployed!$${RESET}\n"
-

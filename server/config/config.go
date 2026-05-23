@@ -12,18 +12,23 @@ import (
 // APIURL / AppURL carry the full scheme+host (e.g. "https://api.files.md").
 // Hostnames are derived from them on demand via APIHost()/AppHost().
 type Config struct {
-	WorkingDir        string
-	StorageDir        string `default:"./storage"  envconfig:"STORAGE_DIR"`
-	BotAPIToken       string `required:"false" envconfig:"BOT_API_TOKEN"`
-	ConfigFilename    string `default:"config.json"`
-	APIURL            string `default:"" envconfig:"API_URL"`
-	AppURL            string `default:"" envconfig:"APP_URL"`
-	ServerCertDir     string `default:"/tmp" envconfig:"CERT_DIR"`
-	TokensDir         string `default:"/tmp" envconfig:"TOKENS_DIR"`
-	TokensSalt        string `envconfig:"TOKENS_SALT"`
-	ServerLogFile     string `default:"/tmp/server.log" envconfig:"LOG_FILE"`
-	StorageQuotaKB    int64  `default:"1024" envconfig:"STORAGE_QUOTA_KB"` // 1MB
-	UnlimitedQuotaIDs string `envconfig:"UNLIMITED_QUOTA_IDS"`
+	WorkingDir              string
+	StorageDir              string `default:"./storage"  envconfig:"STORAGE_DIR"`
+	BotAPIToken             string `required:"false" envconfig:"BOT_API_TOKEN"`
+	ConfigFilename          string `default:"config.json"`
+	APIURL                  string `default:"" envconfig:"API_URL"`
+	AppURL                  string `default:"" envconfig:"APP_URL"`
+	ServerCertDir           string `default:"/tmp" envconfig:"CERT_DIR"`
+	TokensDir               string `default:"/tmp" envconfig:"TOKENS_DIR"`
+	TokensSalt              string `envconfig:"TOKENS_SALT"`
+	ServerLogFile           string `default:"/tmp/server.log" envconfig:"LOG_FILE"`
+	StorageQuotaKB          int64  `default:"1024" envconfig:"STORAGE_QUOTA_KB"` // 1MB
+	UnlimitedQuotaIDs       string `envconfig:"UNLIMITED_QUOTA_IDS"`
+	FeishuAppID             string `envconfig:"FEISHU_APP_ID"`
+	FeishuAppSecret         string `envconfig:"FEISHU_APP_SECRET"`
+	FeishuAllowedOpenIDs    string `envconfig:"FEISHU_ALLOWED_OPEN_IDS"`
+	FeishuDefaultUserID     int64  `envconfig:"FEISHU_DEFAULT_USER_ID"`
+	FeishuEnableCardActions bool   `default:"false" envconfig:"FEISHU_ENABLE_CARD_ACTIONS"`
 }
 
 func (c Config) APIHost() string { return hostOf(c.APIURL) }
