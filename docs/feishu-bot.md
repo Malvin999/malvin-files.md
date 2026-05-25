@@ -156,11 +156,18 @@ FEISHU_APP_SECRET=
 FEISHU_ALLOWED_OPEN_IDS=
 FEISHU_DEFAULT_USER_ID=
 FEISHU_ENABLE_CARD_ACTIONS=false
+SINGLE_USER_MODE=false
+SINGLE_USER_ID=
+CONFIG_FILENAME=config.json
 ```
 
-For a personal single-user setup, `FEISHU_DEFAULT_USER_ID` can point to one
-existing files.md user directory. This avoids a broad user identity refactor in
-the first version.
+For a personal setup that keeps the original storage layout,
+`FEISHU_DEFAULT_USER_ID` can point to one existing files.md user directory.
+
+For a personal single-vault setup, set `SINGLE_USER_MODE=true` and point
+`STORAGE_DIR` at the vault root. Then files are written directly under
+`STORAGE_DIR` instead of `STORAGE_DIR/<userID>`. Use `CONFIG_FILENAME` when the
+vault already has a `config.json` for another tool.
 
 Current implementation status:
 

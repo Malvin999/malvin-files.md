@@ -6,18 +6,22 @@ import (
 	"fmt"
 	"html"
 	"io"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
 
+	lark "github.com/larksuite/oapi-sdk-go/v3"
 	"github.com/larksuite/oapi-sdk-go/v3/channel/types"
+	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 
 	"github.com/zakirullin/files.md/server/pkg/tg"
 )
 
 type Chat struct {
 	channel           types.Channel
+	client            *lark.Client
 	enableCardActions bool
 
 	mu         sync.RWMutex
@@ -27,9 +31,10 @@ type Chat struct {
 	suppress   int32
 }
 
-func NewChat(ch types.Channel, enableCardActions bool) *Chat {
+func NewChat(ch types.Channel, client *lark.Client, enableCardActions bool) *Chat {
 	return &Chat{
 		channel:           ch,
+		client:            client,
 		enableCardActions: enableCardActions,
 		chatIDs:           make(map[int64]string),
 		messageIDs:        make(map[int]string),
@@ -140,9 +145,13 @@ func (c *Chat) SuppressNextHome() {
 }
 
 func (c *Chat) DownloadFile(fileID string, outFile io.Writer) (string, error) {
-	mediaType, fileKey, ext, ok := parseMediaID(fileID)
+	mediaType, fileKey, ext, messageID, ok := parseMediaID(fileID)
 	if !ok {
 		return "", fmt.Errorf("feishu download: invalid media id")
+	}
+
+	if messageID != "" && c.client != nil {
+		return c.downloadMessageResource(messageID, fileKey, mediaType, ext, outFile)
 	}
 
 	bytes, err := c.channel.DownloadFile(context.Background(), fileKey, mediaType)
@@ -152,6 +161,34 @@ func (c *Chat) DownloadFile(fileID string, outFile io.Writer) (string, error) {
 
 	if _, err := io.Copy(outFile, bytesReader(bytes)); err != nil {
 		return "", fmt.Errorf("feishu download write: %w", err)
+	}
+	return ext, nil
+}
+
+func (c *Chat) downloadMessageResource(messageID, fileKey, mediaType, ext string, outFile io.Writer) (string, error) {
+	resourceType := "file"
+	if mediaType == "image" {
+		resourceType = "image"
+	}
+
+	req := larkim.NewGetMessageResourceReqBuilder().
+		MessageId(messageID).
+		FileKey(fileKey).
+		Type(resourceType).
+		Build()
+	resp, err := c.client.Im.V1.MessageResource.Get(context.Background(), req)
+	if err != nil {
+		return "", fmt.Errorf("feishu download message resource: %w", err)
+	}
+	if !resp.Success() {
+		return "", fmt.Errorf("feishu download message resource API error: %d - %s", resp.Code, resp.Msg)
+	}
+
+	if _, err := io.Copy(outFile, resp.File); err != nil {
+		return "", fmt.Errorf("feishu download message resource write: %w", err)
+	}
+	if ext == "" {
+		ext = strings.ToLower(filepath.Ext(resp.FileName))
 	}
 	return ext, nil
 }

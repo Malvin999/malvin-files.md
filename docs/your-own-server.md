@@ -45,11 +45,24 @@ FEISHU_APP_SECRET=<YOUR_FEISHU_APP_SECRET>
 FEISHU_ALLOWED_OPEN_IDS=<YOUR_OPEN_ID>
 FEISHU_DEFAULT_USER_ID=10001
 FEISHU_ENABLE_CARD_ACTIONS=false
+STORAGE_DIR=./storage
 ```
 
 `FEISHU_DEFAULT_USER_ID` is the numeric files.md user directory to write to.
 For the example above, messages are saved under `./storage/10001`. If it is not
 set, the server derives a stable numeric ID from the Feishu sender `open_id`.
+
+For a personal vault where `STORAGE_DIR` should be the vault root itself, set:
+
+```bash
+SINGLE_USER_MODE=true
+SINGLE_USER_ID=10001
+CONFIG_FILENAME=.filesmd.json
+STORAGE_DIR=/path/to/Obsidian
+```
+
+In this mode, new files are written directly under `/path/to/Obsidian` instead
+of `/path/to/Obsidian/10001`.
 
 For a personal setup, keep `FEISHU_ALLOWED_OPEN_IDS` set to your own `open_id`.
 If it is empty, every Feishu sender that can message the bot is accepted.

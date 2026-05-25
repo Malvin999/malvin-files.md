@@ -15,6 +15,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -79,9 +80,67 @@ type File struct {
 	ParentDir   string
 }
 
+type StorageUser struct {
+	ID       int64
+	RootPath string
+}
+
+func UserRootPath(userID int64) string {
+	if config.ServerCfg.SingleUserMode {
+		return config.ServerCfg.StorageDir
+	}
+
+	return path.Join(config.ServerCfg.StorageDir, txt.I64(userID))
+}
+
+func SingleUserID() int64 {
+	if config.ServerCfg.SingleUserID != 0 {
+		return config.ServerCfg.SingleUserID
+	}
+	if config.ServerCfg.FeishuDefaultUserID != 0 {
+		return config.ServerCfg.FeishuDefaultUserID
+	}
+
+	return 0
+}
+
+func StorageUsers(storagePath string, backend afero.Fs) ([]StorageUser, error) {
+	if config.ServerCfg.SingleUserMode {
+		return []StorageUser{{
+			ID:       SingleUserID(),
+			RootPath: storagePath,
+		}}, nil
+	}
+
+	rootFS, err := NewFS(storagePath, backend)
+	if err != nil {
+		return nil, fmt.Errorf("storage users: can't create FS: %w", err)
+	}
+
+	userDirs, err := rootFS.FilesAndDirs(DirUserRoot)
+	if err != nil {
+		return nil, fmt.Errorf("storage users: %w", err)
+	}
+
+	users := make([]StorageUser, 0, len(userDirs))
+	for _, userDir := range userDirs {
+		userID, err := strconv.ParseInt(userDir.Name, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		users = append(users, StorageUser{
+			ID:       userID,
+			RootPath: path.Join(storagePath, txt.I64(userID)),
+		})
+	}
+
+	return users, nil
+}
+
 // newUserFS creates a new FS for a specific user with os.FS backend.
 func newUserFS(userID int64) (*FS, error) {
-	userAbsPath := path.Join(config.ServerCfg.StorageDir, txt.I64(userID))
+	userAbsPath := UserRootPath(userID)
 	backend := afero.NewOsFs()
 
 	quotaKB := config.ServerCfg.StorageQuotaKB

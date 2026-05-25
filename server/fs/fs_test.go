@@ -10,6 +10,8 @@ import (
 
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
+
+	"github.com/zakirullin/files.md/server/config"
 )
 
 func init() {
@@ -47,6 +49,30 @@ func TestMD5(t *testing.T) {
 	res := fs.md5("First task.md")
 
 	r.Equal("0824149b387", res)
+}
+
+func TestUserRootPathSingleUserMode(t *testing.T) {
+	r := require.New(t)
+	origCfg := config.ServerCfg
+	defer func() { config.ServerCfg = origCfg }()
+
+	config.ServerCfg.StorageDir = "/vault"
+	config.ServerCfg.SingleUserMode = true
+
+	r.Equal("/vault", UserRootPath(10001))
+}
+
+func TestStorageUsersSingleUserMode(t *testing.T) {
+	r := require.New(t)
+	origCfg := config.ServerCfg
+	defer func() { config.ServerCfg = origCfg }()
+
+	config.ServerCfg.SingleUserMode = true
+	config.ServerCfg.SingleUserID = 10001
+
+	users, err := StorageUsers("/vault", afero.NewMemMapFs())
+	r.NoError(err)
+	r.Equal([]StorageUser{{ID: 10001, RootPath: "/vault"}}, users)
 }
 
 func TestExcludeChecklists(t *testing.T) {

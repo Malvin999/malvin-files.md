@@ -38,12 +38,12 @@ func NewMessageUpdate(userID int64, msg *types.NormalizedMessage) *Update {
 
 	for _, resource := range msg.Resources {
 		if resource.Type == "image" && resource.FileKey != "" {
-			u.imageID = mediaID(resource.Type, resource.FileKey, resource.FileName)
+			u.imageID = mediaID(resource.Type, resource.FileKey, resource.FileName, msg.MessageID)
 			break
 		}
 	}
 
-	if u.imageID != "" {
+	if u.imageID != "" && msg.RawContentType != "image" {
 		u.caption = u.text
 	}
 
@@ -199,7 +199,7 @@ func stableIntID(s string) int {
 	return int(h.Sum64() & uint64(math.MaxInt32))
 }
 
-func mediaID(mediaType, fileKey, filename string) string {
+func mediaID(mediaType, fileKey, filename, messageID string) string {
 	ext := strings.ToLower(filepath.Ext(filename))
 	if ext == "" && mediaType == "image" {
 		ext = ".png"
@@ -209,19 +209,21 @@ func mediaID(mediaType, fileKey, filename string) string {
 		"type": mediaType,
 		"key":  fileKey,
 		"ext":  ext,
+		"msg":  messageID,
 	}
 	b, _ := json.Marshal(payload)
 	return string(b)
 }
 
-func parseMediaID(id string) (mediaType, fileKey, ext string, ok bool) {
+func parseMediaID(id string) (mediaType, fileKey, ext, messageID string, ok bool) {
 	var payload map[string]string
 	if err := json.Unmarshal([]byte(id), &payload); err != nil {
-		return "", "", "", false
+		return "", "", "", "", false
 	}
 
 	mediaType = payload["type"]
 	fileKey = payload["key"]
 	ext = payload["ext"]
-	return mediaType, fileKey, ext, mediaType != "" && fileKey != ""
+	messageID = payload["msg"]
+	return mediaType, fileKey, ext, messageID, mediaType != "" && fileKey != ""
 }

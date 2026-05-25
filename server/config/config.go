@@ -14,8 +14,10 @@ import (
 type Config struct {
 	WorkingDir              string
 	StorageDir              string `default:"./storage"  envconfig:"STORAGE_DIR"`
+	SingleUserMode          bool   `default:"false" envconfig:"SINGLE_USER_MODE"`
+	SingleUserID            int64  `envconfig:"SINGLE_USER_ID"`
 	BotAPIToken             string `required:"false" envconfig:"BOT_API_TOKEN"`
-	ConfigFilename          string `default:"config.json"`
+	ConfigFilename          string `default:"config.json" envconfig:"CONFIG_FILENAME"`
 	APIURL                  string `default:"" envconfig:"API_URL"`
 	AppURL                  string `default:"" envconfig:"APP_URL"`
 	ServerCertDir           string `default:"/tmp" envconfig:"CERT_DIR"`

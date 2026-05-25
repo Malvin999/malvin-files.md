@@ -54,7 +54,7 @@ func Start(ctx context.Context, cfg Config) (*Service, error) {
 		cfg:             cfg,
 		channel:         ch,
 		eventDispatcher: eventDispatcher,
-		chat:            NewChat(ch, cfg.EnableCardActions),
+		chat:            NewChat(ch, client, cfg.EnableCardActions),
 		mapper:          newIdentityMapper(cfg.DefaultUserID),
 		allowed:         allowlist(cfg.AllowedOpenIDs),
 		userChs:         make(map[int64]chan server.Update),

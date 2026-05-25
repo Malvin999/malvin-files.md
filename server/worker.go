@@ -4,9 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -100,32 +98,20 @@ func MoveDueTasks(
 	fsBackend afero.Fs,
 	telegram Chat,
 ) error {
-	infolog := slog.New(slog.NewTextHandler(os.Stdout, nil))
-
-	rootFS, err := fs.NewFS(storagePath, fsBackend)
-	if err != nil {
-		return fmt.Errorf("schedule worker: can't create FS: %s", err)
-	}
-
-	userDirs, err := rootFS.FilesAndDirs(fs.DirUserRoot)
+	users, err := fs.StorageUsers(storagePath, fsBackend)
 	if err != nil {
 		return fmt.Errorf("schedule worker: %w", err)
 	}
 
-	for _, userDir := range userDirs {
-		userID, err := strconv.ParseInt(userDir.Name, 10, 64)
-		if err != nil {
-			slog.Error("schedule worker: can't parse user ID", "dir", userDir.Name, "err", err)
-			continue
-		}
-		userPath := path.Join(storagePath, txt.I64(userID))
-		userFS, err := fs.NewFS(userPath, fsBackend)
+	infolog := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	for _, user := range users {
+		userFS, err := fs.NewFS(user.RootPath, fsBackend)
 		if err != nil {
 			slog.Error("schedule worker: can't create user FS", "err", err)
 			continue
 		}
 
-		userconf := userconfig.NewConfig(userFS, userID, configFilename)
+		userconf := userconfig.NewConfig(userFS, user.ID, configFilename)
 
 		schedules, err := userconf.Schedules()
 		if err != nil {
@@ -138,7 +124,7 @@ func MoveDueTasks(
 				continue
 			}
 
-			bot := NewBot(userID, telegram, userFS, db.NewDB(userID), userconf)
+			bot := NewBot(user.ID, telegram, userFS, db.NewDB(user.ID), userconf)
 			_, err := bot.appendToChat(schedule.Filename, userconf.Timezone())
 			if err != nil {
 				slog.Error("schedule worker: can't append to inbox", "err", err)
@@ -190,34 +176,23 @@ func RemoveCompletedChecklistItems(
 	configFilename string,
 	fsBackend afero.Fs,
 ) error {
-	rootFS, err := fs.NewFS(storagePath, fsBackend)
-	if err != nil {
-		return fmt.Errorf("schedule worker: can't create FS: %s", err)
-	}
-
-	userDirs, err := rootFS.FilesAndDirs(fs.DirUserRoot)
+	users, err := fs.StorageUsers(storagePath, fsBackend)
 	if err != nil {
 		return fmt.Errorf("schedule worker: %w", err)
 	}
 
-	for _, userDir := range userDirs {
-		userID, err := strconv.ParseInt(userDir.Name, 10, 64)
-		if err != nil {
-			slog.Error("schedule worker: can't parse user ID", "dir", userDir.Name, "err", err)
-			continue
-		}
-		userPath := path.Join(storagePath, txt.I64(userID))
-		userFS, err := fs.NewFS(userPath, fsBackend)
+	for _, user := range users {
+		userFS, err := fs.NewFS(user.RootPath, fsBackend)
 		if err != nil {
 			slog.Error("schedule worker: can't create user FS", "err", err)
 			continue
 		}
 
-		if alreadyRemoved[txt.I64(userID)+"#"+now().Format("2006-01-02")] {
+		if alreadyRemoved[txt.I64(user.ID)+"#"+now().Format("2006-01-02")] {
 			continue
 		}
 
-		userconf := userconfig.NewConfig(userFS, userID, configFilename)
+		userconf := userconfig.NewConfig(userFS, user.ID, configFilename)
 		tz := userconf.Timezone()
 		if now().In(tz).Hour() != 23 || now().In(tz).Minute() < 50 {
 			continue
@@ -275,7 +250,7 @@ func RemoveCompletedChecklistItems(
 			}
 		}
 
-		alreadyRemoved[txt.I64(userID)+"#"+now().Format("2006-01-02")] = true
+		alreadyRemoved[txt.I64(user.ID)+"#"+now().Format("2006-01-02")] = true
 	}
 
 	return nil

@@ -6,6 +6,8 @@ package server
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -578,7 +580,7 @@ func (b *Bot) saveImage(u Update) (string, error) {
 		return "", fmt.Errorf("can't download file: %w", err)
 	}
 
-	imgFilename := fmt.Sprintf("tg_%s%s", imageID, extension)
+	imgFilename := mediaFilename(imageID, extension)
 	err = b.fs.Write(fs.DirMedia, imgFilename, buf.String())
 	if err != nil {
 		return "", fmt.Errorf("can't save image: %w", err)
@@ -595,6 +597,15 @@ func (b *Bot) saveImage(u Update) (string, error) {
 	}
 
 	return content, nil
+}
+
+func mediaFilename(mediaID, extension string) string {
+	if regexp.MustCompile(`^[A-Za-z0-9_-]+$`).MatchString(mediaID) {
+		return fmt.Sprintf("tg_%s%s", mediaID, extension)
+	}
+
+	sum := sha1.Sum([]byte(mediaID))
+	return fmt.Sprintf("tg_%s%s", hex.EncodeToString(sum[:])[:12], extension)
 }
 
 // addToReplied appends newContent to whatever the bot rendered for

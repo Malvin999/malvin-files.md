@@ -26,6 +26,13 @@ func init() {
 	}
 }
 
+func TestMediaFilenameUsesStableSafeName(t *testing.T) {
+	name := mediaFilename(`{"key":"img_xxx","type":"image"}`, ".png")
+
+	require.Regexp(t, `^tg_[0-9a-f]{12}\.png$`, name)
+	require.Equal(t, name, mediaFilename(`{"key":"img_xxx","type":"image"}`, ".png"))
+}
+
 // inboxMsgHash returns the hash of the nth non-header block in Chat.md, or
 // a placeholder string if the inbox doesn't yet exist or has fewer entries.
 // Tests use this to resolve the stable inbox-entry identifier the bot now

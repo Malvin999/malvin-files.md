@@ -45,13 +45,29 @@ func TestIdentityMapperUsesConfiguredUserID(t *testing.T) {
 }
 
 func TestMediaIDRoundTrip(t *testing.T) {
-	id := mediaID("image", "img_xxx", "photo.webp")
+	id := mediaID("image", "img_xxx", "photo.webp", "om_xxx")
 
-	mediaType, fileKey, ext, ok := parseMediaID(id)
+	mediaType, fileKey, ext, messageID, ok := parseMediaID(id)
 	require.True(t, ok)
 	require.Equal(t, "image", mediaType)
 	require.Equal(t, "img_xxx", fileKey)
 	require.Equal(t, ".webp", ext)
+	require.Equal(t, "om_xxx", messageID)
+}
+
+func TestPureImageMessageDoesNotUseImageKeyAsCaption(t *testing.T) {
+	update := NewMessageUpdate(10001, &types.NormalizedMessage{
+		MessageID:      "om_xxx",
+		Content:        "![image](img_xxx)",
+		RawContentType: "image",
+		Resources: []types.Resource{{
+			Type:    "image",
+			FileKey: "img_xxx",
+		}},
+	})
+
+	require.NotEmpty(t, update.imageID)
+	require.Empty(t, update.Caption())
 }
 
 func TestCardCommandJSONRoundTrip(t *testing.T) {
