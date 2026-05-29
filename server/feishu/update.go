@@ -2,6 +2,7 @@ package feishu
 
 import (
 	"encoding/json"
+	"fmt"
 	"hash/fnv"
 	"math"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/larksuite/oapi-sdk-go/v3/channel/types"
+	larkim "github.com/larksuite/oapi-sdk-go/v3/service/im/v1"
 
 	"github.com/zakirullin/files.md/server/pkg/tg"
 )
@@ -29,14 +31,23 @@ type Update struct {
 }
 
 func NewMessageUpdate(userID int64, msg *types.NormalizedMessage) *Update {
+	text := strings.TrimSpace(msg.Content)
+	resources := msg.Resources
+	if msg.RawContentType == "post" {
+		if postText, postResources, ok := parsePostMessage(msg); ok {
+			text = postText
+			resources = postResources
+		}
+	}
+
 	u := &Update{
 		userID:       userID,
-		text:         strings.TrimSpace(msg.Content),
+		text:         text,
 		messageID:    msg.MessageID,
 		createTimeMs: msg.CreateTimeMs,
 	}
 
-	for _, resource := range msg.Resources {
+	for _, resource := range resources {
 		if resource.Type == "image" && resource.FileKey != "" {
 			u.imageID = mediaID(resource.Type, resource.FileKey, resource.FileName, msg.MessageID)
 			break
@@ -52,6 +63,147 @@ func NewMessageUpdate(userID int64, msg *types.NormalizedMessage) *Update {
 	}
 
 	return u
+}
+
+func parsePostMessage(msg *types.NormalizedMessage) (string, []types.Resource, bool) {
+	rawContent := rawMessageContent(msg.RawEvent)
+	if rawContent == "" {
+		return "", nil, false
+	}
+	return parsePostContent(rawContent)
+}
+
+func rawMessageContent(rawEvent interface{}) string {
+	event, ok := rawEvent.(*larkim.P2MessageReceiveV1)
+	if !ok || event.Event == nil || event.Event.Message == nil || event.Event.Message.Content == nil {
+		return ""
+	}
+	return *event.Event.Message.Content
+}
+
+func parsePostContent(rawContent string) (string, []types.Resource, bool) {
+	var contentMap map[string]interface{}
+	if err := json.Unmarshal([]byte(rawContent), &contentMap); err != nil {
+		return "", nil, false
+	}
+
+	bodyMap := postBody(contentMap)
+	if bodyMap == nil {
+		return "", nil, false
+	}
+
+	lines := make([]string, 0)
+	if title, _ := bodyMap["title"].(string); strings.TrimSpace(title) != "" {
+		lines = append(lines, fmt.Sprintf("**%s**", strings.TrimSpace(title)), "")
+	}
+
+	var resources []types.Resource
+	if contentList, ok := bodyMap["content"].([]interface{}); ok {
+		for _, paragraphInterface := range contentList {
+			paragraph, ok := paragraphInterface.([]interface{})
+			if !ok {
+				continue
+			}
+
+			var lineParts []string
+			for _, elInterface := range paragraph {
+				el, ok := elInterface.(map[string]interface{})
+				if !ok {
+					continue
+				}
+
+				text, newResources := postElementText(el)
+				if text != "" {
+					lineParts = append(lineParts, text)
+				}
+				resources = append(resources, newResources...)
+			}
+
+			if line := strings.TrimSpace(strings.Join(lineParts, "")); line != "" {
+				lines = append(lines, line)
+			}
+		}
+	}
+
+	return strings.TrimSpace(strings.Join(lines, "\n")), resources, len(lines) > 0 || len(resources) > 0
+}
+
+func postBody(contentMap map[string]interface{}) map[string]interface{} {
+	if _, ok := contentMap["content"].([]interface{}); ok {
+		return contentMap
+	}
+
+	for _, locale := range []string{"zh_cn", "en_us", "ja_jp", "zh_hk"} {
+		if body, ok := contentMap[locale].(map[string]interface{}); ok {
+			if _, hasContent := body["content"].([]interface{}); hasContent {
+				return body
+			}
+		}
+	}
+
+	for _, v := range contentMap {
+		body, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		if _, hasContent := body["content"].([]interface{}); hasContent {
+			return body
+		}
+	}
+
+	return nil
+}
+
+func postElementText(el map[string]interface{}) (string, []types.Resource) {
+	tag, _ := el["tag"].(string)
+	text, _ := el["text"].(string)
+
+	switch tag {
+	case "text":
+		return text, nil
+	case "a":
+		href, _ := el["href"].(string)
+		label := text
+		if label == "" {
+			label = href
+		}
+		if href == "" {
+			return label, nil
+		}
+		return fmt.Sprintf("[%s](%s)", label, href), nil
+	case "at":
+		userID, _ := el["user_id"].(string)
+		userName, _ := el["user_name"].(string)
+		if userID == "all" || userID == "all_members" {
+			return "@all", nil
+		}
+		if userName != "" {
+			return "@" + userName, nil
+		}
+		if userID != "" {
+			return "@" + userID, nil
+		}
+		return "", nil
+	case "img":
+		imageKey, _ := el["image_key"].(string)
+		if imageKey == "" {
+			return "", nil
+		}
+		return "", []types.Resource{{Type: "image", FileKey: imageKey}}
+	case "media":
+		fileKey, _ := el["file_key"].(string)
+		if fileKey == "" {
+			return "", nil
+		}
+		return fmt.Sprintf(`<file key="%s"/>`, fileKey), []types.Resource{{Type: "file", FileKey: fileKey}}
+	case "code_block":
+		lang, _ := el["language"].(string)
+		return fmt.Sprintf("\n```%s\n%s\n```\n", lang, text), nil
+	case "hr":
+		return "\n---\n", nil
+	default:
+		return text, nil
+	}
 }
 
 func NewCardActionUpdate(userID int64, event *types.CardActionEvent) *Update {

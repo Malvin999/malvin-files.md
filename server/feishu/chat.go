@@ -187,10 +187,47 @@ func (c *Chat) downloadMessageResource(messageID, fileKey, mediaType, ext string
 	if _, err := io.Copy(outFile, resp.File); err != nil {
 		return "", fmt.Errorf("feishu download message resource write: %w", err)
 	}
-	if ext == "" {
-		ext = strings.ToLower(filepath.Ext(resp.FileName))
+	return messageResourceExtension(mediaType, ext, resp.FileName, resp.Header.Get("Content-Type")), nil
+}
+
+func messageResourceExtension(mediaType, requestedExt, filename, contentType string) string {
+	if ext := strings.ToLower(filepath.Ext(filename)); ext != "" {
+		return ext
 	}
-	return ext, nil
+
+	if mediaType == "image" {
+		if ext := imageContentTypeExtension(contentType); ext != "" {
+			return ext
+		}
+		if requestedExt != "" {
+			return requestedExt
+		}
+		return ".png"
+	}
+
+	return requestedExt
+}
+
+func imageContentTypeExtension(contentType string) string {
+	contentType = strings.ToLower(strings.TrimSpace(strings.Split(contentType, ";")[0]))
+	switch contentType {
+	case "image/jpeg", "image/jpg":
+		return ".jpg"
+	case "image/png":
+		return ".png"
+	case "image/gif":
+		return ".gif"
+	case "image/webp":
+		return ".webp"
+	case "image/bmp":
+		return ".bmp"
+	case "image/heic":
+		return ".heic"
+	case "image/heif":
+		return ".heif"
+	default:
+		return ""
+	}
 }
 
 func (c *Chat) chatID(userID int64) (string, bool) {
